@@ -20,7 +20,7 @@
         </dependency>
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>entry-lambda-model</artifactId>
+            <artifactId>command-lambda-model</artifactId>
             <version>${project.version}</version>
         </dependency>
 

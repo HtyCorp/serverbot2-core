@@ -9,14 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>entry-lambda-model</artifactId>
+    <artifactId>command-lambda</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>discord-relay-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
 
 </project>

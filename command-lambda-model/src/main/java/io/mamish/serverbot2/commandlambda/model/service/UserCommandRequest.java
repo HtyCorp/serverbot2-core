@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.entrylambda.model;
+package io.mamish.serverbot2.commandlambda.model.service;
 
 import java.util.List;
 import io.mamish.serverbot2.discordrelay.model.MessageChannel;

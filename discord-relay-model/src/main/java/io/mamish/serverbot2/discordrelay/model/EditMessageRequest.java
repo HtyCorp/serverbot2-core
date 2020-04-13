@@ -22,7 +22,7 @@ public class EditMessageRequest {
         return editMode;
     }
 
-    public boolean isCreateIfMissing() {
+    public boolean shouldCreateIfMissing() {
         return createIfMissing;
     }
 
