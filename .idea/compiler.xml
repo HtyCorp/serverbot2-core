@@ -7,13 +7,13 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="app-daemon-model" />
+        <module name="app-daemon" />
         <module name="command-lambda-model" />
         <module name="discord-relay" />
         <module name="discord-relay-model" />
         <module name="steps-lambda" />
-        <module name="ip-lambda" />
         <module name="command-lambda" />
-        <module name="app-daemon" />
+        <module name="ip-lambda" />
       </profile>
     </annotationProcessing>
   </component>

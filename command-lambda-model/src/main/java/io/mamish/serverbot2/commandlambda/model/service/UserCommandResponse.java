@@ -1,20 +1,36 @@
 package io.mamish.serverbot2.commandlambda.model.service;
 
+import java.util.Objects;
+
 public class UserCommandResponse {
 
-    private boolean sendInitialMessage;
-    private String initialMessageContent;
+    private String optionalMessageContent;
+    private String optionalMessageExternalId;
 
-    public UserCommandResponse(boolean sendInitialMessage, String initialMessageContent) {
-        this.sendInitialMessage = sendInitialMessage;
-        this.initialMessageContent = initialMessageContent;
+    public UserCommandResponse(String optionalMessageContent, String optionalMessageExternalId) {
+        this.optionalMessageContent = optionalMessageContent;
+        this.optionalMessageExternalId = optionalMessageExternalId;
     }
 
-    public boolean shouldSendInitialMessage() {
-        return sendInitialMessage;
+    public String getOptionalMessageContent() {
+        return optionalMessageContent;
     }
 
-    public String getInitialMessageContent() {
-        return initialMessageContent;
+    public String getOptionalMessageExternalId() {
+        return optionalMessageExternalId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserCommandResponse that = (UserCommandResponse) o;
+        return optionalMessageContent.equals(that.optionalMessageContent) &&
+                Objects.equals(optionalMessageExternalId, that.optionalMessageExternalId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(optionalMessageContent, optionalMessageExternalId);
     }
 }
