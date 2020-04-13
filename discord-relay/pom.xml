@@ -11,5 +11,38 @@
 
     <artifactId>discord-relay</artifactId>
 
+    <dependencies>
+        <!-- Local module dependencies -->
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>discord-relay-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>entry-lambda-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- External dependencies-->
+        <dependency>
+            <groupId>org.javacord</groupId>
+            <artifactId>javacord</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>dynamodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>lambda</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+        </dependency>
+
+    </dependencies>
 
 </project>

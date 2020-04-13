@@ -11,5 +11,12 @@
 
     <artifactId>entry-lambda-model</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>discord-relay-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>
