@@ -1,0 +1,3 @@
+# Project exclude paths
+/app-daemon/target/
+/app-daemon-model/target/
