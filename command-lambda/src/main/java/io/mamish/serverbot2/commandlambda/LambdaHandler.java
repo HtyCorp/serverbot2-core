@@ -10,20 +10,37 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, Listener {
 
-    private Map<String, GeneratedCommandDefinition> commandDefinitions = new TreeMap<>();
+    private Map<String, GeneratedCommandDefinition> commandDefinitions;
 
     public LambdaHandler() {
-        for (Method method: Listener.class.getDeclaredMethods()) {
+
+        var allListenerInterfaceMethods = Arrays.stream(Listener.class.getDeclaredMethods());
+        Function<Method,GeneratedCommandDefinition> tryGenerateDefinition = method -> {
             try {
-                GeneratedCommandDefinition definition = new GeneratedCommandDefinition(method);
-                commandDefinitions.put(definition.getName(), definition);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("Invalid command definitions", e);
+                return new GeneratedCommandDefinition(method);
+            } catch (ReflectiveOperationException roe) {
+                throw new IllegalStateException("Invalid command definitions", roe);
             }
-        }
+        };
+        var compareByDocPositionAttribute = Comparator.comparing(GeneratedCommandDefinition::getDocumentationPosition);
+        BinaryOperator<GeneratedCommandDefinition> errorOnNameCollision = (_a, _b) -> {
+            throw new RuntimeException("Command name collision while generating definitions: " + _a.getName());
+        };
+        var collectToTreeMapWithNameAsKey = Collectors.toMap(GeneratedCommandDefinition::getName,
+                Function.identity(),
+                errorOnNameCollision,
+                TreeMap::new);
+
+        this.commandDefinitions = allListenerInterfaceMethods
+                .map(tryGenerateDefinition)
+                .sorted(compareByDocPositionAttribute)
+                .collect(collectToTreeMapWithNameAsKey);
     }
 
     @Override
@@ -79,7 +96,29 @@ public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCom
 
     @Override
     public UserCommandResponse onCommandHelp(CommandHelp commandHelp) {
-        return null;
+
+        if (commandHelp.getCommandName() != null) {
+            String name = commandHelp.getCommandName();
+            GeneratedCommandDefinition definition = commandDefinitions.get(name);
+            if (definition == null) {
+                return new UserCommandResponse("Error: '" + name + "' is not a recognised command name.");
+            } else {
+                StringBuilder detailedHelpBuilder = new StringBuilder();
+                detailedHelpBuilder.append(definition.getUsageString());
+                detailedHelpBuilder.append("\n  ").append(definition.getDescriptionString());
+                for (String argString: definition.getArgumentDescriptionStrings()) {
+                    detailedHelpBuilder.append("\n    ").append(argString);
+                }
+                return new UserCommandResponse(detailedHelpBuilder.toString());
+            }
+        } else {
+            String aggregateHelpString = commandDefinitions.values().stream().map(definition -> {
+                String line0 = definition.getUsageString();
+                String line1 = definition.getDescriptionString();
+                return line0 + "\n  " + line1;
+            }).collect(Collectors.joining("\n"));
+            return new UserCommandResponse(aggregateHelpString);
+        }
     }
 
     @Override
@@ -101,4 +140,5 @@ public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCom
     public UserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
         return null;
     }
+
 }

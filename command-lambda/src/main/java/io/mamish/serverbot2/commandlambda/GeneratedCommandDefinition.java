@@ -19,6 +19,7 @@ public class GeneratedCommandDefinition {
     private List<Field> orderedFields;
     private int numRequiredFields;
 
+    private int documentationPosition;
     private String usageString;
     private String descriptionString;
     private List<String> argumentDescriptionStrings;
@@ -52,6 +53,7 @@ public class GeneratedCommandDefinition {
             }
         }
 
+        this.documentationPosition = commandMetadata.docsPosition();
         this.usageString = sbUsage.toString();
         this.descriptionString = commandMetadata.description();
         this.argumentDescriptionStrings = argMetaList.stream().map(m -> m.name() + ": " + m.description()).collect(Collectors.toList());
@@ -76,6 +78,10 @@ public class GeneratedCommandDefinition {
 
     public int getNumRequiredFields() {
         return numRequiredFields;
+    }
+
+    public int getDocumentationPosition() {
+        return documentationPosition;
     }
 
     public String getUsageString() {

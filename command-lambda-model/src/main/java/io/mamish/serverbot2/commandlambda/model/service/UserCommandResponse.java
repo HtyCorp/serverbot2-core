@@ -9,6 +9,10 @@ public class UserCommandResponse {
     private String optionalMessageContent;
     private String optionalMessageExternalId;
 
+    public UserCommandResponse(String optionalMessageContent) {
+        this.optionalMessageContent = optionalMessageContent;
+    }
+
     public UserCommandResponse(String optionalMessageContent, String optionalMessageExternalId) {
         this.optionalMessageContent = optionalMessageContent;
         this.optionalMessageExternalId = optionalMessageExternalId;
@@ -39,8 +43,8 @@ public class UserCommandResponse {
     @Override
     public String toString() {
         return "UserCommandResponse{" +
-                "optionalMessageContent='" + StringEscapeUtils.escapeJson(optionalMessageContent) + '\'' +
-                ", optionalMessageExternalId='" + StringEscapeUtils.escapeJson(optionalMessageExternalId) + '\'' +
+                "optionalMessageContent='" + StringEscapeUtils.escapeJava(optionalMessageContent) + '\'' +
+                ", optionalMessageExternalId='" + StringEscapeUtils.escapeJava(optionalMessageExternalId) + '\'' +
                 '}';
     }
 }
