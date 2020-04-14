@@ -11,9 +11,9 @@
         <module name="command-lambda-model" />
         <module name="discord-relay" />
         <module name="discord-relay-model" />
-        <module name="steps-lambda" />
-        <module name="command-lambda" />
         <module name="ip-lambda" />
+        <module name="command-lambda" />
+        <module name="steps-lambda" />
       </profile>
     </annotationProcessing>
   </component>

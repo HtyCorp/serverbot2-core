@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.commandlambda.model.service;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.Objects;
 
 public class UserCommandResponse {
@@ -32,5 +34,13 @@ public class UserCommandResponse {
     @Override
     public int hashCode() {
         return Objects.hash(optionalMessageContent, optionalMessageExternalId);
+    }
+
+    @Override
+    public String toString() {
+        return "UserCommandResponse{" +
+                "optionalMessageContent='" + StringEscapeUtils.escapeJson(optionalMessageContent) + '\'' +
+                ", optionalMessageExternalId='" + StringEscapeUtils.escapeJson(optionalMessageExternalId) + '\'' +
+                '}';
     }
 }

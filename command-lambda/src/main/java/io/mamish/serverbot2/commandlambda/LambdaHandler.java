@@ -43,10 +43,12 @@ public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCom
 
         // Check for not all required arguments provided
         if (args.size() < definition.getNumRequiredFields()) {
-            String fstr = "Error: expected at least %d arguments but only got %d.\n"
-                    + "Expected usage: %s\n"
-                    + "Use '!help %s' to see usage details.";
-            String errorMessage = String.format(fstr, definition.getNumRequiredFields(), args.size(), definition.getUsageString(), keyword);
+            String pluralS = (definition.getNumRequiredFields() > 1) ? "s" : "";
+            String fstr = "Error: expected at least %d argument%s but got %d."
+                    + "\nUsage: %s"
+                    + "\nUse '!help %s' for details.";
+            String errorMessage = String.format(fstr,
+                    definition.getNumRequiredFields(), pluralS, args.size(), definition.getUsageString(), keyword);
             return new UserCommandResponse(errorMessage, null);
         }
 

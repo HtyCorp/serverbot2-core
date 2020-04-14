@@ -3,6 +3,8 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.MessageChannel;
+import org.apache.commons.text.StringEscapeUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -31,6 +33,28 @@ public class LambdaHandlerTest {
         UserCommandResponse actualResponse = handler.handleRequest(request, null);
 
         assert actualResponse.equals(expectedResponse);
+    }
+
+    @Test
+    public void testStartMissingArgument() {
+
+        LambdaHandler handler = new LambdaHandler();
+
+        UserCommandRequest request = new UserCommandRequest(
+                List.of("start"),
+                MessageChannel.STANDARD,
+                DUMMY_USER_ID
+        );
+
+        String expectedResponseString = "Error: expected at least 1 argument but got 0."
+                + "\nUsage: !start game-name"
+                + "\nUse '!help start' for details.";
+        UserCommandResponse expectedResponse = new UserCommandResponse(expectedResponseString, null);
+
+        UserCommandResponse actualResponse = handler.handleRequest(request, null);
+
+        Assertions.assertEquals(expectedResponse, actualResponse);
+
     }
 
 }
