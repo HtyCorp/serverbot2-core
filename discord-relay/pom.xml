@@ -15,6 +15,11 @@
         <!-- Local module dependencies -->
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>shared-configuration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
             <artifactId>discord-relay-model</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -31,6 +36,10 @@
             <type>pom</type>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb</artifactId>
         </dependency>
@@ -41,6 +50,10 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sqs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>secretsmanager</artifactId>
         </dependency>
 
     </dependencies>

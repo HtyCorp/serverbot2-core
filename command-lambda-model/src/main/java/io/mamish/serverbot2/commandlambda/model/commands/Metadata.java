@@ -10,8 +10,8 @@ public class Metadata {
     private Metadata() {}
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.TYPE)
-    public static @interface Command {
+    @Target(ElementType.METHOD)
+    public @interface Command {
         int docsPosition();
         String name();
         int numMinArguments();
@@ -20,7 +20,7 @@ public class Metadata {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
-    public static @interface Argument {
+    public @interface Argument {
         int argPosition();
         String name();
         String description();

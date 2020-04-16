@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.model.commands.Metadata;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -10,7 +11,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GeneratedCommandDefinition {
+public class CommandDefinition {
+
+    private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
     private String name;
 
@@ -25,10 +28,10 @@ public class GeneratedCommandDefinition {
     private List<String> argumentDescriptionStrings;
 
 
-    public GeneratedCommandDefinition(Method targetCommandMethod) throws ReflectiveOperationException {
+    public CommandDefinition(Method targetCommandMethod) throws ReflectiveOperationException {
 
         Class<?> requestType = targetCommandMethod.getParameterTypes()[0];
-        Metadata.Command commandMetadata = requestType.getAnnotation(Metadata.Command.class);
+        Metadata.Command commandMetadata = targetCommandMethod.getAnnotation(Metadata.Command.class);
         List<Field> requestTypeFields = Arrays.asList(requestType.getDeclaredFields());
         requestTypeFields.forEach(f -> f.setAccessible(true));
         requestTypeFields.sort(Comparator.comparing(f -> f.getAnnotation(Metadata.Argument.class).argPosition()));
@@ -42,7 +45,7 @@ public class GeneratedCommandDefinition {
         List<Metadata.Argument> argMetaList = requestTypeFields.stream().map(f -> f.getAnnotation(Metadata.Argument.class)).collect(Collectors.toList());
 
         StringBuilder sbUsage = new StringBuilder();
-        sbUsage.append("!").append(this.name);
+        sbUsage.append(SIGIL).append(this.name);
         for (int i = 0; i < argMetaList.size(); i++) {
             String argName = argMetaList.get(i).name();
             sbUsage.append(' ');

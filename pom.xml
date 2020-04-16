@@ -13,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <awscdk.version>1.32.2</awscdk.version>
     </properties>
 
     <build>
@@ -34,6 +35,8 @@
         <module>command-lambda-model</module>
         <module>ip-lambda</module>
         <module>steps-lambda</module>
+        <module>command-lambda-infra</module>
+        <module>shared-configuration</module>
     </modules>
 
     <dependencyManagement>
@@ -50,12 +53,6 @@
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-lambda-java-core</artifactId>
                 <version>1.2.0</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/software.amazon.awscdk/core -->
-            <dependency>
-                <groupId>software.amazon.awscdk</groupId>
-                <artifactId>core</artifactId>
-                <version>1.32.2</version>
             </dependency>
             <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
             <dependency>
@@ -76,10 +73,27 @@
                 <artifactId>commons-text</artifactId>
                 <version>1.8</version>
             </dependency>
+
+            <!-- CDK DEPENDENCIES - no bom available so need to specify individual -->
+
+            <!-- https://mvnrepository.com/artifact/software.amazon.awscdk/core -->
+            <dependency>
+                <groupId>software.amazon.awscdk</groupId>
+                <artifactId>core</artifactId>
+                <version>${awscdk.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/software.amazon.awscdk/lambda -->
+            <dependency>
+                <groupId>software.amazon.awscdk</groupId>
+                <artifactId>lambda</artifactId>
+                <version>${awscdk.version}</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
-    <!-- Top-level dependencies for tests only -->
+    <!-- Top-level dependencies for tests and logging only -->
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
@@ -95,6 +109,21 @@
             <version>5.6.2</version>
             <scope>test</scope>
         </dependency>
+
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.logging.log4j</groupId>-->
+<!--            <artifactId>log4j-api</artifactId>-->
+<!--            <version>2.13.1</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.logging.log4j</groupId>-->
+<!--            <artifactId>log4j-core</artifactId>-->
+<!--            <version>2.13.1</version>-->
+<!--        </dependency>-->
+
 
     </dependencies>
 

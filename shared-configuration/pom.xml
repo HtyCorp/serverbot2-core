@@ -9,22 +9,16 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>command-lambda</artifactId>
+    <artifactId>shared-configuration</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>command-lambda-model</artifactId>
-            <version>${project.version}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>ssm</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>shared-configuration</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-lambda-java-core</artifactId>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>secretsmanager</artifactId>
         </dependency>
     </dependencies>
 

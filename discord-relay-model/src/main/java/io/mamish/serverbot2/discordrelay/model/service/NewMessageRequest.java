@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.discordrelay.model;
+package io.mamish.serverbot2.discordrelay.model.service;
 
 import java.util.List;
 

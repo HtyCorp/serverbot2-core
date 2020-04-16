@@ -2,21 +2,26 @@ package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
-import io.mamish.serverbot2.discordrelay.model.MessageChannel;
+import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class LambdaHandlerTest {
 
+    private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
     private static final String DUMMY_USER_ID = "12345678901234567";
+
+    private Logger logger = Logger.getLogger("LambdaHandlerTest");
 
     @Test
     public void testMissingCommand() {
-        testSimpleResponseMessage("Error: !notarealcommand is not a recognised command.",
+        testSimpleResponseMessage("Error: "+SIGIL+"notarealcommand is not a recognised command.",
                 "notarealcommand", "arg0", "arg1");
     }
 
@@ -24,8 +29,8 @@ public class LambdaHandlerTest {
     public void testStartMissingArgument() {
 
         String expectedResponseMessage = "Error: expected at least 1 argument but got 0."
-                + "\nUsage: !start game-name"
-                + "\nUse '!help start' for details.";
+                + "\nUsage: "+SIGIL+"start game-name"
+                + "\nUse '"+SIGIL+"help start' for details.";
 
         testSimpleResponseMessage(expectedResponseMessage,
                 "start");
@@ -41,7 +46,7 @@ public class LambdaHandlerTest {
     @Test
     public void testHelpSpecificCommand() {
         String expectedResponseMessage =
-                "!start game-name\n" +
+                SIGIL+"start game-name\n" +
                 "  Start a game\n" +
                 "    game-name: Name of game to start";
         testSimpleResponseMessage(expectedResponseMessage,
@@ -53,7 +58,7 @@ public class LambdaHandlerTest {
         UserCommandRequest request = new UserCommandRequest(List.of(requestArgs), MessageChannel.STANDARD, DUMMY_USER_ID);
         UserCommandResponse actualResponse = handler.handleRequest(request, null);
 
-        System.out.println("request = " + Arrays.toString(requestArgs) + ", response = " + actualResponse);
+        logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + actualResponse);
 
         Assertions.assertEquals(expectedResponseMessage, actualResponse.getOptionalMessageContent());
     }
