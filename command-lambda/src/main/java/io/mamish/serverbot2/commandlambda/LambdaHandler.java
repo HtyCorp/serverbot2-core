@@ -6,15 +6,9 @@ import io.mamish.serverbot2.commandlambda.model.commands.*;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, Listener {
+public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, CommandListener {
 
     private CommandDispatcher commandDispatcher;
 
@@ -28,10 +22,10 @@ public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCom
     }
 
     @Override
-    public UserCommandResponse onCommandHelp(CommandHelp commandHelp) {
+    public UserCommandResponse onCommandHelp(CommandDtoHelp commandDtoHelp) {
 
-        if (commandHelp.getCommandName() != null) {
-            String name = commandHelp.getCommandName();
+        if (commandDtoHelp.getCommandName() != null) {
+            String name = commandDtoHelp.getCommandName();
             CommandDefinition definition = commandDispatcher.getDefinitions().get(name);
             if (definition == null) {
                 return new UserCommandResponse("Error: '" + name + "' is not a recognised command name.");
@@ -53,22 +47,22 @@ public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCom
     }
 
     @Override
-    public UserCommandResponse onCommandGames(CommandGames commandGames) {
+    public UserCommandResponse onCommandGames(CommandDtoGames commandDtoGames) {
         return null;
     }
 
     @Override
-    public UserCommandResponse onCommandStart(CommandStart commandStart) {
+    public UserCommandResponse onCommandStart(CommandDtoStart commandDtoStart) {
         return null;
     }
 
     @Override
-    public UserCommandResponse onCommandStop(CommandStop commandStop) {
+    public UserCommandResponse onCommandStop(CommandDtoStop commandDtoStop) {
         return null;
     }
 
     @Override
-    public UserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
+    public UserCommandResponse onCommandAddIp(CommandDtoAddIp commandDtoAddIp) {
         return null;
     }
 

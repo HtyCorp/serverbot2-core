@@ -1,6 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.Listener;
+import io.mamish.serverbot2.commandlambda.model.commands.CommandListener;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -17,39 +17,19 @@ public class CommandDispatcher {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
-    private Listener listenerInstance;
+    private CommandListener commandListenerInstance;
     private Map<String, CommandDefinition> commandDefinitions;
 
-    public CommandDispatcher(Listener listenerInstance) {
+    public CommandDispatcher(CommandListener commandListenerInstance) {
 
-        this.listenerInstance = listenerInstance;
+        this.commandListenerInstance = commandListenerInstance;
 
-        var allListenerInterfaceMethods = Arrays.stream(Listener.class.getDeclaredMethods());
-        Function<Method, CommandDefinition> tryGenerateDefinition = method -> {
-            try {
-                return new CommandDefinition(method);
-            } catch (ReflectiveOperationException roe) {
-                throw new IllegalStateException("Invalid command definitions", roe);
-            }
-        };
-        var compareByDocPositionAttribute = Comparator.comparing(CommandDefinition::getDocumentationPosition);
-        BinaryOperator<CommandDefinition> errorOnNameCollision = (_a, _b) -> {
-            throw new RuntimeException("Command name collision while generating definitions: " + _a.getName());
-        };
-        var collectToTreeMapWithNameAsKey = Collectors.toMap(CommandDefinition::getName,
-                Function.identity(),
-                errorOnNameCollision,
-                TreeMap::new);
-
-        this.commandDefinitions = allListenerInterfaceMethods
-                .map(tryGenerateDefinition)
-                .sorted(compareByDocPositionAttribute)
-                .collect(collectToTreeMapWithNameAsKey);
+        generateCommandDefinitions();
     }
 
     private void generateCommandDefinitions() {
 
-        var allListenerInterfaceMethods = Arrays.stream(Listener.class.getDeclaredMethods());
+        var allListenerInterfaceMethods = Arrays.stream(CommandListener.class.getDeclaredMethods());
         Function<Method, CommandDefinition> tryGenerateDefinition = method -> {
             try {
                 return new CommandDefinition(method);
@@ -112,7 +92,7 @@ public class CommandDispatcher {
 
             // If parsing worked, run target listener method with request object.
             try {
-                return (UserCommandResponse) definition.getTargetMethod().invoke(listenerInstance, requestObject);
+                return (UserCommandResponse) definition.getTargetMethod().invoke(commandListenerInstance, requestObject);
             } catch (InvocationTargetException ite) {
                 ite.printStackTrace();
                 return new UserCommandResponse("Unexpected error occurred while running command. Sorry...", null);
