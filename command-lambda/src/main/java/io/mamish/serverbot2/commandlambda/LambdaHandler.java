@@ -2,68 +2,38 @@ package io.mamish.serverbot2.commandlambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import io.mamish.serverbot2.commandlambda.model.commands.*;
-import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
+import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
+import io.mamish.serverbot2.commandlambda.model.service.ICommandServiceHandler;
+import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.sharedutil.reflect.SimpleApiDefinition;
+import io.mamish.serverbot2.sharedutil.reflect.JsonRequestDispatcher;
 
-import java.util.stream.Collectors;
+import java.lang.reflect.InvocationTargetException;
+/*
+ * This is just an entry layer to parse JSON and build a service command to pass the real command handler.
+ * Lambda native JSON parsing makes this extra layer a bit unnecessary, but I'm keeping it for testing and consistency.
+ */
+public class LambdaHandler implements RequestHandler<String, String>, ICommandServiceHandler {
 
-public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, CommandHandler {
-
-    private CommandDispatcher commandDispatcher;
+    private JsonRequestDispatcher<ICommandServiceHandler> requestDispatcher;
+    private CommandHandler commandHandler;
 
     public LambdaHandler() {
-        commandDispatcher = new CommandDispatcher(this);
+        requestDispatcher = new JsonRequestDispatcher<>(this, ICommandServiceHandler.class, SimpleApiDefinition.class);
+        commandHandler = new CommandHandler();
     }
 
     @Override
-    public UserCommandResponse handleRequest(UserCommandRequest userCommandRequest, Context context) {
-        return commandDispatcher.dispatch(userCommandRequest);
-    }
-
-    @Override
-    public UserCommandResponse onCommandHelp(CommandDtoHelp commandDtoHelp) {
-
-        if (commandDtoHelp.getCommandName() != null) {
-            String name = commandDtoHelp.getCommandName();
-            CommandDefinition definition = commandDispatcher.getDefinitions().get(name);
-            if (definition == null) {
-                return new UserCommandResponse("Error: '" + name + "' is not a recognised command name.");
-            } else {
-                StringBuilder detailedHelpBuilder = new StringBuilder();
-                detailedHelpBuilder.append(definition.getUsageString());
-                detailedHelpBuilder.append("\n  ").append(definition.getDescriptionString());
-                for (String argString: definition.getArgumentDescriptionStrings()) {
-                    detailedHelpBuilder.append("\n    ").append(argString);
-                }
-                return new UserCommandResponse(detailedHelpBuilder.toString());
-            }
-        } else {
-            String aggregateHelpString = commandDispatcher.getDefinitions().values().stream()
-                    .map(definition -> definition.getUsageString() + "\n  " + definition.getDescriptionString())
-                    .collect(Collectors.joining("\n"));
-            return new UserCommandResponse(aggregateHelpString);
+    public String handleRequest(String inputString, Context context) {
+        try {
+            return requestDispatcher.dispatch(inputString);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException("Uncaught exception when handling request", e);
         }
     }
 
     @Override
-    public UserCommandResponse onCommandGames(CommandDtoGames commandDtoGames) {
-        return null;
+    public CommandServiceResponse onRequestUserCommand(CommandServiceRequest commandServiceRequest) {
+        return commandHandler.handleRequest(commandServiceRequest);
     }
-
-    @Override
-    public UserCommandResponse onCommandStart(CommandDtoStart commandDtoStart) {
-        return null;
-    }
-
-    @Override
-    public UserCommandResponse onCommandStop(CommandDtoStop commandDtoStop) {
-        return null;
-    }
-
-    @Override
-    public UserCommandResponse onCommandAddIp(CommandDtoAddIp commandDtoAddIp) {
-        return null;
-    }
-
 }

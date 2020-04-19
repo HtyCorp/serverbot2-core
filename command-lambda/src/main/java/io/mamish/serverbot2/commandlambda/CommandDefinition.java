@@ -1,21 +1,15 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.Metadata;
+import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.sharedutil.reflect.AbstractRequestDispatcher;
 import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.GeneratedRequestDefinition;
+import io.mamish.serverbot2.sharedutil.reflect.SimpleApiDefinition;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommandDefinition extends GeneratedRequestDefinition {
+public class CommandDefinition extends SimpleApiDefinition {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
@@ -24,6 +18,10 @@ public class CommandDefinition extends GeneratedRequestDefinition {
 
     public CommandDefinition(Method targetCommandMethod) throws ReflectiveOperationException {
         super(targetCommandMethod);
+
+        if (!AbstractCommandDto.class.isAssignableFrom(getRequestDtoType())) {
+            throw new IllegalStateException("Illegal request DTO type in generated definition: not a subclass of AbstractCommandDto");
+        }
 
         List<ApiArgumentInfo> argInfoList = getOrderedFieldsInfoView();
 

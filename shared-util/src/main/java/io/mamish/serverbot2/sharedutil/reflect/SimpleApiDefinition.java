@@ -11,7 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GeneratedRequestDefinition {
+public class SimpleApiDefinition {
 
     private final String name;
     private final String description;
@@ -23,8 +23,10 @@ public class GeneratedRequestDefinition {
     private final Constructor<?> requestDtoConstructor;
 
     private final List<Pair<Field,ApiArgumentInfo>> orderedFields;
+    private final List<Field> orderedFieldsFieldView;
+    private final List<ApiArgumentInfo> orderedFieldsInfoView;
 
-    public GeneratedRequestDefinition(Method targetMethod) throws ReflectiveOperationException {
+    public SimpleApiDefinition(Method targetMethod) throws ReflectiveOperationException {
 
         Class<?> requestType = targetMethod.getParameterTypes()[0];
         ApiRequestInfo apiRequestInfo = requestType.getAnnotation(ApiRequestInfo.class);
@@ -37,11 +39,14 @@ public class GeneratedRequestDefinition {
         this.requestDtoType = requestType;
         this.requestDtoConstructor = requestType.getConstructor();
 
-        orderedFields = Arrays.stream(requestType.getDeclaredFields())
+        this.orderedFields = Arrays.stream(requestType.getDeclaredFields())
+                .filter(f -> f.getAnnotation(ApiArgumentInfo.class) != null)
                 .map(f -> new Pair<>(f,f.getAnnotation(ApiArgumentInfo.class)))
                 .sorted(Comparator.comparing(p -> p.snd().order()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
         orderedFields.forEach(f -> f.fst().setAccessible(true));
+        this.orderedFieldsFieldView = orderedFields.stream().map(Pair::fst).collect(Collectors.toUnmodifiableList());
+        this.orderedFieldsInfoView = orderedFields.stream().map(Pair::snd).collect(Collectors.toUnmodifiableList());
 
     }
 
@@ -78,11 +83,10 @@ public class GeneratedRequestDefinition {
     }
 
     public List<Field> getOrderedFieldsFieldView() {
-        return orderedFields.stream().map(Pair::fst).collect(Collectors.toUnmodifiableList());
+        return orderedFieldsFieldView;
     }
 
     public List<ApiArgumentInfo> getOrderedFieldsInfoView() {
-        return orderedFields.stream().map(Pair::snd).collect(Collectors.toUnmodifiableList());
+        return orderedFieldsInfoView;
     }
-
 }

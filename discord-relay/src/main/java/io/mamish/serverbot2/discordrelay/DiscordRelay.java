@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.discordrelay;
 
 import com.google.gson.Gson;
-import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
+import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
+import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -72,8 +72,8 @@ public class DiscordRelay {
         }
 
         List<String> words = Arrays.asList(content.substring(SIGIL.length()).split("\\s+"));
-        UserCommandRequest commandRequest = new UserCommandRequest(words, oAppChannel.get(), author.getIdAsString());
-        UserCommandResponse commandResponse = invokeCommandLambda(commandRequest);
+        CommandServiceRequest commandRequest = new CommandServiceRequest(words, oAppChannel.get(), author.getIdAsString());
+        CommandServiceResponse commandResponse = invokeCommandLambda(commandRequest);
 
         if (commandResponse.getOptionalMessageContent() != null) {
             channel.sendMessage(commandResponse.getOptionalMessageContent());
@@ -81,10 +81,10 @@ public class DiscordRelay {
 
     }
 
-    private UserCommandResponse invokeCommandLambda(UserCommandRequest request) {
+    private CommandServiceResponse invokeCommandLambda(CommandServiceRequest request) {
         SdkBytes requestPayload = SdkBytes.fromUtf8String(gson.toJson(request));
         InvokeResponse response = lambdaClient.invoke(r -> r.payload(requestPayload).functionName(CommandLambdaConfig.FUNCTION_NAME));
-        return gson.fromJson(response.payload().asUtf8String(), UserCommandResponse.class);
+        return gson.fromJson(response.payload().asUtf8String(), CommandServiceResponse.class);
     }
 
     private void logIgnoreMessageReason(Message message, String reason) {

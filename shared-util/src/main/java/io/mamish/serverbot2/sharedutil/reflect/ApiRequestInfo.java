@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 public @interface ApiRequestInfo {
     int order();
     String name();
-    String description();
     int numRequiredFields();
+    String description();
 }

@@ -4,16 +4,16 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Objects;
 
-public class UserCommandResponse {
+public class CommandServiceResponse {
 
     private String optionalMessageContent;
     private String optionalMessageExternalId;
 
-    public UserCommandResponse(String optionalMessageContent) {
+    public CommandServiceResponse(String optionalMessageContent) {
         this.optionalMessageContent = optionalMessageContent;
     }
 
-    public UserCommandResponse(String optionalMessageContent, String optionalMessageExternalId) {
+    public CommandServiceResponse(String optionalMessageContent, String optionalMessageExternalId) {
         this.optionalMessageContent = optionalMessageContent;
         this.optionalMessageExternalId = optionalMessageExternalId;
     }
@@ -30,7 +30,7 @@ public class UserCommandResponse {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        UserCommandResponse that = (UserCommandResponse) o;
+        CommandServiceResponse that = (CommandServiceResponse) o;
         return optionalMessageContent.equals(that.optionalMessageContent) &&
                 Objects.equals(optionalMessageExternalId, that.optionalMessageExternalId);
     }
