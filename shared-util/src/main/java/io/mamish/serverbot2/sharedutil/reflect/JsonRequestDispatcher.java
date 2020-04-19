@@ -24,7 +24,7 @@ public class JsonRequestDispatcher<HandlerType> extends
     protected Object parseRequestObject(SimpleApiDefinition definition, JsonObject input) {
         Object parsedObject;
         try {
-            parsedObject = annotatedGson.getGson().fromJson(input, definition.getClass());
+            parsedObject = annotatedGson.getGson().fromJson(input, definition.getRequestDtoType());
         } catch (JsonSyntaxException e) {
             throw new UnparsableInputException("Invalid JSON request fields", e);
         }
@@ -33,7 +33,8 @@ public class JsonRequestDispatcher<HandlerType> extends
                 .limit(definition.getNumRequiredFields())
                 .allMatch(field -> {
                     try {
-                        return field.get(parsedObject) != null;
+                        Object requiredFieldValue = field.get(parsedObject);
+                        return requiredFieldValue != null;
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException("Unexpected access exception validation JSON field", e);
                     }

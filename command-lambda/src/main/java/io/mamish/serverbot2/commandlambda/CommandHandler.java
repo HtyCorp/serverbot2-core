@@ -3,6 +3,10 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.commands.*;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingException;
+import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
+import io.mamish.serverbot2.sharedutil.reflect.UnknownRequestException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
@@ -18,8 +22,13 @@ public class CommandHandler implements ICommandHandler {
     public CommandServiceResponse handleRequest(CommandServiceRequest request) {
         try {
             return commandDispatcher.dispatch(request);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException("Uknown exception when invoking command.", e);
+        } catch(UnknownRequestException e) {
+            return new CommandServiceResponse("Error: '"+e.getRequestedTarget()+"' is not a recognised command.");
+        } catch(RequestValidationException | RequestHandlingException e) {
+            return new CommandServiceResponse("Error: " + e.getMessage());
+        // Other exception types should be treated as non-publishable for UX, so don't return a response object.
+        } catch(InvocationTargetException e) {
+            throw new RuntimeException("Unknown exception when invoking command.", e);
         }
     }
 

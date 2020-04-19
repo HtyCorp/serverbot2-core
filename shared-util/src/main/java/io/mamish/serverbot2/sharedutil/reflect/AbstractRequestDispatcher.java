@@ -79,7 +79,7 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
         DefinitionType definition = definitionMap.get(targetName);
 
         if (definition == null) {
-            throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.");
+            throw new UnknownRequestException(targetName, "Unknown API target '" + targetName + "' in request.");
         }
         Object requestObject = parseRequestObject(definition, processedInput);
 

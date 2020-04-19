@@ -5,8 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandServiceHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
-import io.mamish.serverbot2.sharedutil.reflect.SimpleApiDefinition;
-import io.mamish.serverbot2.sharedutil.reflect.JsonRequestDispatcher;
+import io.mamish.serverbot2.sharedutil.reflect.*;
 
 import java.lang.reflect.InvocationTargetException;
 /*
@@ -36,4 +35,5 @@ public class LambdaHandler implements RequestHandler<String, String>, ICommandSe
     public CommandServiceResponse onRequestUserCommand(CommandServiceRequest commandServiceRequest) {
         return commandHandler.handleRequest(commandServiceRequest);
     }
+
 }

@@ -27,14 +27,14 @@ public class LambdaHandlerTest {
 
     @Test
     public void testMissingCommand() {
-        testSimpleResponseMessage("Error: "+SIGIL+"notarealcommand is not a recognised command.",
+        testSimpleResponseMessage("Error: 'notarealcommand' is not a recognised command.",
                 "notarealcommand", "arg0", "arg1");
     }
 
     @Test
     public void testStartMissingArgument() {
 
-        String expectedResponseMessage = "Error: expected at least 1 argument but got 0."
+        String expectedResponseMessage = "Error: Expected at least 1 argument but got 0."
                 + "\nUsage: "+SIGIL+"start game-name"
                 + "\nUse '"+SIGIL+"help start' for details.";
 
@@ -67,7 +67,6 @@ public class LambdaHandlerTest {
         String responseString = handler.handleRequest(requestString, null);
 
         Pair<String, JsonObject> rawResponse = annotatedGson.fromJson(responseString);
-        assert rawResponse.fst().equals("CommandServiceResponse");
         CommandServiceResponse actualResponse = annotatedGson.getGson().fromJson(rawResponse.snd(), CommandServiceResponse.class);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + actualResponse);

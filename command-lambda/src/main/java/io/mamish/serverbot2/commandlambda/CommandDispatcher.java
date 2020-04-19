@@ -36,12 +36,12 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
     protected Object parseRequestObject(CommandDefinition definition, CommandServiceRequest inputRequest) {
 
         String name = definition.getName();
-        List<String> arguments = inputRequest.getWords().subList(0,inputRequest.getWords().size());
+        List<String> arguments = inputRequest.getWords().subList(1,inputRequest.getWords().size());
 
         // Check for not all required arguments provided
         if (arguments.size() < definition.getNumRequiredFields()) {
             String pluralS = (definition.getNumRequiredFields() > 1) ? "s" : "";
-            String fstr = "Error: expected at least %d argument%s but got %d."
+            String fstr = "Expected at least %d argument%s but got %d."
                     + "\nUsage: %s"
                     + "\nUse '"+SIGIL+"help %s' for details.";
             String errorMessage = String.format(fstr,
