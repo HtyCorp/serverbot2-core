@@ -8,7 +8,7 @@ import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
 
 import java.util.stream.Collectors;
 
-public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, CommandListener {
+public class LambdaHandler implements RequestHandler<UserCommandRequest, UserCommandResponse>, CommandHandler {
 
     private CommandDispatcher commandDispatcher;
 

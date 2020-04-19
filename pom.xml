@@ -37,6 +37,7 @@
         <module>steps-lambda</module>
         <module>command-lambda-infra</module>
         <module>shared-configuration</module>
+        <module>shared-util</module>
     </modules>
 
     <dependencyManagement>

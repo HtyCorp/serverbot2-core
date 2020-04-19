@@ -1,9 +1,13 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.CommandListener;
+import io.mamish.serverbot2.commandlambda.model.commands.CommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
+import io.mamish.serverbot2.discordrelay.model.service.DiscordRequestHandler;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.reflect.AbstractRequestDispatcher;
+import io.mamish.serverbot2.sharedutil.reflect.UnparsableInputException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,48 +17,15 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class CommandDispatcher {
+public class CommandDispatcher extends AbstractRequestDispatcher<CommandHandler, List<String>, List<String>, CommandDefinition> {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
-    private CommandListener commandListenerInstance;
+    private CommandHandler commandHandlerInstance;
     private Map<String, CommandDefinition> commandDefinitions;
 
-    public CommandDispatcher(CommandListener commandListenerInstance) {
-
-        this.commandListenerInstance = commandListenerInstance;
-
-        generateCommandDefinitions();
-    }
-
-    private void generateCommandDefinitions() {
-
-        var allListenerInterfaceMethods = Arrays.stream(CommandListener.class.getDeclaredMethods());
-        Function<Method, CommandDefinition> tryGenerateDefinition = method -> {
-            try {
-                return new CommandDefinition(method);
-            } catch (ReflectiveOperationException roe) {
-                throw new IllegalStateException("Invalid command definitions", roe);
-            }
-        };
-        var compareByDocPositionAttribute = Comparator.comparing(CommandDefinition::getDocumentationPosition);
-        BinaryOperator<CommandDefinition> errorOnNameCollision = (_a, _b) -> {
-            throw new RuntimeException("Command name collision while generating definitions: " + _a.getName());
-        };
-        var collectToTreeMapWithNameAsKey = Collectors.toMap(CommandDefinition::getName,
-                Function.identity(),
-                errorOnNameCollision,
-                TreeMap::new);
-
-        this.commandDefinitions = allListenerInterfaceMethods
-                .map(tryGenerateDefinition)
-                .sorted(compareByDocPositionAttribute)
-                .collect(collectToTreeMapWithNameAsKey);
-
-    }
-
-    public Map<String,CommandDefinition> getDefinitions() {
-        return Collections.unmodifiableMap(commandDefinitions);
+    public CommandDispatcher(CommandHandler handler) {
+        super(handler, CommandHandler.class, CommandDefinition.class);
     }
 
     public UserCommandResponse dispatch(UserCommandRequest userCommandRequest) {
@@ -92,7 +63,7 @@ public class CommandDispatcher {
 
             // If parsing worked, run target listener method with request object.
             try {
-                return (UserCommandResponse) definition.getTargetMethod().invoke(commandListenerInstance, requestObject);
+                return (UserCommandResponse) definition.getTargetMethod().invoke(commandHandlerInstance, requestObject);
             } catch (InvocationTargetException ite) {
                 ite.printStackTrace();
                 return new UserCommandResponse("Unexpected error occurred while running command. Sorry...", null);
@@ -104,4 +75,18 @@ public class CommandDispatcher {
         }
     }
 
+    @Override
+    protected Pair<String, List<String>> parseNameKey(List<String> input) throws UnparsableInputException {
+        if (input.size() < 1) {
+            throw new UnparsableInputException("Empty word list: expected at least the command/keyword.");
+        }
+        String name = input.get(0);
+        List<String> arguments = input.subList(1,input.size());
+        return new Pair<>(name,arguments);
+    }
+
+    @Override
+    protected Object parseRequestObject(CommandDefinition definition, List<String> input) {
+
+    }
 }

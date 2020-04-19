@@ -15,6 +15,7 @@
         <module name="steps-lambda" />
         <module name="command-lambda-infra" />
         <module name="command-lambda" />
+        <module name="shared-util" />
         <module name="ip-lambda" />
       </profile>
     </annotationProcessing>

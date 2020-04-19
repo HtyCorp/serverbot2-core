@@ -4,6 +4,8 @@ import software.amazon.awssdk.regions.Region;
 
 public class CommonConfig {
 
+    public static final String JSON_API_TARGET_KEY = "xApiTarget";
+
     public static final String COMMAND_SIGIL_CHARACTER = "!";
 
     public static final Region REGION = Region.AP_SOUTHEAST_2;

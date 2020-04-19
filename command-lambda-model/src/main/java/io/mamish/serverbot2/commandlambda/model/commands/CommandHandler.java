@@ -2,7 +2,7 @@ package io.mamish.serverbot2.commandlambda.model.commands;
 
 import io.mamish.serverbot2.commandlambda.model.service.UserCommandResponse;
 
-public interface CommandListener {
+public interface CommandHandler {
 
     @Metadata.Command(docsPosition = 0, name = "help", numMinArguments = 0,
             description = "Show help for a particular command")
