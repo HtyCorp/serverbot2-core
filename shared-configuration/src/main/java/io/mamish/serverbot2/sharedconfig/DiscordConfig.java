@@ -9,4 +9,6 @@ public class DiscordConfig {
     public static Parameter CHANNEL_ID_ADMIN = new Parameter("discord-relay/channel-id/admin");
     public static Parameter CHANNEL_ID_DEBUG = new Parameter("discord-relay/channel-id/debug");
 
+    public static String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
+
 }

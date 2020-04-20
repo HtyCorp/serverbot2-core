@@ -25,10 +25,8 @@ public class CommandHandler implements ICommandHandler {
             return new CommandServiceResponse("Error: '"+e.getRequestedTarget()+"' is not a recognised command.");
         } catch(RequestValidationException | RequestHandlingException e) {
             return new CommandServiceResponse("Error: " + e.getMessage());
-        // Other exception types should be treated as non-publishable for UX, so don't return a response object.
-        } catch(InvocationTargetException e) {
-            throw new RuntimeException("Unknown exception when invoking command.", e);
         }
+        // Other exception types should be treated as non-publishable for UX, so don't return a response object.
     }
 
     @Override

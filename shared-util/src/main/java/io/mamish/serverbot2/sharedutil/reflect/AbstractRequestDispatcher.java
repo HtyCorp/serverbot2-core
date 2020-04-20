@@ -70,7 +70,8 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
     }
 
     public OutputType dispatch(ParseInputType rawInput)
-            throws UnknownRequestException, UnparsableInputException, RequestValidationException, InvocationTargetException {
+            throws UnknownRequestException, UnparsableInputException, RequestValidationException,
+            RequestHandlingException, RequestHandlingRuntimeException {
 
         Pair<String, ProcessedInputType> nameAndRemainingInput = parseNameKey(rawInput);
 
@@ -89,6 +90,8 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
         } catch (IllegalAccessException e) {
             // Shouldn't ever happen since methods are from interface and therefore always public
             throw new RuntimeException("Illegal handler method access", e);
+        } catch (InvocationTargetException e) {
+            throw new RequestHandlingRuntimeException("Uncaught exception during request handling", e.getCause());
         }
 
         return serializeResponseObject(definition, invokeResult);

@@ -47,6 +47,9 @@ public class JsonRequestDispatcher<HandlerType> extends
 
     @Override
     protected String serializeResponseObject(SimpleApiDefinition definition, Object handlerResult) {
+        if (handlerResult == null) {
+            return null;
+        }
         return annotatedGson.toJson(handlerResult);
     }
 }

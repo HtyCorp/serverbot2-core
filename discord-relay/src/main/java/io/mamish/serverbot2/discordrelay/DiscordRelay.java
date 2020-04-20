@@ -72,6 +72,11 @@ public class DiscordRelay {
         }
 
         List<String> words = Arrays.asList(content.substring(SIGIL.length()).split("\\s+"));
+        if (words.size() < 1 || words.get(0).length() == 0) {
+            logIgnoreMessageReason(message,"no command immediately after sigil character");
+            return;
+        }
+
         CommandServiceRequest commandRequest = new CommandServiceRequest(words, oAppChannel.get(), author.getIdAsString());
         CommandServiceResponse commandResponse = invokeCommandLambda(commandRequest);
 

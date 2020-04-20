@@ -28,7 +28,7 @@ public class LambdaHandler implements RequestHandler<String, String>, ICommandSe
     public String handleRequest(String inputString, Context context) {
         try {
             return requestDispatcher.dispatch(inputString);
-        } catch (InvocationTargetException e) {
+        } catch (RequestHandlingRuntimeException e) {
             e.printStackTrace();
             CommandServiceResponse defaultErrorResponse = new CommandServiceResponse("Sorry, an unknown error occurred.");
             return gson.toJson(defaultErrorResponse);
