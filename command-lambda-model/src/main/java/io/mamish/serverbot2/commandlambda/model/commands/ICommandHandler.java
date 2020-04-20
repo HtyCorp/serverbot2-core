@@ -8,6 +8,6 @@ public interface ICommandHandler {
     CommandServiceResponse onCommandGames(CommandGames commandGames);
     CommandServiceResponse onCommandStart(CommandStart commandStart);
     CommandServiceResponse onCommandStop(CommandStop commandStop);
-    CommandServiceResponse onCommandAddIp(CommandDtoAddIp commandAddIp);
+    CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp);
 
 }

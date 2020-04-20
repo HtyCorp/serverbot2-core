@@ -9,6 +9,8 @@ public class NewMessageRequest {
     private String recipientUserId;
     private String content;
 
+    public NewMessageRequest() {}
+
     public NewMessageRequest(String externalId, List<MessageChannel> channels, String recipientUserId, String content) {
         this.externalId = externalId;
         this.channels = channels;

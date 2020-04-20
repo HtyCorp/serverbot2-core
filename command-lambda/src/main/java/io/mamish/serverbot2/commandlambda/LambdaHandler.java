@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandServiceHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import io.mamish.serverbot2.sharedutil.reflect.*;
 
 import java.lang.reflect.InvocationTargetException;
@@ -16,9 +17,10 @@ public class LambdaHandler implements RequestHandler<String, String>, ICommandSe
 
     private JsonRequestDispatcher<ICommandServiceHandler> requestDispatcher;
     private CommandHandler commandHandler;
+    private AnnotatedGson gson = new AnnotatedGson();
 
     public LambdaHandler() {
-        requestDispatcher = new JsonRequestDispatcher<>(this, ICommandServiceHandler.class, SimpleApiDefinition.class);
+        requestDispatcher = new JsonRequestDispatcher<>(this, ICommandServiceHandler.class);
         commandHandler = new CommandHandler();
     }
 
@@ -27,7 +29,9 @@ public class LambdaHandler implements RequestHandler<String, String>, ICommandSe
         try {
             return requestDispatcher.dispatch(inputString);
         } catch (InvocationTargetException e) {
-            throw new RuntimeException("Uncaught exception when handling request", e);
+            e.printStackTrace();
+            CommandServiceResponse defaultErrorResponse = new CommandServiceResponse("Sorry, an unknown error occurred.");
+            return gson.toJson(defaultErrorResponse);
         }
     }
 

@@ -16,7 +16,11 @@ public class AnnotatedGson {
         return gson;
     }
 
-    public Pair<String,JsonObject> fromJson(String jsonString) {
+    public <T> T fromJson(String json, Class<T> typeOfT) {
+        return gson.fromJson(json, typeOfT);
+    }
+
+    public Pair<String,JsonObject> fromJsonWithTargetName(String jsonString) {
         try {
             JsonObject obj = JsonParser.parseString(jsonString).getAsJsonObject();
             String targetName = obj.remove(CommonConfig.JSON_API_TARGET_KEY).getAsString();
@@ -26,7 +30,11 @@ public class AnnotatedGson {
         }
     }
 
-    public String toJson(Object request, String name) throws SerializationException {
+    public String toJson(Object request) {
+        return gson.toJson(request);
+    }
+
+    public String toJsonWithTargetName(Object request, String name) throws SerializationException {
         JsonElement jsonTree = gson.toJsonTree(request);
         if (!jsonTree.isJsonObject()) {
             throw new SerializationException("Response object is not a JSON object. Java type is " + request.getClass());
@@ -40,6 +48,5 @@ public class AnnotatedGson {
         jsonObject.addProperty(KEY, name);
         return gson.toJson(jsonObject);
     }
-
 
 }

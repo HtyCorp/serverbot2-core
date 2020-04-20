@@ -7,6 +7,8 @@ public class EditMessageRequest {
     private boolean createIfMissing;
     private String content;
 
+    public EditMessageRequest() {}
+
     public EditMessageRequest(String externalId, EditMode editMode, boolean createIfMissing, String content) {
         this.externalId = externalId;
         this.editMode = editMode;

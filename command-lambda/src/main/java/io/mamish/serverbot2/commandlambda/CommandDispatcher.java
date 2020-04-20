@@ -19,7 +19,7 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
     public CommandDispatcher(ICommandHandler handler) {
-        super(handler, ICommandHandler.class, CommandDefinition.class);
+        super(handler, ICommandHandler.class, CommandDefinition::new);
     }
 
     @Override

@@ -31,7 +31,7 @@ public class CommandServiceResponse {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CommandServiceResponse that = (CommandServiceResponse) o;
-        return optionalMessageContent.equals(that.optionalMessageContent) &&
+        return Objects.equals(optionalMessageContent, that.optionalMessageContent) &&
                 Objects.equals(optionalMessageExternalId, that.optionalMessageExternalId);
     }
 
@@ -42,9 +42,9 @@ public class CommandServiceResponse {
 
     @Override
     public String toString() {
-        return "UserCommandResponse{" +
-                "optionalMessageContent='" + StringEscapeUtils.escapeJava(optionalMessageContent) + '\'' +
-                ", optionalMessageExternalId='" + StringEscapeUtils.escapeJava(optionalMessageExternalId) + '\'' +
+        return "CommandServiceResponse{" +
+                "optionalMessageContent='" + optionalMessageContent + '\'' +
+                ", optionalMessageExternalId='" + optionalMessageExternalId + '\'' +
                 '}';
     }
 }

@@ -1,23 +1,21 @@
 package io.mamish.serverbot2.sharedutil.reflect;
 
 import com.google.gson.*;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import io.mamish.serverbot2.sharedutil.Pair;
 
 public class JsonRequestDispatcher<HandlerType> extends
-        AbstractRequestDispatcher<HandlerType,String,JsonObject,String, SimpleApiDefinition> {
+        AbstractRequestDispatcher<HandlerType,String,JsonObject,String,SimpleApiDefinition> {
 
     private AnnotatedGson annotatedGson = new AnnotatedGson();
 
-    public JsonRequestDispatcher(HandlerType handler, Class<HandlerType> handlerInterfaceClass,
-                                 Class<SimpleApiDefinition> definitionClass) {
-        super(handler, handlerInterfaceClass, definitionClass);
+    public JsonRequestDispatcher(HandlerType handler, Class<HandlerType> handlerInterfaceClass) {
+        super(handler, handlerInterfaceClass, SimpleApiDefinition::new);
     }
 
     @Override
     protected Pair<String, JsonObject> parseNameKey(String rawInput) {
-        return annotatedGson.fromJson(rawInput);
+        return annotatedGson.fromJsonWithTargetName(rawInput);
     }
 
     @Override
@@ -49,6 +47,6 @@ public class JsonRequestDispatcher<HandlerType> extends
 
     @Override
     protected String serializeResponseObject(SimpleApiDefinition definition, Object handlerResult) {
-        return annotatedGson.toJson(handlerResult, definition.getName());
+        return annotatedGson.toJson(handlerResult);
     }
 }

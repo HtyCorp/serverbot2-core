@@ -3,7 +3,6 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.commands.*;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingException;
 import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnknownRequestException;
@@ -39,7 +38,7 @@ public class CommandHandler implements ICommandHandler {
             String name = commandHelp.getCommandName();
             CommandDefinition definition = commandDispatcher.getDefinitionMap().get(name);
             if (definition == null) {
-                return new CommandServiceResponse("Error: '" + name + "' is not a recognised command name.");
+                return new CommandServiceResponse("Can't look up help: '" + name + "' is not a recognised command name.");
             } else {
                 StringBuilder detailedHelpBuilder = new StringBuilder();
                 detailedHelpBuilder.append(definition.getUsageString());
@@ -73,7 +72,7 @@ public class CommandHandler implements ICommandHandler {
     }
 
     @Override
-    public CommandServiceResponse onCommandAddIp(CommandDtoAddIp commandAddIp) {
+    public CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp) {
         return null;
     }
 

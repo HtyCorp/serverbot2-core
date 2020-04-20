@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
@@ -8,10 +7,8 @@ import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import io.mamish.serverbot2.sharedutil.Pair;
-import org.apache.commons.text.StringEscapeUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.services.ssm.model.Command;
 
 import java.util.Arrays;
 import java.util.List;
@@ -45,7 +42,7 @@ public class LambdaHandlerTest {
 
     @Test
     public void testHelpMissingCommand() {
-        testSimpleResponseMessage("Error: 'notarealcommand' is not a recognised command name.",
+        testSimpleResponseMessage("Can't look up help: 'notarealcommand' is not a recognised command name.",
                 "help", "notarealcommand");
     }
 
@@ -63,11 +60,11 @@ public class LambdaHandlerTest {
         LambdaHandler handler = new LambdaHandler();
 
         CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.STANDARD, DUMMY_USER_ID);
-        String requestString = annotatedGson.toJson(request, "CommandService");
+        String requestString = annotatedGson.toJsonWithTargetName(request, "CommandService");
         String responseString = handler.handleRequest(requestString, null);
 
-        Pair<String, JsonObject> rawResponse = annotatedGson.fromJson(responseString);
-        CommandServiceResponse actualResponse = annotatedGson.getGson().fromJson(rawResponse.snd(), CommandServiceResponse.class);
+
+        CommandServiceResponse actualResponse = annotatedGson.fromJson(responseString, CommandServiceResponse.class);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + actualResponse);
 

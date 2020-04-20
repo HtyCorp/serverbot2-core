@@ -2,13 +2,11 @@ package io.mamish.serverbot2.sharedutil.reflect;
 
 import io.mamish.serverbot2.sharedutil.Pair;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,13 +17,20 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
     private HandlerType handlerInstance;
     private Map<String, DefinitionType> definitionMap;
 
+    protected abstract Pair<String, ProcessedInputType> parseNameKey(ParseInputType input)
+            throws UnparsableInputException;
+
+    // return type unspecified since its unique to each request definition
+    protected abstract Object parseRequestObject(DefinitionType definition, ProcessedInputType processedInput)
+            throws UnparsableInputException, RequestValidationException;
+
+    protected abstract OutputType serializeResponseObject(DefinitionType definition, Object handlerResult);
+
     public AbstractRequestDispatcher(HandlerType handlerInstance, Class<HandlerType> handlerInterfaceClass,
-                                     Class<DefinitionType> definitionClass) {
+                                     ReflectFunction<Method,DefinitionType> definitionGenerator) {
 
         assert handlerInterfaceClass.isInterface();
         this.handlerInstance = handlerInstance;
-
-        Constructor<DefinitionType> definitionConstructor;
 
         Stream<Method> allListenerInterfaceMethods;
         Function<Method, DefinitionType> tryGenerateDefinition;
@@ -33,17 +38,12 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
         BinaryOperator<DefinitionType> errorOnNameCollision;
         Collector<DefinitionType, ?, TreeMap<String,DefinitionType>> collectToTreeMapWithNameAsKey;
 
-        try {
-            definitionConstructor = definitionClass.getConstructor(Method.class);
-        } catch (NoSuchMethodException nsme) {
-            throw new IllegalStateException("Failed to generate definition constructor", nsme);
-        }
         allListenerInterfaceMethods = Arrays.stream(handlerInterfaceClass.getDeclaredMethods());
         tryGenerateDefinition = method -> {
             try {
-                return definitionConstructor.newInstance(method);
-            } catch (ReflectiveOperationException roe) {
-                throw new IllegalStateException("Invalid command definitions", roe);
+                return definitionGenerator.apply(method);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Unexpected error while generating API definition");
             }
         };
         compareByOrderAttribute = Comparator.comparing(DefinitionType::getOrder);
@@ -52,7 +52,7 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
         };
 
         // Using TreeMap to preserve insertion order by metadata order attribute.
-        // Not strictly necessary now (as it is with ordered fields in request POJOs but keeping just in case.
+        // Not strictly necessary now (as it is with ordered fields in request POJOs) but keeping just in case.
         collectToTreeMapWithNameAsKey = Collectors.toMap(DefinitionType::getName,
                 Function.identity(),
                 errorOnNameCollision,
@@ -87,20 +87,12 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
         try {
             invokeResult = definition.getTargetMethod().invoke(handlerInstance, requestObject);
         } catch (IllegalAccessException e) {
-            // Shouldn't ever happen since methods are from interface
+            // Shouldn't ever happen since methods are from interface and therefore always public
             throw new RuntimeException("Illegal handler method access", e);
         }
 
         return serializeResponseObject(definition, invokeResult);
 
     }
-
-    protected abstract Pair<String, ProcessedInputType> parseNameKey(ParseInputType input)
-            throws UnparsableInputException;
-
-    protected abstract Object parseRequestObject(DefinitionType definition, ProcessedInputType processedInput)
-            throws UnparsableInputException, RequestValidationException;
-
-    protected abstract OutputType serializeResponseObject(DefinitionType definition, Object handlerResult);
 
 }
