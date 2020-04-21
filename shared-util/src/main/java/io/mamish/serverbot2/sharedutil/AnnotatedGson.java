@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
 import io.mamish.serverbot2.sharedutil.reflect.SerializationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnparsableInputException;
 
@@ -34,7 +35,15 @@ public class AnnotatedGson {
         return gson.toJson(request);
     }
 
-    public String toJsonWithTargetName(Object request, String name) throws SerializationException {
+    public String toJsonWithTarget(Object request) throws SerializationException {
+        ApiRequestInfo apiRequestInfo = request.getClass().getAnnotation(ApiRequestInfo.class);
+        if (apiRequestInfo == null) {
+            throw new SerializationException("Request object's class (" + request.getClass() + ") is missing ApiRequestInfo annotation");
+        }
+        return toJsonWithExplicitTarget(request, apiRequestInfo.name());
+    }
+
+    public String toJsonWithExplicitTarget(Object request, String name) throws SerializationException {
         JsonElement jsonTree = gson.toJsonTree(request);
         if (!jsonTree.isJsonObject()) {
             throw new SerializationException("Response object is not a JSON object. Java type is " + request.getClass());

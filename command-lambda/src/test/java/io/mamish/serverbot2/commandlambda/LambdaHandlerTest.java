@@ -1,12 +1,10 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.google.gson.JsonObject;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.AnnotatedGson;
-import io.mamish.serverbot2.sharedutil.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +58,7 @@ public class LambdaHandlerTest {
         LambdaHandler handler = new LambdaHandler();
 
         CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.STANDARD, DUMMY_USER_ID);
-        String requestString = annotatedGson.toJsonWithTargetName(request, "CommandService");
+        String requestString = annotatedGson.toJsonWithTarget(request);
         String responseString = handler.handleRequest(requestString, null);
 
 

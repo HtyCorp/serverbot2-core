@@ -7,6 +7,7 @@ import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -27,7 +28,7 @@ public class DiscordRelay {
 
     Logger logger = Logger.getLogger("DiscordRelay");
 
-    private Gson gson = new Gson();
+    private AnnotatedGson annotatedGson;
     private LambdaClient lambdaClient = LambdaClient.builder().region(CommonConfig.REGION).build();
     private DiscordApi discordApi;
     private ChannelMap channelMap;
@@ -87,9 +88,9 @@ public class DiscordRelay {
     }
 
     private CommandServiceResponse invokeCommandLambda(CommandServiceRequest request) {
-        SdkBytes requestPayload = SdkBytes.fromUtf8String(gson.toJson(request));
+        SdkBytes requestPayload = SdkBytes.fromUtf8String(annotatedGson.toJsonWithTarget(request));
         InvokeResponse response = lambdaClient.invoke(r -> r.payload(requestPayload).functionName(CommandLambdaConfig.FUNCTION_NAME));
-        return gson.fromJson(response.payload().asUtf8String(), CommandServiceResponse.class);
+        return annotatedGson.fromJson(response.payload().asUtf8String(), CommandServiceResponse.class);
     }
 
     private void logIgnoreMessageReason(Message message, String reason) {

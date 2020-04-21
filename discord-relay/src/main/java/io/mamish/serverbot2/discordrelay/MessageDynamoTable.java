@@ -13,8 +13,8 @@ public class MessageDynamoTable {
 
     private final static String TABLE = DiscordConfig.MESSAGE_TABLE_NAME;
 
-    DynamoDbClient ddbClient = DynamoDbClient.builder().region(CommonConfig.REGION).build();
-    SimpleDynamoDbMapper<DynamoMessageItem> mapper = new SimpleDynamoDbMapper<>(DynamoMessageItem.class);
+    private DynamoDbClient ddbClient = DynamoDbClient.builder().region(CommonConfig.REGION).build();
+    private SimpleDynamoDbMapper<DynamoMessageItem> mapper = new SimpleDynamoDbMapper<>(DynamoMessageItem.class);
 
     public DynamoMessageItem getItem(String externalMessageId) {
         try {

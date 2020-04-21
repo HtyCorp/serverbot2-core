@@ -11,5 +11,12 @@
 
     <artifactId>discord-relay-model</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>shared-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

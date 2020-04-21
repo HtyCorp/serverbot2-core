@@ -5,6 +5,8 @@ import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.server.Server;
 
 import javax.swing.text.html.Option;
 import java.util.EnumMap;
@@ -14,8 +16,8 @@ import java.util.Optional;
 
 public class ChannelMap {
 
-    private Map<Channel, MessageChannel> discordToApp = new HashMap<>();
-    private Map<MessageChannel, Channel> appToDiscord = new EnumMap<>(MessageChannel.class);
+    private Map<ServerTextChannel, MessageChannel> discordToApp = new HashMap<>();
+    private Map<MessageChannel, ServerTextChannel> appToDiscord = new EnumMap<>(MessageChannel.class);
 
     public ChannelMap(DiscordApi discordApi) {
         putBoth(discordApi, MessageChannel.STANDARD, DiscordConfig.CHANNEL_ID_STANDARD);
@@ -24,16 +26,16 @@ public class ChannelMap {
         putBoth(discordApi, MessageChannel.DEBUG, DiscordConfig.CHANNEL_ID_DEBUG);
     }
 
-    public Optional<MessageChannel> getAppChannel(Channel discordChannel) {
+    public Optional<MessageChannel> getAppChannel(ServerTextChannel discordChannel) {
         return Optional.ofNullable(discordToApp.get(discordChannel));
     }
 
-    public Optional<Channel> getDiscordChannel(MessageChannel appChannel) {
+    public Optional<ServerTextChannel> getDiscordChannel(MessageChannel appChannel) {
         return Optional.ofNullable(appToDiscord.get(appChannel));
     }
 
     private void putBoth(DiscordApi discordApi, MessageChannel appChannel, Parameter channelIdParameter) {
-        Channel discordChannel = discordApi.getChannelById(channelIdParameter.getValue()).get();
+        ServerTextChannel discordChannel = discordApi.getChannelById(channelIdParameter.getValue()).flatMap(Channel::asServerTextChannel).get();
         discordToApp.put(discordChannel, appChannel);
         appToDiscord.put(appChannel, discordChannel);
     }
