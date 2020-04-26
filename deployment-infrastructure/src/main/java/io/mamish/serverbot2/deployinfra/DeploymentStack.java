@@ -1,15 +1,11 @@
 package io.mamish.serverbot2.deployinfra;
 
 import io.mamish.serverbot2.sharedconfig.DeploymentConfig;
+import software.amazon.awscdk.appdelivery.PipelineDeployStackAction;
 import software.amazon.awscdk.core.*;
-import software.amazon.awscdk.services.codebuild.BuildSpec;
-import software.amazon.awscdk.services.codebuild.Cache;
-import software.amazon.awscdk.services.codebuild.LinuxBuildImage;
-import software.amazon.awscdk.services.codebuild.Project;
-import software.amazon.awscdk.services.codepipeline.Artifact;
-import software.amazon.awscdk.services.codepipeline.IStage;
-import software.amazon.awscdk.services.codepipeline.Pipeline;
-import software.amazon.awscdk.services.codepipeline.StageProps;
+import software.amazon.awscdk.services.apigateway.Stage;
+import software.amazon.awscdk.services.codebuild.*;
+import software.amazon.awscdk.services.codepipeline.*;
 import software.amazon.awscdk.services.codepipeline.actions.Action;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
@@ -18,10 +14,8 @@ import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.s3.Bucket;
-import software.amazon.awssdk.services.secretsmanager.model.DeleteResourcePolicyRequest;
 
 import java.util.List;
-import java.util.Map;
 
 public class DeploymentStack extends Stack {
     public DeploymentStack(Construct parent, String id) {
@@ -35,38 +29,66 @@ public class DeploymentStack extends Stack {
                 .bucketName(DeploymentConfig.ARTIFACT_BUCKET_NAME)
                 .build();
 
-
-        Artifact mainArtifact = Artifact.artifact("ServerbotApp");
-
+        Artifact sourceOutput = Artifact.artifact("source-output");
+        Artifact jarFiles = Artifact.artifact("jar-files");
+        Artifact synthDeploymentInfra = Artifact.artifact("synth-deployment-infra");
+        Artifact synthAppInfra = Artifact.artifact("synth-app-infra");
+        
         GitHubSourceAction gitHubSourceAction = GitHubSourceAction.Builder.create()
                 .actionName("GitHubTestReleaseBranch")
                 .branch(DeploymentConfig.GITHUB_DEPLOYMENT_SOURCE_BRANCH)
                 .owner(DeploymentConfig.GITHUB_DEPLOYMENT_SOURCE_OWNER)
                 .repo(DeploymentConfig.GITHUB_DEPLOYMENT_SOURCE_REPO)
                 .oauthToken(SecretValue.secretsManager(DeploymentConfig.GITHUB_OAUTH_TOKEN_SECRET_NAME))
-                .output(mainArtifact)
+                .output(sourceOutput)
                 .build();
         StageProps githubSourceStage = StageProps.builder()
-                .stageName("GitHubTestReleaseBranch")
+                .stageName("TestSource")
                 .actions(List.of(gitHubSourceAction))
                 .build();
 
-        Project codeBuildProject = Project.Builder.create(this, "CodeBuildProject")
-                .
-
+        BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
+                .buildImage(LinuxBuildImage.STANDARD_4_0)
+                .computeType(ComputeType.MEDIUM)
+                .build();
+        PipelineProject codeBuildProject = PipelineProject.Builder.create(this, "CodeBuildProject")
+                .environment(codeBuildBuildEnvironment)
+                .build();
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
-                .actionName("")
+                .project(codeBuildProject)
+                .actionName("BuildJarsAndCDKSynth")
+                .input(sourceOutput)
+                .outputs(List.of(jarFiles, synthDeploymentInfra, synthAppInfra))
+                .build();
+        StageProps codeBuildStage = StageProps.builder()
+                .stageName("BuildAll")
+                .actions(List.of(codeBuildAction))
+                .build();
 
+        PipelineDeployStackAction updateSelfAction = PipelineDeployStackAction.Builder.create()
+                .stack(this)
+                .input(synthDeploymentInfra)
+                .adminPermissions(true)
+                .build();
+        StageProps updateSelfStage = StageProps.builder()
+                .stageName("SelfUpdateDeploymentInfra")
+                .actions(List.of(updateSelfAction))
+                .build();
 
-        List<StageProps> stages = List.of(
-                githubSourceStage
-        );
+        PipelineDeployStackAction updateApplicationAction = PipelineDeployStackAction.Builder.create()
+                .stack(this)
+                .input(synthAppInfra)
+                .adminPermissions(true)
+                .build();
+        StageProps updateApplicationStage = StageProps.builder()
+                .stageName("UpdateApplicationInfra")
+                .actions(List.of(updateApplicationAction))
+                .build();
 
         Pipeline pipeline = Pipeline.Builder.create(this, "Pipeline")
                 .artifactBucket(artifactBucket)
                 .restartExecutionOnUpdate(true)
-                .role(pipelineRole())
-                .stages()
+                .stages(List.of(githubSourceStage,codeBuildStage,updateSelfStage))
                 .build();
 
     }
@@ -82,24 +104,6 @@ public class DeploymentStack extends Stack {
                 .assumedBy(new ServicePrincipal("codepipeline.amazonaws.com"))
                 .managedPolicies(pipelineRolePolicies)
                 .build();
-    }
-
-    private Project codeBuildProject() {
-        Project project = Project.Builder.create(this, "CodeBuildProject")
-                .cache(Cache.none()) //TODO: S3 caching to save time grabbing Maven dependencies
-                .buildSpec(codeBuildBuildSpec())
-                .build();
-    }
-
-    private BuildSpec codeBuildBuildSpec() {
-
-//        Map<String,Object> envVars = Map.of();
-//        Map<String,Object> phases = Map.of();
-
-        return BuildSpec.fromObject(Map.of(
-                "version", "0.2"
-                //TODO
-        ));
     }
 
 }

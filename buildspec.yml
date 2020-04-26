@@ -1,0 +1,36 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      runtime: corretto11
+    commands:
+      - "npm install -g aws-cdk"
+  build:
+    commands:
+      - "mvn clean package"
+      - "cd $CODEBUILD_SRC_DIR/deployment-infrastructure && cdk synth >/dev/null"
+      - "cd $CODEBUILD_SRC_DIR/application-infrastructure && cdk synth >/dev/null"
+  post_build:
+    commands:
+      - "echo \"Build completed at $(date)\""
+artifacts:
+  secondary-artifacts:
+    jar-files:
+      files:
+        - "app-daemon/target/*.jar"
+        - "discord-relay/target/*.jar"
+        - "command-lambda/target/*.jar"
+        - "steps-lambda/target/*.jar"
+        - "ip-lambda/target/*.jar"
+      discard-paths: yes
+    synth-deployment-infra:
+      files:
+        - "**/*"
+      discard-paths: no
+      base-directory: "deployment-infrastructure/cdk.out"
+    synth-app-infra:
+      files:
+        - "**/*"
+      discard-paths: no
+      base-directory: "application-infrastructure/cdk.out"

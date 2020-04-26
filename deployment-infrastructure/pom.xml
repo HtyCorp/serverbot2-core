@@ -11,6 +11,23 @@
 
     <artifactId>deployment-infrastructure</artifactId>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>io.mamish.serverbot2.deployinfra.DeploymentApp</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
@@ -35,6 +52,11 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>codepipeline-actions</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>cdk-app-delivery</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
         <dependency>
