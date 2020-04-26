@@ -91,6 +91,11 @@ public abstract class AbstractRequestDispatcher<HandlerType, ParseInputType, Pro
             // Shouldn't ever happen since methods are from interface and therefore always public
             throw new RuntimeException("Illegal handler method access", e);
         } catch (InvocationTargetException e) {
+            // If exception is a specifically thrown RequestHandlingException, unwrap it and throw directly.
+            if (e.getCause() instanceof RequestHandlingException) {
+                throw (RequestHandlingException) e.getCause();
+            }
+            // Otherwise, re-wrap in a RequestHandlingRuntimeException to mark it as an unexpected error.
             throw new RequestHandlingRuntimeException("Uncaught exception during request handling", e.getCause());
         }
 

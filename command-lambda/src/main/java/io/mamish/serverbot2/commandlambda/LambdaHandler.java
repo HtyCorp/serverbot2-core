@@ -3,12 +3,11 @@ package io.mamish.serverbot2.commandlambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
-import io.mamish.serverbot2.commandlambda.model.service.ICommandServiceHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ICommandServiceHandler;
 import io.mamish.serverbot2.sharedutil.AnnotatedGson;
-import io.mamish.serverbot2.sharedutil.reflect.*;
-
-import java.lang.reflect.InvocationTargetException;
+import io.mamish.serverbot2.sharedutil.reflect.JsonRequestDispatcher;
+import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingRuntimeException;
 /*
  * This is just an entry layer to parse JSON and build a service command to pass the real command handler.
  * Lambda native JSON parsing makes this extra layer a bit unnecessary, but I'm keeping it for testing and consistency.

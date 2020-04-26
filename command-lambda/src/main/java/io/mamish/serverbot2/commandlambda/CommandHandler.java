@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.google.gson.Gson;
 import io.mamish.serverbot2.commandlambda.model.commands.*;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
@@ -7,12 +8,12 @@ import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingException;
 import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnknownRequestException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
 
 public class CommandHandler implements ICommandHandler {
 
     private CommandDispatcher commandDispatcher;
+    private Gson gson;
 
     public CommandHandler() {
         commandDispatcher = new CommandDispatcher(this);
@@ -56,22 +57,22 @@ public class CommandHandler implements ICommandHandler {
 
     @Override
     public CommandServiceResponse onCommandGames(CommandGames commandGames) {
-        return null;
+        return new CommandServiceResponse("Echo 'games': " + gson.toJson(commandGames));
     }
 
     @Override
     public CommandServiceResponse onCommandStart(CommandStart commandStart) {
-        return null;
+        return new CommandServiceResponse("Echo 'start': " + gson.toJson(commandStart));
     }
 
     @Override
-    public CommandServiceResponse onCommandStop(CommandStop commandDtoStop) {
-        return null;
+    public CommandServiceResponse onCommandStop(CommandStop commandStop) {
+        return new CommandServiceResponse("Echo 'stop': " + gson.toJson(commandStop));
     }
 
     @Override
     public CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        return null;
+        return new CommandServiceResponse("Echo 'addip': " + gson.toJson(commandAddIp));
     }
 
 }

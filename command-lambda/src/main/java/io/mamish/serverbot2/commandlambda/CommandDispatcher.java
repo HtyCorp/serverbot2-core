@@ -12,7 +12,7 @@ import io.mamish.serverbot2.sharedutil.reflect.SerializationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnparsableInputException;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.List;
 
 public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler,CommandServiceRequest,CommandServiceRequest,CommandServiceResponse,CommandDefinition> {
 
@@ -67,7 +67,7 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
             return requestDto;
 
         } catch (ReflectiveOperationException e) {
-            throw new UnparsableInputException("Unknown error while processing command.");
+            throw new UnparsableInputException("Unknown error while processing command.", e);
         }
     }
 

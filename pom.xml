@@ -35,9 +35,10 @@
         <module>command-lambda-model</module>
         <module>ip-lambda</module>
         <module>steps-lambda</module>
-        <module>command-lambda-infra</module>
         <module>shared-configuration</module>
         <module>shared-util</module>
+        <module>application-infrastructure</module>
+        <module>deployment-infrastructure</module>
     </modules>
 
     <dependencyManagement>

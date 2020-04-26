@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>command-lambda-infra</artifactId>
+    <artifactId>application-infrastructure</artifactId>
 
     <dependencies>
         <dependency>
@@ -19,6 +19,17 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>lambda</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>iam</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>stepfunctions</artifactId>
+            <version>${awscdk.version}</version>
         </dependency>
     </dependencies>
 

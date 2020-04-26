@@ -76,17 +76,14 @@ public class DiscordServiceHandler implements IDiscordServiceHandler {
         // If no external ID supplied, send a message with no tracking in DynamoDB.
         if (newMessageRequest.getExternalId() == null) {
             channel.sendMessage(requestedContent).join();
-            return;
+        } else {
+            if (messageDynamoTable.getItem(requestedExternalId) != null) {
+                // This interface doesn't return a response so just log errors locally.
+                throw new RequestValidationException("Received NewMessageRequest with an already used external ID");
+            }
+            Message message = channel.sendMessage(requestedContent).join();
+            messageDynamoTable.putItem(new DynamoMessageItem(newMessageRequest.getExternalId(), message.getIdAsString()));
         }
-
-        if (messageDynamoTable.getItem(requestedExternalId) != null) {
-            // This interface doesn't return a response so just log errors locally.
-            throw new RequestValidationException("Received NewMessageRequest with an already used external ID");
-        }
-
-        Message message = channel.sendMessage(requestedContent).join();
-
-        messageDynamoTable.putItem(new DynamoMessageItem(newMessageRequest.getExternalId(), message.getIdAsString()));
 
     }
 
