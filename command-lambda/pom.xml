@@ -11,6 +11,10 @@
 
     <artifactId>command-lambda</artifactId>
 
+    <build>
+        <finalName>${artifactId}</finalName>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>

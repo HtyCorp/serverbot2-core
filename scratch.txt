@@ -1,0 +1,9 @@
+ECS deployment:
+ * corretto11 is based on AL2 -> has AWS CLI v1 pre-installed
+ * update by creating new task def with updated relay artifact S3 location in its entrypoint
+ * "ecs-patterns" module no good - assumes using a load-balanced service. Relay is outbound-only by design
+ * need to explore "ecs" module to see if it can be used for a basic deployment
+Step functions definition:
+ * Find way to integrate API models into state CDK constructs: guarantee SFn is generating expected JSON
+Discord relay:
+ * Static SQS queue?
