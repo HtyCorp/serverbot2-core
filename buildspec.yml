@@ -9,6 +9,11 @@ phases:
   build:
     commands:
       - "mvn clean package"
+      - "mkdir -p $CODEBUILD_SRC_DIR/relay-docker"
+      # Copy artifacts to docker asset directory
+      - "cp $CODEBUILD_SRC_DIR/application-infrastructure/src/main/resource/RelayDockerfile $CODEBUILD_SRC_DIR/relay-docker/Dockerfile"
+      - "cp $CODEBUILD_SRC_DIR/discord-relay/target/discord-relay.jar $CODEBUILD_SRC_DIR/relay-docker/discord-relay.jar"
+      # Synthesize CDK stacks using previous assets
       - "cd $CODEBUILD_SRC_DIR/deployment-infrastructure && cdk synth >/dev/null"
       - "cd $CODEBUILD_SRC_DIR/application-infrastructure && cdk synth >/dev/null"
   post_build:

@@ -45,7 +45,22 @@
         </dependency>
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
+            <artifactId>logs</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
             <artifactId>stepfunctions</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>ec2</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>ecs</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
     </dependencies>

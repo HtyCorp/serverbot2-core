@@ -1,0 +1,2 @@
+FROM amazoncorretto:11
+CMD java -jar discord-relay.jar
