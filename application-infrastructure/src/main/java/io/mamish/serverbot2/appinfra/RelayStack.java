@@ -23,6 +23,7 @@ public class RelayStack extends Stack {
     }
 
     public RelayStack(Construct parent, String id, StackProps props) {
+        super(parent, id, props);
 
         SubnetConfiguration publicSubnetConfiguration = SubnetConfiguration.builder()
                 .name("PublicSubnet")

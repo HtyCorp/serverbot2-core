@@ -4,6 +4,8 @@ import software.amazon.awssdk.regions.Region;
 
 public class CommonConfig {
 
+    public static final String APEX_DOMAIN_NAME = "mamish.io";
+
     public static final String JSON_API_TARGET_KEY = "xApiTarget";
 
     public static final String COMMAND_SIGIL_CHARACTER = "!";

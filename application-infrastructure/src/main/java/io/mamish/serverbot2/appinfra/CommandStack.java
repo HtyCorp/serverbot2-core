@@ -8,6 +8,7 @@ import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.AssetCode;
+import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
 
@@ -21,7 +22,7 @@ public class CommandStack extends Stack {
     public CommandStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
-        AssetCode localCodeBuildCode = AssetCode.fromAsset("command-lambda/target/command-lambda.jar");
+        Code localRelayJar = AssetCode.fromAsset("../command-lambda/target/command-lambda.jar");
 
         List<IManagedPolicy> policyList = List.of(
                 ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
@@ -34,9 +35,10 @@ public class CommandStack extends Stack {
                 .build();
 
         Function function = Function.Builder.create(this, "CommandFunction")
-                .code(localCodeBuildCode)
-                .role(functionRole)
                 .runtime(Runtime.JAVA_11)
+                .code(localRelayJar)
+                .handler("io.mamish.serverbot2.commandlambda.LambdaHandler")
+                .role(functionRole)
                 .build();
     }
 }
