@@ -14,11 +14,11 @@ public class MessageDynamoTable {
     private final static String TABLE = DiscordConfig.MESSAGE_TABLE_NAME;
 
     private DynamoDbClient ddbClient = DynamoDbClient.builder().region(CommonConfig.REGION).build();
-    private SimpleDynamoDbMapper<DynamoMessageItem> mapper = new SimpleDynamoDbMapper<>(DynamoMessageItem.class);
+    private SimpleDynamoDbMapper<DynamoMessageItem> mapper = new SimpleDynamoDbMapper<>(TABLE, DynamoMessageItem.class);
 
     public DynamoMessageItem getItem(String externalMessageId) {
         try {
-            var keyMap =  Map.of("externalMessageId", AttributeValue.builder().s(externalMessageId).build());
+            var keyMap =  Map.of(DiscordConfig.MESSAGE_TABLE_PKEY, AttributeValue.builder().s(externalMessageId).build());
             var attributes = ddbClient.getItem(r -> r.tableName(TABLE).key(keyMap).consistentRead(true)).item();
             return mapper.fromAttributes(attributes);
         } catch (ResourceNotFoundException e) {

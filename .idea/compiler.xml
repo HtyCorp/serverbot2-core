@@ -12,12 +12,12 @@
         <module name="shared-configuration" />
         <module name="discord-relay" />
         <module name="discord-relay-model" />
-        <module name="steps-lambda" />
+        <module name="app-daemon" />
         <module name="shared-util" />
         <module name="command-lambda" />
         <module name="ip-lambda" />
         <module name="application-infrastructure" />
-        <module name="app-daemon" />
+        <module name="steps-lambda" />
       </profile>
     </annotationProcessing>
   </component>

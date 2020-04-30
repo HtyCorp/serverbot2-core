@@ -1,8 +1,13 @@
 package io.mamish.serverbot2.appinfra;
 
+import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
+import software.amazon.awscdk.services.dynamodb.Attribute;
+import software.amazon.awscdk.services.dynamodb.AttributeType;
+import software.amazon.awscdk.services.dynamodb.BillingMode;
+import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.ec2.SubnetConfiguration;
 import software.amazon.awscdk.services.ec2.SubnetType;
 import software.amazon.awscdk.services.ec2.Vpc;
@@ -24,6 +29,20 @@ public class RelayStack extends Stack {
 
     public RelayStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
+
+        // Data stores for relay
+
+        Attribute messageTablePartitionKey = Attribute.builder()
+                .name(DiscordConfig.MESSAGE_TABLE_PKEY)
+                .type(AttributeType.STRING)
+                .build();
+        Table messageTable = Table.Builder.create(this, "DiscordRelayMessageTable")
+                .tableName(DiscordConfig.MESSAGE_TABLE_NAME)
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .partitionKey(messageTablePartitionKey)
+                .build();
+
+        // Whole bunch of ECS (Fargate) resources
 
         SubnetConfiguration publicSubnetConfiguration = SubnetConfiguration.builder()
                 .name("PublicSubnet")

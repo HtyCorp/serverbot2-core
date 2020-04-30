@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.appinfra;
 
+import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -35,6 +36,7 @@ public class CommandStack extends Stack {
                 .build();
 
         Function function = Function.Builder.create(this, "CommandFunction")
+                .functionName(CommandLambdaConfig.FUNCTION_NAME)
                 .runtime(Runtime.JAVA_11)
                 .code(localRelayJar)
                 .handler("io.mamish.serverbot2.commandlambda.LambdaHandler")

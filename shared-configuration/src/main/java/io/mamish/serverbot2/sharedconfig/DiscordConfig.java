@@ -9,6 +9,9 @@ public class DiscordConfig {
     public static Parameter CHANNEL_ID_ADMIN = new Parameter("discord-relay/channel-id/admin");
     public static Parameter CHANNEL_ID_DEBUG = new Parameter("discord-relay/channel-id/debug");
 
-    public static String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
+    // I'm normally avoiding fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
+    // Deletion/replacement of these should be manual and very careful anyway.
+    public static final String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
+    public static final String MESSAGE_TABLE_PKEY = "externalId";
 
 }

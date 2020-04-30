@@ -1,63 +1,91 @@
 package io.mamish.serverbot2.sharedutil.reflect;
 
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 
-import org.w3c.dom.Attr;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SimpleDynamoDbMapper<DtoType> {
 
-    private Constructor<DtoType> constructor;
-    private List<Pair<String, Field>> namedFields;
+    /*
+     * Need to work out the scope of this thing. It's broadly useful, but I don't want to make DDB a dependency in this
+     * module. Maybe split into a separate utility module.
+     */
 
-    public SimpleDynamoDbMapper(Class<DtoType> dtoClass) {
-        namedFields = Arrays.stream(dtoClass.getDeclaredFields())
-                .map(f -> new Pair<>(f.getName(),f))
-                .collect(Collectors.toList());
-        namedFields.forEach(p -> {
-            assert p.snd().getType().equals(String.class);
-            p.snd().setAccessible(true);
-        });
+    private Constructor<DtoType> constructor;
+    private Map<String, Field> registeredAttributes = new HashMap<>();
+    private Pair<String, Field> partitionKeyField;
+    private Pair<String, Field> sortKeyField;
+
+    private String tableName;
+    private boolean consistentRead;
+
+    public SimpleDynamoDbMapper(String tableName, Class<DtoType> dtoClass) {
+        this(tableName, dtoClass, true);
     }
+
+    public SimpleDynamoDbMapper(String tableName, Class<DtoType> dtoClass, boolean consistentRead) {
+
+        this.tableName = tableName;
+        this.consistentRead = consistentRead;
+
+        for (Field field: dtoClass.getDeclaredFields()) {
+            DdbAttribute attr = field.getAnnotation(DdbAttribute.class);
+            if (attr != null) {
+                registeredAttributes.put(attr.value(), field);
+                if (attr.keyType().equals(DdbKeyType.PARTITION)) {
+                    partitionKeyField = new Pair<>(attr.value(), field);
+                } else if (attr.keyType().equals(DdbKeyType.SORT)) {
+                    sortKeyField = new Pair<>(attr.value(), field);
+                }
+            }
+        }
+
+    }
+
+//    public DtoType fromPrimaryKey(String pkey) {
+//        // See note at top.
+//    }
+//
+//    public DtoType fromPrimaryKey(String pkey, String skey) {
+//        // See note at top.
+//    }
 
     public DtoType fromAttributes(Map<String,AttributeValue> attributeMap) {
         try {
             DtoType dto = constructor.newInstance();
-            for (Pair<String,Field> p: namedFields) {
-                String key = p.fst();
-                Field field = p.snd();
-                // Obviously this assume String types.
+            for (Map.Entry<String,Field> entry: registeredAttributes.entrySet()) {
+                String key = entry.getKey();
+                Field field = entry.getValue();
+                // Obviously this assumes String types.
                 String mapValue = attributeMap.containsKey(key) ? attributeMap.get(key).s() : null;
                 field.set(dto, mapValue);
             }
             return dto;
         } catch (Exception e) {
             // DTO constructors and types should be extremely simple, so no complicated exception handling.
-            throw new RuntimeException("DTO constructor somehow failed", e);
+            throw new RuntimeException("DTO constructor failed", e);
         }
     }
 
     public Map<String,AttributeValue> toAttributes(DtoType dto) {
         try {
-            Map<String,AttributeValue> instance = new HashMap<>();
-            for (Pair<String,Field> p: namedFields) {
-                String key = p.fst();
-                String valueString = (String) p.snd().get(dto);
+            Map<String,AttributeValue> resultAttributes = new HashMap<>();
+            for (Map.Entry<String,Field> entry: registeredAttributes.entrySet()) {
+                String key = entry.getKey();
+                String valueString = (String) entry.getValue().get(dto);
                 AttributeValue value = AttributeValue.builder().s(valueString).build();
-                instance.put(key, value);
+                resultAttributes.put(key, value);
             }
-            return instance;
+            return resultAttributes;
         } catch (Exception e) {
-            throw new RuntimeException("DTO constructor somehow failed", e);
+            throw new RuntimeException("DTO constructor failed", e);
         }
     }
 
