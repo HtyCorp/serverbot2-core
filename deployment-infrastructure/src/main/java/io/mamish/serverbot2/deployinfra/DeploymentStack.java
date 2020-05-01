@@ -30,7 +30,6 @@ public class DeploymentStack extends Stack {
         // Top-level pipeline definition to add stages to.
 
         Bucket artifactBucket = Bucket.Builder.create(this, "ArtifactBucket")
-                .bucketName(DeploymentConfig.ARTIFACT_BUCKET_NAME)
                 .build();
 
         Pipeline pipeline = Pipeline.Builder.create(this, "Pipeline")
