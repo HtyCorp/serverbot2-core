@@ -1,5 +1,8 @@
 package io.mamish.serverbot2.sharedconfig;
 
+/**
+ * Configuration values used by command handling Lambda function and shared to other packages.
+ */
 public class CommandLambdaConfig {
 
     // Justifying fixed name: Lambda functions have no CFN parameters that require replacement on change.

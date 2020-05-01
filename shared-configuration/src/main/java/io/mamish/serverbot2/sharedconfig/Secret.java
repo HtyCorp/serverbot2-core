@@ -2,30 +2,18 @@ package io.mamish.serverbot2.sharedconfig;
 
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
-public class Secret {
+import java.util.function.Function;
 
-    private static final SecretsManagerClient secretsManager = SecretsManagerClient.builder()
-            .region(CommonConfig.REGION)
-            .build();
+/**
+ * A deferred configuration value that fetches the latest secret version with the given name/id.
+ */
+public class Secret extends ConfigValue {
 
-    private String name;
-    private String value;
+    private static final SecretsManagerClient secretsManager = SecretsManagerClient.create();
+    private static final Function<String,String> fetcher = n -> secretsManager.getSecretValue(r -> r.secretId(n)).secretString();
 
     public Secret(String name) {
-        this.name = name;
-        this.value = getSecretString(name);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    static String getSecretString(String secretId) {
-        return secretsManager.getSecretValue(r -> r.secretId(secretId)).secretString();
+        super(name, fetcher);
     }
 
 }

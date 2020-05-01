@@ -1,22 +1,26 @@
 package io.mamish.serverbot2.sharedutil.reflect;
 
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import com.sun.source.tree.CatchTree;
 import io.mamish.serverbot2.sharedutil.Pair;
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Simple mapper between items in a DynamoDB table and Java DTOs. Support string types only.
+ *
+ * Note exception handling for reflection isn't really there. It assumes nothing will go wrong since that would be a
+ * programming error more than an unexpected runtime condition.
+ *
+ * @param <DtoType> The type of the DTO object generated and processed by the mapper.
+ */
 public class SimpleDynamoDbMapper<DtoType> {
-
-    /*
-     * Need to work out the scope of this thing. It's broadly useful, but I don't want to make DDB a dependency in this
-     * module. Maybe split into a separate utility module.
-     */
 
     private Constructor<DtoType> constructor;
     private Map<String, Field> registeredAttributes = new HashMap<>();
@@ -25,6 +29,8 @@ public class SimpleDynamoDbMapper<DtoType> {
 
     private String tableName;
     private boolean consistentRead;
+
+    private DynamoDbClient ddbClient = DynamoDbClient.create();
 
     public SimpleDynamoDbMapper(String tableName, Class<DtoType> dtoClass) {
         this(tableName, dtoClass, true);
@@ -49,13 +55,30 @@ public class SimpleDynamoDbMapper<DtoType> {
 
     }
 
-//    public DtoType fromPrimaryKey(String pkey) {
-//        // See note at top.
-//    }
-//
-//    public DtoType fromPrimaryKey(String pkey, String skey) {
-//        // See note at top.
-//    }
+    public boolean has(String pkey) {
+        return has(pkey, null);
+    }
+
+    public boolean has(String pkey, String skey) {
+        return ddbGetAttributes(pkey, skey) != null;
+    }
+
+    public DtoType get(String pkey) {
+        return get(pkey, null);
+    }
+
+    public DtoType get(String pkey, String skey) {
+        Map<String,AttributeValue> attributes = ddbGetAttributes(pkey, skey);
+        if (attributes != null) {
+            return fromAttributes(attributes);
+        }
+        return null;
+    }
+
+    public void put(DtoType item) {
+        Map<String,AttributeValue> attributes = toAttributes(item);
+        ddbClient.putItem(r -> r.tableName(tableName).item(attributes));
+    }
 
     public DtoType fromAttributes(Map<String,AttributeValue> attributeMap) {
         try {
@@ -70,7 +93,7 @@ public class SimpleDynamoDbMapper<DtoType> {
             return dto;
         } catch (Exception e) {
             // DTO constructors and types should be extremely simple, so no complicated exception handling.
-            throw new RuntimeException("DTO constructor failed", e);
+            throw new RuntimeException("Unexpected reflective operation exception", e);
         }
     }
 
@@ -84,9 +107,31 @@ public class SimpleDynamoDbMapper<DtoType> {
                 resultAttributes.put(key, value);
             }
             return resultAttributes;
-        } catch (Exception e) {
-            throw new RuntimeException("DTO constructor failed", e);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unexpected reflective operation exception", e);
         }
+    }
+
+    private Map<String,AttributeValue> ddbGetAttributes(String pkey, String skey) {
+        Map<String,AttributeValue> keyMap;
+        if (skey == null) {
+            keyMap = Map.of(partitionKeyField.fst(), mkString(pkey));
+        } else {
+            keyMap = Map.of(partitionKeyField.fst(), mkString(pkey), sortKeyField.fst(), mkString(skey));
+        }
+
+        GetItemResponse response = ddbClient.getItem(r -> r.tableName(tableName)
+                .key(keyMap)
+                .consistentRead(consistentRead));
+
+        if (!response.hasItem()) {
+            return null;
+        }
+        return response.item();
+    }
+
+    private AttributeValue mkString(String s) {
+        return AttributeValue.builder().s(s).build();
     }
 
 }

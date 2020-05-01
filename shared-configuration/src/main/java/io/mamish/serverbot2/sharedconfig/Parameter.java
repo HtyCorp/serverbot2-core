@@ -2,32 +2,18 @@ package io.mamish.serverbot2.sharedconfig;
 
 import software.amazon.awssdk.services.ssm.SsmClient;
 
-public class Parameter {
+import java.util.function.Function;
 
-    private static final SsmClient ssmClient = SsmClient.builder()
-            .region(CommonConfig.REGION)
-            .build();
+/**
+ * A deferred configuration value that fetches the latest SSM parameter with the given name.
+ */
+public class Parameter extends ConfigValue {
 
-    private String name;
-    private String value;
+    private static final SsmClient ssmClient = SsmClient.create();
+    private static final Function<String,String> fetcher =  n -> ssmClient.getParameter(r -> r.name(n)).parameter().value();
 
     public Parameter(String name) {
-        this.name = name;
-        this.value = getParameterString(name);
+        super(name, fetcher);
     }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    private static String getParameterString(String parameterName) {
-        return ssmClient.getParameter(r -> r.name(parameterName)).parameter().value();
-    }
-
-
 
 }

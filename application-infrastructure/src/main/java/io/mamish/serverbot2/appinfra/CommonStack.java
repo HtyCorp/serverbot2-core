@@ -37,7 +37,6 @@ public class CommonStack extends Stack {
 
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
                 .validationMethod(ValidationMethod.DNS)
-                .region(CommonConfig.REGION_NAME)
                 .domainName("*."+CommonConfig.APEX_DOMAIN_NAME)
                 .hostedZone(apexHostedZone)
                 .build();

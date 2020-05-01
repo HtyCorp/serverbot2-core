@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.discordrelay;
 
-import com.google.gson.Gson;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
@@ -29,16 +28,17 @@ public class DiscordRelay {
     Logger logger = Logger.getLogger("DiscordRelay");
 
     private AnnotatedGson annotatedGson;
-    private LambdaClient lambdaClient = LambdaClient.builder().region(CommonConfig.REGION).build();
+    private LambdaClient lambdaClient = LambdaClient.create();
     private DiscordApi discordApi;
     private ChannelMap channelMap;
+
+    private RequestMessagePoller messagePoller;
 
     public DiscordRelay() {
         String apiToken = DiscordConfig.API_TOKEN.getValue();
         discordApi = new DiscordApiBuilder().setToken(apiToken).login().join();
-
         channelMap = new ChannelMap(discordApi);
-
+        messagePoller = new RequestMessagePoller(discordApi, channelMap);
         discordApi.addMessageCreateListener(this::onMessageCreate);
     }
 

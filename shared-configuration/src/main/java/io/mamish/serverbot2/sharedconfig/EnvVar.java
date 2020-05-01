@@ -1,20 +1,12 @@
 package io.mamish.serverbot2.sharedconfig;
 
-public class EnvVar {
-
-    private String name;
-    private String value;
+/**
+ * A deferred configuration value that fetches the system environment variable with the given name.
+ */
+public class EnvVar extends ConfigValue {
 
     public EnvVar(String name) {
-        this.name = name;
-        this.value = System.getenv(name);
+        super(name, System::getenv);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }

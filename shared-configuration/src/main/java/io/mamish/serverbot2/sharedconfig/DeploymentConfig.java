@@ -1,5 +1,8 @@
 package io.mamish.serverbot2.sharedconfig;
 
+/**
+ * Configuration values used by CDK deployment.
+ */
 public class DeploymentConfig {
 
     public static final String ARTIFACT_BUCKET_NAME = "htycorp-serverbot2-test-codepipeline-artifact-bucket";
