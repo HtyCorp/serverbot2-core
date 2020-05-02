@@ -11,6 +11,19 @@
 
     <artifactId>ip-lambda</artifactId>
 
+    <properties>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.iplambda.ApiGatetwayLambdaHandler</module.assemblyJarMainClass>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>

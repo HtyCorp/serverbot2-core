@@ -8,19 +8,20 @@ phases:
       - "npm install -g aws-cdk"
   build:
     commands:
-      - "mvn clean package"
+      - "mvn clean install"
       - "mkdir -p $CODEBUILD_SRC_DIR/relay-docker"
-      # Copy artifacts to docker asset directory
+      # Copy relay artifacts to package as a Docker asset in CDK
       - "cp $CODEBUILD_SRC_DIR/application-infrastructure/src/main/resource/RelayDockerfile $CODEBUILD_SRC_DIR/relay-docker/Dockerfile"
       - "cp $CODEBUILD_SRC_DIR/discord-relay/target/discord-relay.jar $CODEBUILD_SRC_DIR/relay-docker/discord-relay.jar"
       # Synthesize CDK stacks using previous assets
-      - "cd $CODEBUILD_SRC_DIR/deployment-infrastructure && cdk synth >/dev/null"
-      - "cd $CODEBUILD_SRC_DIR/application-infrastructure && cdk synth >/dev/null"
+      - "(cd $CODEBUILD_SRC_DIR/deployment-infrastructure && cdk synth)"
+      - "(cd $CODEBUILD_SRC_DIR/application-infrastructure && cdk synth)"
   post_build:
     commands:
       - "echo \"Build completed at $(date)\""
 artifacts:
   secondary-artifacts:
+    # Looking like it won't be necessary to pass these: they are built into the CDK assemblies
     jar-files:
       files:
         - "app-daemon/target/*.jar"
@@ -33,9 +34,9 @@ artifacts:
       files:
         - "**/*"
       discard-paths: no
-      base-directory: "deployment-infrastructure/cdk.out"
+      base-directory: "deployment-infrastructure/target/cdk-assembly"
     synth-app-infra:
       files:
         - "**/*"
       discard-paths: no
-      base-directory: "application-infrastructure/cdk.out"
+      base-directory: "application-infrastructure/target/cdk-assembly"

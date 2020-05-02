@@ -1,0 +1,4 @@
+{
+  "app": "mvn -e -q exec:java",
+  "output": "target/cdk-assembly"
+}
