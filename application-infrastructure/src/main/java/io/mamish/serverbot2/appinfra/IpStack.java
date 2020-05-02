@@ -51,7 +51,7 @@ public class IpStack extends Stack {
         Function proxyFunction = Function.Builder.create(this, "IpProxyFunction")
                 .runtime(Runtime.JAVA_11)
                 .code(localLambdaJar)
-                .handler("io.mamish.serverbot2.iplambda.LambdaHandler")
+                .handler("io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler")
                 .role(functionRole)
                 .build();
 

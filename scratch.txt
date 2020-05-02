@@ -7,3 +7,5 @@ Step functions definition:
  * Find way to integrate API models into state CDK constructs: guarantee SFn is generating expected JSON
 Discord relay:
  * Static SQS queue?
+CodeBuild:
+ * Use local build step bash scripts in buildpsec, instead of running commands directly?

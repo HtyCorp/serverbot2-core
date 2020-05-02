@@ -36,8 +36,10 @@ public class RelayStack extends Stack {
                 .name(DiscordConfig.MESSAGE_TABLE_PKEY)
                 .type(AttributeType.STRING)
                 .build();
+        // Table configured for destroy since
         Table messageTable = Table.Builder.create(this, "DiscordRelayMessageTable")
                 .tableName(DiscordConfig.MESSAGE_TABLE_NAME)
+                //.removalPolicy(RemovalPolicy.DESTROY)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .partitionKey(messageTablePartitionKey)
                 .build();
@@ -60,7 +62,7 @@ public class RelayStack extends Stack {
                 .build();
 
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")
-                .assumedBy(new ServicePrincipal(" ecs-tasks.amazonaws.com"))
+                .assumedBy(new ServicePrincipal("ecs-tasks.amazonaws.com"))
                 .managedPolicies(List.of(
                         ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess"),
                         ManagedPolicy.fromAwsManagedPolicyName("AWSLambdaFullAccess"),
@@ -80,6 +82,7 @@ public class RelayStack extends Stack {
                 .build();
         AwsLogDriverProps logDriverProps = AwsLogDriverProps.builder()
                 .logGroup(ecsLogGroup)
+                .streamPrefix("DiscordRelay")
                 .build();
 
         String dockerDirPath = System.getenv("CODEBUILD_SRC_DIR") + "/relay-docker";
@@ -91,6 +94,7 @@ public class RelayStack extends Stack {
         FargateService service = FargateService.Builder.create(this, "DiscordRelayService")
                 .cluster(cluster)
                 .taskDefinition(taskDefinition)
+                .assignPublicIp(true)
                 .build();
 
     }
