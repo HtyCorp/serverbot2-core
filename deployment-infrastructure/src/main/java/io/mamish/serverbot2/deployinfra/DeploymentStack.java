@@ -56,9 +56,9 @@ public class DeploymentStack extends Stack {
 
         // CodeBuild project with JAR and CDK assembly output artifacts
 
-        Artifact jarFiles = Artifact.artifact("jar-files");
-        Artifact synthDeploymentInfra = Artifact.artifact("synth-deployment-infra");
-        Artifact synthAppInfra = Artifact.artifact("synth-app-infra");
+        Artifact jarFiles = Artifact.artifact("jar_files");
+        Artifact synthDeploymentInfra = Artifact.artifact("cdk_deploy_assembly");
+        Artifact synthAppInfra = Artifact.artifact("cdk_app_assembly");
 
         BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
                 .buildImage(LinuxBuildImage.STANDARD_4_0)

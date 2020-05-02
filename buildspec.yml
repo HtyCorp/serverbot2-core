@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      runtime: corretto11
+      java: corretto11
     commands:
       - "npm install -g aws-cdk"
   build:
@@ -24,20 +24,20 @@ phases:
 artifacts:
   secondary-artifacts:
     # Looking like it won't be necessary to pass these: they are built into the CDK assemblies
-    jar-files:
+    jar_files:
       files:
-        - "app-daemon/target/*.jar"
-        - "discord-relay/target/*.jar"
-        - "command-lambda/target/*.jar"
-        - "steps-lambda/target/*.jar"
-        - "ip-lambda/target/*.jar"
+        - "app-daemon/target/app-daemon.jar"
+        - "discord-relay/target/discord-relay.jar"
+        - "command-lambda/target/command-lambda.jar"
+        - "steps-lambda/target/steps-lambda.jar"
+        - "ip-lambda/target/ip-lambda.jar"
       discard-paths: yes
-    synth-deployment-infra:
+    cdk_deploy_assembly:
       files:
         - "**/*"
       discard-paths: no
       base-directory: "deployment-infrastructure/target/cdk-assembly"
-    synth-app-infra:
+    cdk_app_assembly:
       files:
         - "**/*"
       discard-paths: no
