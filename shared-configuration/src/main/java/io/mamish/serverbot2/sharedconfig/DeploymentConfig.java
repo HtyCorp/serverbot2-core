@@ -7,7 +7,7 @@ public class DeploymentConfig {
 
     public static final String GITHUB_OAUTH_TOKEN_SECRET_NAME = "deployment/github-token";
 
-    public static final String GITHUB_DEPLOYMENT_SOURCE_OWNER = "MamishIo";
+    public static final String GITHUB_DEPLOYMENT_SOURCE_OWNER = "HtyCorp";
     public static final String GITHUB_DEPLOYMENT_SOURCE_REPO = "serverbot2-core";
     public static final String GITHUB_DEPLOYMENT_SOURCE_BRANCH = "test-release";
 
