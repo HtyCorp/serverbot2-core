@@ -11,11 +11,13 @@ phases:
       - "mvn clean install"
       - "mkdir -p $CODEBUILD_SRC_DIR/relay-docker"
       # Copy relay artifacts to package as a Docker asset in CDK
-      - "cp $CODEBUILD_SRC_DIR/application-infrastructure/src/main/resource/RelayDockerfile $CODEBUILD_SRC_DIR/relay-docker/Dockerfile"
-      - "cp $CODEBUILD_SRC_DIR/discord-relay/target/discord-relay.jar $CODEBUILD_SRC_DIR/relay-docker/discord-relay.jar"
+      - "cp application-infrastructure/src/main/resource/RelayDockerfile relay-docker/Dockerfile"
+      - "cp discord-relay/target/discord-relay.jar relay-docker/discord-relay.jar"
       # Synthesize CDK stacks using previous assets
-      - "(cd $CODEBUILD_SRC_DIR/deployment-infrastructure && cdk synth)"
-      - "(cd $CODEBUILD_SRC_DIR/application-infrastructure && cdk synth)"
+      - "(cd deployment-infrastructure/ && cdk synth >/dev/null)"
+      - "echo \"Generated $(cat deployment-infrastructure/target/cdk-assembly/*.template.json | wc -l) template lines\""
+      - "(cd application-infrastructure && cdk synth >/dev/null)"
+      - "echo \"Generated $(cat application-infrastructure/target/cdk-assembly/*.template.json | wc -l) template lines\""
   post_build:
     commands:
       - "echo \"Build completed at $(date)\""
