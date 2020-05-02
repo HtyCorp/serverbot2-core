@@ -11,4 +11,7 @@ public class DeploymentConfig {
     public static final String GITHUB_DEPLOYMENT_SOURCE_REPO = "serverbot2-core";
     public static final String GITHUB_DEPLOYMENT_SOURCE_BRANCH = "test-release";
 
+    public static final EnvVar CDK_DEFAULT_ACCOUNT = new EnvVar("CDK_DEFAULT_ACCOUNT");
+    public static final EnvVar CDK_DEFAULT_REGION = new EnvVar("CDK_DEFAULT_REGION");
+
 }
