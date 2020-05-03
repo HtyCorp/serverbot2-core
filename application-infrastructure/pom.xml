@@ -72,6 +72,11 @@
         </dependency>
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
+            <artifactId>stepfunctions-tasks</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
             <artifactId>ec2</artifactId>
             <version>${awscdk.version}</version>
         </dependency>

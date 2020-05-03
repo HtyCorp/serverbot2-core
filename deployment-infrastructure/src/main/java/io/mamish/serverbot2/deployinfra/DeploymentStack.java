@@ -39,7 +39,7 @@ public class DeploymentStack extends Stack {
 
         // GitHub action with source output artifact
 
-        Artifact sourceOutput = Artifact.artifact("source-output");
+        Artifact sourceOutput = Artifact.artifact("source_output");
 
         GitHubSourceAction gitHubSourceAction = GitHubSourceAction.Builder.create()
                 .actionName("GitHubTestReleaseBranch")

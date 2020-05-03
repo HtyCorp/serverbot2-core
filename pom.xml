@@ -67,6 +67,7 @@
         <module>shared-util</module>
         <module>application-infrastructure</module>
         <module>deployment-infrastructure</module>
+        <module>steps-lambda-model</module>
     </modules>
 
     <dependencyManagement>
