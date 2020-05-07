@@ -6,11 +6,15 @@ import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Simple mapper between items in a DynamoDB table and Java DTOs. Support string types only.
@@ -57,6 +61,16 @@ public class SimpleDynamoDbMapper<DtoType> {
 
     public boolean has(String pkey) {
         return has(pkey, null);
+    }
+
+    // Could make this a Map with some effort, but no need at the moment.
+    public List<DtoType> scan() {
+        ScanResponse response = ddbClient.scan(r -> r.tableName(tableName).consistentRead(consistentRead));
+        if (!response.hasItems()) {
+            return List.of();
+        } else {
+            return response.items().stream().map(this::fromAttributes).collect(Collectors.toList());
+        }
     }
 
     public boolean has(String pkey, String skey) {

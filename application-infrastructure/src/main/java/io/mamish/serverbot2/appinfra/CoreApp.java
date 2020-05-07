@@ -21,6 +21,8 @@ public class CoreApp {
         new IpStack(app, "IpStack", props, commonStack);
         new RelayStack(app, "RelayStack", props);
         new CommandStack(app, "CommandStack", props);
+        new StateMachinesStack(app, "StateMachinesStack", props);
+        new GameMetadataStack(app, "GameMetadataStack", props);
 
         app.synth();
 

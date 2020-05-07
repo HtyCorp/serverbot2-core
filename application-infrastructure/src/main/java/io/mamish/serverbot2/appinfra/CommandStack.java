@@ -23,8 +23,6 @@ public class CommandStack extends Stack {
     public CommandStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
-        Code localRelayJar = AssetCode.fromAsset("../command-lambda/target/command-lambda.jar");
-
         List<IManagedPolicy> policyList = List.of(
                 ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
                 ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess"),
@@ -38,7 +36,7 @@ public class CommandStack extends Stack {
         Function function = Function.Builder.create(this, "CommandFunction")
                 .functionName(CommandLambdaConfig.FUNCTION_NAME)
                 .runtime(Runtime.JAVA_11)
-                .code(localRelayJar)
+                .code(Util.mavenJarAsset("command-lambda"))
                 .handler("io.mamish.serverbot2.commandlambda.LambdaHandler")
                 .role(functionRole)
                 .build();

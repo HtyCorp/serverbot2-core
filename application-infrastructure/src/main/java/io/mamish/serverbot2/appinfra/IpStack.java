@@ -46,11 +46,9 @@ public class IpStack extends Stack {
                 .managedPolicies(policyList)
                 .build();
 
-        Code localLambdaJar = AssetCode.fromAsset("../ip-lambda/target/ip-lambda.jar");
-
         Function proxyFunction = Function.Builder.create(this, "IpProxyFunction")
                 .runtime(Runtime.JAVA_11)
-                .code(localLambdaJar)
+                .code(Util.mavenJarAsset("ip-lambda"))
                 .handler("io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler")
                 .role(functionRole)
                 .build();

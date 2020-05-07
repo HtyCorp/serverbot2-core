@@ -68,6 +68,8 @@
         <module>application-infrastructure</module>
         <module>deployment-infrastructure</module>
         <module>steps-lambda-model</module>
+        <module>game-metadata-service-model</module>
+        <module>game-metadata-service</module>
     </modules>
 
     <dependencyManagement>

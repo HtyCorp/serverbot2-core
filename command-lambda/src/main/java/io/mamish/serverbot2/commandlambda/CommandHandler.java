@@ -7,16 +7,25 @@ import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingException;
 import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnknownRequestException;
+import software.amazon.awssdk.services.sfn.SfnClient;
+import software.amazon.awssdk.services.sfn.model.StateMachineListItem;
 
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 public class CommandHandler implements ICommandHandler {
 
     private CommandDispatcher commandDispatcher;
     private Gson gson;
+    private Map<String,String> stateMachineArns;
 
     public CommandHandler() {
         commandDispatcher = new CommandDispatcher(this);
+        stateMachineArns = SfnClient.create().listStateMachines().stateMachines().stream().collect(Collectors.toMap(
+                StateMachineListItem::name,
+                StateMachineListItem::stateMachineArn
+        ));
     }
 
     public CommandServiceResponse handleRequest(CommandServiceRequest request) {
@@ -73,6 +82,10 @@ public class CommandHandler implements ICommandHandler {
     @Override
     public CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp) {
         return new CommandServiceResponse("Echo 'addip': " + gson.toJson(commandAddIp));
+    }
+
+    private String getStateMachineArn(String name) throws NoSuchElementException {
+        return stateMachineArns.get(name);
     }
 
 }

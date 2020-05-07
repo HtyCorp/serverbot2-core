@@ -6,20 +6,25 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="app-daemon-model" />
-        <module name="deployment-infrastructure" />
-        <module name="command-lambda-model" />
-        <module name="shared-configuration" />
-        <module name="discord-relay" />
         <module name="discord-relay-model" />
-        <module name="app-daemon" />
-        <module name="shared-util" />
-        <module name="command-lambda" />
-        <module name="ip-lambda" />
-        <module name="application-infrastructure" />
-        <module name="steps-lambda-model" />
+        <module name="command-lambda-model" />
         <module name="steps-lambda" />
+        <module name="command-lambda" />
+        <module name="shared-configuration" />
+        <module name="deployment-infrastructure" />
+        <module name="shared-util" />
+        <module name="app-daemon-model" />
+        <module name="game-metadata-service" />
+        <module name="application-infrastructure" />
+        <module name="app-daemon" />
+        <module name="game-metadata-service-model" />
+        <module name="steps-lambda-model" />
+        <module name="discord-relay" />
+        <module name="ip-lambda" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="untitled" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
