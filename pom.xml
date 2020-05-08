@@ -70,6 +70,7 @@
         <module>steps-lambda-model</module>
         <module>game-metadata-service-model</module>
         <module>game-metadata-service</module>
+        <module>service-framework</module>
     </modules>
 
     <dependencyManagement>

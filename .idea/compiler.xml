@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="service-framework" />
         <module name="discord-relay-model" />
         <module name="command-lambda-model" />
         <module name="steps-lambda" />

@@ -2,7 +2,9 @@ package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
+import io.mamish.serverbot2.framework.client.ServiceClient;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
@@ -32,9 +34,12 @@ public class DiscordRelay {
     private DiscordApi discordApi;
     private ChannelMap channelMap;
 
+    private ICommandService commandServiceClient;
+
     private RequestMessagePoller messagePoller;
 
     public DiscordRelay() {
+        commandServiceClient = ServiceClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
         String apiToken = DiscordConfig.API_TOKEN.getValue();
         discordApi = new DiscordApiBuilder().setToken(apiToken).login().join();
         channelMap = new ChannelMap(discordApi);
@@ -79,18 +84,12 @@ public class DiscordRelay {
         }
 
         CommandServiceRequest commandRequest = new CommandServiceRequest(words, oAppChannel.get(), author.getIdAsString());
-        CommandServiceResponse commandResponse = invokeCommandLambda(commandRequest);
+        CommandServiceResponse commandResponse = commandServiceClient.requestUserCommand(commandRequest);
 
         if (commandResponse.getOptionalMessageContent() != null) {
             channel.sendMessage(commandResponse.getOptionalMessageContent());
         }
 
-    }
-
-    private CommandServiceResponse invokeCommandLambda(CommandServiceRequest request) {
-        SdkBytes requestPayload = SdkBytes.fromUtf8String(annotatedGson.toJsonWithTarget(request));
-        InvokeResponse response = lambdaClient.invoke(r -> r.payload(requestPayload).functionName(CommandLambdaConfig.FUNCTION_NAME));
-        return annotatedGson.fromJson(response.payload().asUtf8String(), CommandServiceResponse.class);
     }
 
     private void logIgnoreMessageReason(Message message, String reason) {
