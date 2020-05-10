@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.framework.common;
 
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 
 import java.lang.reflect.Constructor;
@@ -32,6 +33,9 @@ public class ApiActionDefinition {
     private final List<Pair<Field, ApiArgumentInfo>> orderedFields;
     private final List<Field> orderedFieldsFieldView;
     private final List<ApiArgumentInfo> orderedFieldsInfoView;
+
+    private final String usageString;
+    private final List<String> argumentDescriptionStrings;
 
     public ApiActionDefinition(Method targetMethod) throws ReflectiveOperationException {
 
@@ -66,6 +70,23 @@ public class ApiActionDefinition {
         orderedFields.forEach(f -> f.fst().setAccessible(true));
         this.orderedFieldsFieldView = orderedFields.stream().map(Pair::fst).collect(Collectors.toUnmodifiableList());
         this.orderedFieldsInfoView = orderedFields.stream().map(Pair::snd).collect(Collectors.toUnmodifiableList());
+
+        List<ApiArgumentInfo> argInfoList = getOrderedFieldsInfoView();
+
+        StringBuilder sbUsage = new StringBuilder();
+        sbUsage.append(CommonConfig.COMMAND_SIGIL_CHARACTER).append(getName());
+        for (int i = 0; i < argInfoList.size(); i++) {
+            String argName = argInfoList.get(i).name();
+            sbUsage.append(' ');
+            if (i < getNumRequiredFields()) {
+                sbUsage.append(argName);
+            } else {
+                sbUsage.append('[').append(argName).append(']');
+            }
+        }
+
+        this.usageString = sbUsage.toString();
+        this.argumentDescriptionStrings = argInfoList.stream().map(m -> m.name() + ": " + m.description()).collect(Collectors.toList());
 
     }
 
@@ -119,5 +140,13 @@ public class ApiActionDefinition {
 
     public List<ApiArgumentInfo> getOrderedFieldsInfoView() {
         return orderedFieldsInfoView;
+    }
+
+    public String getUsageString() {
+        return usageString;
+    }
+
+    public List<String> getArgumentDescriptionStrings() {
+        return argumentDescriptionStrings;
     }
 }

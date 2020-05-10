@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import io.mamish.serverbot2.commandlambda.model.commands.*;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
-import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingException;
-import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
-import io.mamish.serverbot2.sharedutil.reflect.UnknownRequestException;
+import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.StateMachineListItem;
 
@@ -16,12 +14,12 @@ import java.util.stream.Collectors;
 
 public class CommandHandler implements ICommandHandler {
 
-    private CommandDispatcher commandDispatcher;
-    private Gson gson;
+    private ApiCommandHandler apiCommandHandler;
+    private Gson gson = new Gson();
     private Map<String,String> stateMachineArns;
 
     public CommandHandler() {
-        commandDispatcher = new CommandDispatcher(this);
+        apiCommandHandler = new ApiCommandHandler(this);
         stateMachineArns = SfnClient.create().listStateMachines().stateMachines().stream().collect(Collectors.toMap(
                 StateMachineListItem::name,
                 StateMachineListItem::stateMachineArn
@@ -29,14 +27,7 @@ public class CommandHandler implements ICommandHandler {
     }
 
     public CommandServiceResponse handleRequest(CommandServiceRequest request) {
-        try {
-            return commandDispatcher.dispatch(request);
-        } catch(UnknownRequestException e) {
-            return new CommandServiceResponse("Error: '"+e.getRequestedTarget()+"' is not a recognised command.");
-        } catch(RequestValidationException | RequestHandlingException e) {
-            return new CommandServiceResponse("Error: " + e.getMessage());
-        }
-        // Other exception types should be treated as non-publishable for UX, so don't return a response object.
+        return apiCommandHandler.handleRequest(request);
     }
 
     @Override
@@ -44,7 +35,7 @@ public class CommandHandler implements ICommandHandler {
 
         if (commandHelp.getCommandName() != null) {
             String name = commandHelp.getCommandName();
-            CommandDefinition definition = commandDispatcher.getDefinitionMap().get(name);
+            ApiActionDefinition definition = apiCommandHandler.getApiDefinitionSet().getFromName(name);
             if (definition == null) {
                 return new CommandServiceResponse("Can't look up help: '" + name + "' is not a recognised command name.");
             } else {
@@ -57,7 +48,7 @@ public class CommandHandler implements ICommandHandler {
                 return new CommandServiceResponse(detailedHelpBuilder.toString());
             }
         } else {
-            String aggregateHelpString = commandDispatcher.getDefinitionMap().values().stream()
+            String aggregateHelpString = apiCommandHandler.getApiDefinitionSet().getAll().stream()
                     .map(definition -> definition.getUsageString() + "\n  " + definition.getDescription())
                     .collect(Collectors.joining("\n"));
             return new CommandServiceResponse(aggregateHelpString);

@@ -48,7 +48,7 @@ public class RequestMessagePoller {
 
     private void runServiceHandler(String messageBody) {
         try {
-            requestDispatcher.dispatch(messageBody);
+            requestDispatcher.handleRequest(messageBody);
         } catch (UnknownRequestException e) {
             logger.log(Level.SEVERE, "Request method not recognised", e);
         } catch (RequestValidationException e) {

@@ -2,6 +2,9 @@ package io.mamish.serverbot2.framework.exception;
 
 public class UnparsableInputException extends ApiException {
 
+    public UnparsableInputException() {
+    }
+
     public UnparsableInputException(String message) {
         super(message);
     }
@@ -10,4 +13,7 @@ public class UnparsableInputException extends ApiException {
         super(message, cause);
     }
 
+    public UnparsableInputException(Throwable cause) {
+        super(cause);
+    }
 }

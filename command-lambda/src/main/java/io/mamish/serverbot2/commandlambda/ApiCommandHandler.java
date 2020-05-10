@@ -4,21 +4,31 @@ import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
 import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.framework.common.ApiActionDefinition;
+import io.mamish.serverbot2.framework.exception.*;
+import io.mamish.serverbot2.framework.server.AbstractApiHandler;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.ClassUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
-import io.mamish.serverbot2.sharedutil.reflect.SerializationException;
-import io.mamish.serverbot2.sharedutil.reflect.UnparsableInputException;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler,CommandServiceRequest,CommandServiceRequest,CommandServiceResponse,CommandDefinition> {
+public class ApiCommandHandler extends AbstractApiHandler<ICommandHandler,CommandServiceResponse,CommandServiceRequest,CommandServiceRequest> {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
-    public CommandDispatcher(ICommandHandler handler) {
-        super(handler, ICommandHandler.class, CommandDefinition::new);
+    // These exception types report the exact exception message to the user if caught.
+    // Others are unexpected or confusing, and return a generic error message.
+    private static final Class<?>[] allowedExceptionsForUserMessage = new Class<?>[] {
+            RequestHandlingException.class, // Explicitly thrown handling exceptions have crafted messages.
+            RequestValidationException.class, // Used for invalid or missing request arguments.
+            UnknownRequestException.class, // Used if an unknown command is requested by user.
+    };
+
+    public ApiCommandHandler(ICommandHandler handler) {
+        super(handler, ICommandHandler.class);
     }
 
     @Override
@@ -32,7 +42,7 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
     }
 
     @Override
-    protected Object parseRequestObject(CommandDefinition definition, CommandServiceRequest inputRequest) {
+    protected Object parseRequestObject(ApiActionDefinition definition, CommandServiceRequest inputRequest) {
 
         String name = definition.getName();
         List<String> arguments = inputRequest.getWords().subList(1,inputRequest.getWords().size());
@@ -50,7 +60,7 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
 
         // Try parsing the request object (shouldn't fail based on above checks).
         try {
-            Object baseRequestObject = definition.getRequestDtoConstructor().newInstance();
+            Object baseRequestObject = definition.getRequestTypeConstructor().newInstance();
             if (!(baseRequestObject instanceof AbstractCommandDto)) {
                 throw new IllegalStateException("Illegal DTO type: not an subclass of AbstractCommandDto");
             }
@@ -71,11 +81,20 @@ public class CommandDispatcher extends AbstractRequestDispatcher<ICommandHandler
     }
 
     @Override
-    protected CommandServiceResponse serializeResponseObject(CommandDefinition definition, Object handlerResult) {
+    protected CommandServiceResponse serializeResponseObject(ApiActionDefinition definition, Object handlerResult) {
         if (!(handlerResult instanceof CommandServiceResponse)) {
-            throw new SerializationException("Command handler returned a type other than UserCommandResponse");
+            throw new SerializationException("Command handler returned a type other than CommandServiceResponse");
         }
         return (CommandServiceResponse) handlerResult;
+    }
+
+    @Override
+    protected CommandServiceResponse serializeErrorObject(ApiException exception) {
+        if (ClassUtils.instanceOfAny(exception, allowedExceptionsForUserMessage)) {
+            return new CommandServiceResponse("Error: " + exception.getMessage());
+        } else {
+            return new CommandServiceResponse("Sorry, an unknown error occurred.");
+        }
     }
 
 }

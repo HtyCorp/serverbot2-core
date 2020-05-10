@@ -5,15 +5,23 @@ import io.mamish.serverbot2.framework.exception.*;
 import io.mamish.serverbot2.sharedutil.Pair;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class AbstractApiHandler<ModelType, OutputType, RawInputType, ParsedInputType> {
 
     private ModelType handlerInstance;
     private ApiDefinitionSet<?> apiDefinitionSet;
 
+    private Logger logger = Logger.getLogger("AbstractApiHandler");
+
     public AbstractApiHandler(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
         this.handlerInstance = handlerInstance;
         this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass);
+    }
+
+    public ApiDefinitionSet<?> getApiDefinitionSet() {
+        return apiDefinitionSet;
     }
 
     protected abstract Pair<String, ParsedInputType> parseNameKey(RawInputType rawInput)
@@ -28,9 +36,20 @@ public abstract class AbstractApiHandler<ModelType, OutputType, RawInputType, Pa
 
     protected abstract OutputType serializeErrorObject(ApiException exception);
 
-    public OutputType dispatch(RawInputType rawInput)
-            throws UnknownRequestException, UnparsableInputException, RequestValidationException,
-            RequestHandlingException, RequestHandlingRuntimeException {
+    public final OutputType handleRequest(RawInputType rawInput) {
+        try {
+            return internalHandleRequest(rawInput);
+        } catch (ApiException e) {
+            logger.log(Level.WARNING, "ApiException in API request dispatcher", e);
+            return serializeErrorObject(e);
+        } catch (Exception e) {
+            String message = "Unknown exception in API request dispatcher: " + e.getMessage();
+            logger.log(Level.SEVERE, message, e);
+            return serializeErrorObject(new FrameworkInternalException(message));
+        }
+    }
+
+    private OutputType internalHandleRequest(RawInputType rawInput) throws ApiException {
 
         Pair<String, ParsedInputType> nameAndRemainingInput = parseNameKey(rawInput);
 
@@ -39,7 +58,7 @@ public abstract class AbstractApiHandler<ModelType, OutputType, RawInputType, Pa
         ApiActionDefinition definition = apiDefinitionSet.getFromName(targetName);
 
         if (definition == null) {
-            throw new UnknownRequestException(targetName, "Unknown API target '" + targetName + "' in request.");
+            throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.");
         }
         Object requestObject = parseRequestObject(definition, parsedInput);
 

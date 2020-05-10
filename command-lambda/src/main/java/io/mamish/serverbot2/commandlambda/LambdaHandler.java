@@ -1,41 +1,26 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
-import io.mamish.serverbot2.sharedutil.reflect.JsonRequestDispatcher;
-import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingRuntimeException;
-/*
- * This is just an entry layer to parse JSON and build a service command to pass the real command handler.
- * Lambda native JSON parsing makes this extra layer a bit unnecessary, but I'm keeping it for testing and consistency.
- */
-public class LambdaHandler implements RequestHandler<String, String>, ICommandService {
+import io.mamish.serverbot2.framework.server.LambdaStandardApiHandler;
 
-    private JsonRequestDispatcher<ICommandService> requestDispatcher;
-    private CommandHandler commandHandler;
-    private AnnotatedGson gson = new AnnotatedGson();
+public class LambdaHandler extends LambdaStandardApiHandler<ICommandService> implements ICommandService {
 
-    public LambdaHandler() {
-        requestDispatcher = new JsonRequestDispatcher<>(this, ICommandService.class);
-        commandHandler = new CommandHandler();
+    private CommandHandler commandHandler = new CommandHandler();
+
+    @Override
+    protected Class<ICommandService> getModelClass() {
+        return ICommandService.class;
     }
 
     @Override
-    public String handleRequest(String inputString, Context context) {
-        try {
-            return requestDispatcher.dispatch(inputString);
-        } catch (RequestHandlingRuntimeException e) {
-            e.printStackTrace();
-            CommandServiceResponse defaultErrorResponse = new CommandServiceResponse("Sorry, an unknown error occurred.");
-            return gson.toJson(defaultErrorResponse);
-        }
+    protected ICommandService getHandlerInstance() {
+        return this;
     }
 
     @Override
     public CommandServiceResponse requestUserCommand(CommandServiceRequest commandServiceRequest) {
         return commandHandler.handleRequest(commandServiceRequest);
     }
-
 }

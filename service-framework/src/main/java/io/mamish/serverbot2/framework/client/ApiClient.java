@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -8,6 +9,7 @@ import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiErrorInfo;
 import io.mamish.serverbot2.framework.exception.ApiException;
+import io.mamish.serverbot2.framework.server.LambdaStandardApiHandler;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
@@ -39,6 +41,12 @@ public final class ApiClient {
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
                     .functionName(functionName));
             return response.payload().asUtf8String();
+        });
+    }
+
+    public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaStandardApiHandler localFunction) {
+        return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
+            return localFunction.handleRequest(payloadAndId.fst(), null);
         });
     }
 

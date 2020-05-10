@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public class ApiErrorTransformer {
 
     private static List<Class<? extends ApiException>> exceptionClassList = List.of(
+            FrameworkInternalException.class,
             RequestHandlingException.class,
             RequestHandlingRuntimeException.class,
             SerializationException.class,

@@ -8,4 +8,11 @@ public class SerializationException extends ApiException {
     public SerializationException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public SerializationException(Throwable cause) {
+        super(cause);
+    }
+
+    public SerializationException() {
+    }
 }

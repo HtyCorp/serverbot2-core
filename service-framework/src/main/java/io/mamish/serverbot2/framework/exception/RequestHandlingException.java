@@ -8,4 +8,11 @@ public class RequestHandlingException extends ApiException {
     public RequestHandlingException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public RequestHandlingException(Throwable cause) {
+        super(cause);
+    }
+
+    public RequestHandlingException() {
+    }
 }

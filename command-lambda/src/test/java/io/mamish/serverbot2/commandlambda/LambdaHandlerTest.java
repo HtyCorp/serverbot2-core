@@ -1,8 +1,12 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.google.gson.Gson;
+import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
+import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,7 +21,7 @@ public class LambdaHandlerTest {
     private static final String DUMMY_USER_ID = "12345678901234567";
 
     private Logger logger = Logger.getLogger("LambdaHandlerTest");
-    private AnnotatedGson annotatedGson = new AnnotatedGson();
+    private Gson gson = new Gson();
 
     @Test
     public void testMissingCommand() {
@@ -55,17 +59,14 @@ public class LambdaHandlerTest {
 
     private void testSimpleResponseMessage(String expectedResponseMessage, String... requestArgs) {
         LambdaHandler handler = new LambdaHandler();
+        ICommandService localClient = ApiClient.localLambda(ICommandService.class, handler);
 
         CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.STANDARD, DUMMY_USER_ID);
-        String requestString = annotatedGson.toJsonWithTarget(request);
-        String responseString = handler.handleRequest(requestString, null);
+        CommandServiceResponse response = localClient.requestUserCommand(request);
 
+        logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));
 
-        CommandServiceResponse actualResponse = annotatedGson.fromJson(responseString, CommandServiceResponse.class);
-
-        logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + actualResponse);
-
-        Assertions.assertEquals(expectedResponseMessage, actualResponse.getOptionalMessageContent());
+        Assertions.assertEquals(expectedResponseMessage, response.getOptionalMessageContent());
     }
 
 //    // For quicker test generation: print command output and fail, so it can be manually inspected and added in test.
