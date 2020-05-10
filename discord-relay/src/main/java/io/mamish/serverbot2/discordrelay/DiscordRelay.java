@@ -4,11 +4,10 @@ import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
-import io.mamish.serverbot2.framework.client.ServiceClient;
+import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -16,9 +15,7 @@ import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.event.message.MessageCreateEvent;
-import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +36,7 @@ public class DiscordRelay {
     private RequestMessagePoller messagePoller;
 
     public DiscordRelay() {
-        commandServiceClient = ServiceClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
+        commandServiceClient = ApiClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
         String apiToken = DiscordConfig.API_TOKEN.getValue();
         discordApi = new DiscordApiBuilder().setToken(apiToken).login().join();
         channelMap = new ChannelMap(discordApi);

@@ -4,6 +4,8 @@ import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordServiceHandler;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
+import io.mamish.serverbot2.framework.exception.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.RequestValidationException;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedutil.reflect.*;
 import org.javacord.api.DiscordApi;
@@ -11,7 +13,6 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.user.User;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DiscordServiceHandler implements IDiscordServiceHandler {

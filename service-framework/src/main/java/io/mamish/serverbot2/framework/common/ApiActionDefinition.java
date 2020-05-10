@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.framework.common;
 
 import io.mamish.serverbot2.sharedutil.Pair;
 
@@ -6,15 +6,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Note: Working to replace this with a client+server version in module 'service-framework'.
+ * Note: Making this as a replacement of "SimpleApiDefinition" to work with clients and servers.
  */
-public class SimpleApiDefinition {
+public class ApiActionDefinition {
 
     private final String name;
     private final String description;
@@ -22,25 +21,42 @@ public class SimpleApiDefinition {
     private final int numRequiredFields;
 
     private final Method targetMethod;
-    private final Class<?> requestDtoType;
-    private final Constructor<?> requestDtoConstructor;
 
-    private final List<Pair<Field,ApiArgumentInfo>> orderedFields;
+    private final Class<?> requestDataType;
+    private final Constructor<?> requestTypeConstructor;
+
+    private final boolean hasResponseType;
+    private final Class<?> responseDataType;
+    private final Constructor<?> responseTypeConstructor;
+
+    private final List<Pair<Field, ApiArgumentInfo>> orderedFields;
     private final List<Field> orderedFieldsFieldView;
     private final List<ApiArgumentInfo> orderedFieldsInfoView;
 
-    public SimpleApiDefinition(Method targetMethod) throws ReflectiveOperationException {
+    public ApiActionDefinition(Method targetMethod) throws ReflectiveOperationException {
 
         Class<?> requestType = targetMethod.getParameterTypes()[0];
         ApiRequestInfo apiRequestInfo = requestType.getAnnotation(ApiRequestInfo.class);
+
+        Class<?> responseType = targetMethod.getReturnType();
 
         this.name = apiRequestInfo.name();
         this.description = apiRequestInfo.description();
         this.order = apiRequestInfo.order();
         this.numRequiredFields = apiRequestInfo.numRequiredFields();
         this.targetMethod = targetMethod;
-        this.requestDtoType = requestType;
-        this.requestDtoConstructor = requestType.getConstructor();
+        this.requestDataType = requestType;
+        this.requestTypeConstructor = requestType.getConstructor();
+
+        if (responseType == Void.TYPE) {
+            this.hasResponseType = false;
+            this.responseDataType = null;
+            this.responseTypeConstructor = null;
+        } else {
+            this.hasResponseType = true;
+            this.responseDataType = responseType;
+            this.responseTypeConstructor = responseType.getConstructor();
+        }
 
         this.orderedFields = Arrays.stream(requestType.getDeclaredFields())
                 .filter(f -> f.getAnnotation(ApiArgumentInfo.class) != null)
@@ -73,12 +89,24 @@ public class SimpleApiDefinition {
         return targetMethod;
     }
 
-    public Class<?> getRequestDtoType() {
-        return requestDtoType;
+    public Class<?> getRequestDataType() {
+        return requestDataType;
     }
 
-    public Constructor<?> getRequestDtoConstructor() {
-        return requestDtoConstructor;
+    public Constructor<?> getRequestTypeConstructor() {
+        return requestTypeConstructor;
+    }
+
+    public boolean hasResponseType() {
+        return hasResponseType;
+    }
+
+    public Class<?> getResponseDataType() {
+        return responseDataType;
+    }
+
+    public Constructor<?> getResponseTypeConstructor() {
+        return responseTypeConstructor;
     }
 
     public List<Pair<Field, ApiArgumentInfo>> getOrderedFields() {

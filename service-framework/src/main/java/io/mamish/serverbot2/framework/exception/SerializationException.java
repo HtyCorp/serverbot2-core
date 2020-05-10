@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.framework.exception;
 
-public class SerializationException extends IllegalArgumentException {
+public class SerializationException extends ApiException {
     public SerializationException(String message) {
         super(message);
     }

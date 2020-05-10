@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.framework.exception;
 
-public class UnknownRequestException extends IllegalArgumentException {
+public class UnknownRequestException extends ApiException {
 
     private String requestedTarget;
 

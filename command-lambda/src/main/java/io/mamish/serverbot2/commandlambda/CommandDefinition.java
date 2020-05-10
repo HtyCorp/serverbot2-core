@@ -3,7 +3,6 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.SimpleApiDefinition;
 
 import java.lang.reflect.Method;
 import java.util.List;

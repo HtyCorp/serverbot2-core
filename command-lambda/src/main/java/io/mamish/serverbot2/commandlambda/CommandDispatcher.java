@@ -6,7 +6,6 @@ import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.sharedutil.reflect.AbstractRequestDispatcher;
 import io.mamish.serverbot2.sharedutil.reflect.RequestValidationException;
 import io.mamish.serverbot2.sharedutil.reflect.SerializationException;
 import io.mamish.serverbot2.sharedutil.reflect.UnparsableInputException;

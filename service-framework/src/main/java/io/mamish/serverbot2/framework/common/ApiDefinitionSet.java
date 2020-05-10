@@ -10,35 +10,35 @@ import java.util.stream.Stream;
 
 public class ApiDefinitionSet<ModelType> {
 
-    private final Map<String, BasicApiDefinition> nameToDefinitionMap;
-    private final Map<Class<?>, BasicApiDefinition> requestClassToDefinitionMap;
+    private final Map<String, ApiActionDefinition> nameToDefinitionMap;
+    private final Map<Class<?>, ApiActionDefinition> requestClassToDefinitionMap;
 
     public ApiDefinitionSet(Class<ModelType> modelClass) {
 
         assert modelClass.isInterface();
 
         Stream<Method> allListenerInterfaceMethods;
-        Function<Method, BasicApiDefinition> tryGenerateDefinition;
-        Comparator<BasicApiDefinition> compareByOrderAttribute;
-        BinaryOperator<BasicApiDefinition> errorOnNameCollision;
-        Collector<BasicApiDefinition, ?, TreeMap<String,BasicApiDefinition>> collectToTreeMapWithNameAsKey;
+        Function<Method, ApiActionDefinition> tryGenerateDefinition;
+        Comparator<ApiActionDefinition> compareByOrderAttribute;
+        BinaryOperator<ApiActionDefinition> errorOnNameCollision;
+        Collector<ApiActionDefinition, ?, TreeMap<String, ApiActionDefinition>> collectToTreeMapWithNameAsKey;
 
         allListenerInterfaceMethods = Arrays.stream(modelClass.getDeclaredMethods());
         tryGenerateDefinition = method -> {
             try {
-                return new BasicApiDefinition(method);
+                return new ApiActionDefinition(method);
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException("Unexpected error while generating API definition");
             }
         };
-        compareByOrderAttribute = Comparator.comparing(BasicApiDefinition::getOrder);
+        compareByOrderAttribute = Comparator.comparing(ApiActionDefinition::getOrder);
         errorOnNameCollision = (_a, _b) -> {
             throw new IllegalStateException("Command name collision while generating definitions: " + _a.getName());
         };
 
         // Using TreeMap to preserve insertion order by metadata order attribute.
         // Not strictly necessary now (as it is with ordered fields in request POJOs) but keeping just in case.
-        collectToTreeMapWithNameAsKey = Collectors.toMap(BasicApiDefinition::getName,
+        collectToTreeMapWithNameAsKey = Collectors.toMap(ApiActionDefinition::getName,
                 Function.identity(),
                 errorOnNameCollision,
                 TreeMap::new);
@@ -49,20 +49,20 @@ public class ApiDefinitionSet<ModelType> {
                 .collect(collectToTreeMapWithNameAsKey));
 
         this.requestClassToDefinitionMap = this.nameToDefinitionMap.values().stream().collect(Collectors.toUnmodifiableMap(
-                BasicApiDefinition::getRequestDataType,
+                ApiActionDefinition::getRequestDataType,
                 Function.identity()
         ));
     }
 
-    public BasicApiDefinition getFromName(String name) {
+    public ApiActionDefinition getFromName(String name) {
         return nameToDefinitionMap.get(name);
     }
 
-    public BasicApiDefinition getFromRequestClass(Class<?> requestClass) {
+    public ApiActionDefinition getFromRequestClass(Class<?> requestClass) {
         return requestClassToDefinitionMap.get(requestClass);
     }
 
-    public Collection<BasicApiDefinition> getAll() {
+    public Collection<ApiActionDefinition> getAll() {
         return nameToDefinitionMap.values();
     }
 

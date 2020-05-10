@@ -5,7 +5,6 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
-import io.mamish.serverbot2.sharedutil.AnnotatedGson;
 import io.mamish.serverbot2.sharedutil.reflect.JsonRequestDispatcher;
 import io.mamish.serverbot2.sharedutil.reflect.RequestHandlingRuntimeException;
 /*

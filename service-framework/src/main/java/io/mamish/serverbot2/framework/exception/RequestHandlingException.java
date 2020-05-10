@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.framework.exception;
 
-public class RequestHandlingException extends RuntimeException {
+public class RequestHandlingException extends ApiException {
     public RequestHandlingException(String message) {
         super(message);
     }

@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda.model.commands;
 
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
 import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
 

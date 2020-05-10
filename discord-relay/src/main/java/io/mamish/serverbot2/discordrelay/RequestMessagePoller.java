@@ -1,9 +1,13 @@
 package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordServiceHandler;
+import io.mamish.serverbot2.framework.exception.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.RequestHandlingRuntimeException;
+import io.mamish.serverbot2.framework.exception.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.UnknownRequestException;
+import io.mamish.serverbot2.framework.server.JsonApiHandler;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedutil.reflect.*;
 import org.javacord.api.DiscordApi;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -14,13 +18,13 @@ import java.util.logging.Logger;
 
 public class RequestMessagePoller {
 
-    private JsonRequestDispatcher<IDiscordServiceHandler> requestDispatcher;
+    private JsonApiHandler<IDiscordServiceHandler> requestDispatcher;
     private Logger logger;
 
     public RequestMessagePoller(DiscordApi discordApi, ChannelMap channelMap) {
 
         DiscordServiceHandler handlerInstance  = new DiscordServiceHandler(discordApi, channelMap);
-        requestDispatcher = new JsonRequestDispatcher<>(handlerInstance, IDiscordServiceHandler.class);
+        requestDispatcher = new JsonApiHandler<>(handlerInstance, IDiscordServiceHandler.class);
         logger = Logger.getLogger("DiscordServiceHandler");
 
         new Thread(this::loopMessagePoll, "DiscordRelaySQSPoller").start();

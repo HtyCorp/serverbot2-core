@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.framework.exception;
 
-public class UnparsableInputException extends IllegalArgumentException {
+public class UnparsableInputException extends ApiException {
 
     public UnparsableInputException(String message) {
         super(message);
