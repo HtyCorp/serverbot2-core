@@ -6,9 +6,7 @@ import io.mamish.serverbot2.sharedconfig.Parameter;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import org.javacord.api.entity.server.Server;
 
-import javax.swing.text.html.Option;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,5 @@
 package io.mamish.serverbot2.sharedconfig;
 
-import software.amazon.awssdk.regions.Region;
-
 /**
  * Common configuration values across the project.
  */

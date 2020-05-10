@@ -11,7 +11,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.ClassUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.List;
 

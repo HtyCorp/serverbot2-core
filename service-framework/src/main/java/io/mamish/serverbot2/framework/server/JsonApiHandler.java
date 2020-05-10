@@ -1,7 +1,8 @@
 package io.mamish.serverbot2.framework.server;
 
 import com.google.gson.*;
-import io.mamish.serverbot2.framework.common.*;
+import io.mamish.serverbot2.framework.common.ApiActionDefinition;
+import io.mamish.serverbot2.framework.common.ApiErrorInfo;
 import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.RequestValidationException;
 import io.mamish.serverbot2.framework.exception.UnparsableInputException;

@@ -1,9 +1,10 @@
 package io.mamish.serverbot2.commandlambda.model.service;
 
-import java.util.List;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
 import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+
+import java.util.List;
 
 @ApiRequestInfo(order = 0, name = "CommandService", numRequiredFields = 3, description = "Run a user command submitted from Discord")
 public class CommandServiceRequest {

@@ -19,7 +19,6 @@ import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 
 import java.util.List;
-import java.util.Map;
 
 public class RelayStack extends Stack {
 

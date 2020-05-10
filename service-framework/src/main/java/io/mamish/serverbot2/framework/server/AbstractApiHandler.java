@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.framework.server;
 
-import io.mamish.serverbot2.framework.common.*;
+import io.mamish.serverbot2.framework.common.ApiActionDefinition;
+import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
 import io.mamish.serverbot2.framework.exception.*;
 import io.mamish.serverbot2.sharedutil.Pair;
 

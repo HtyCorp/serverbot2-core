@@ -1,7 +1,5 @@
 package io.mamish.serverbot2.commandlambda.model.service;
 
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.util.Objects;
 
 public class CommandServiceResponse {

@@ -11,7 +11,7 @@ public abstract class LambdaStandardApiHandler<ModelType> implements RequestHand
     protected abstract ModelType getHandlerInstance();
 
     @Override
-    public String handleRequest(String input, Context context) {
+    public final String handleRequest(String input, Context context) {
         return jsonApiHandler.handleRequest(input);
     }
 

@@ -7,7 +7,7 @@ import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.framework.exception.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.RequestValidationException;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedutil.reflect.*;
+import io.mamish.serverbot2.sharedutil.reflect.SimpleDynamoDbMapper;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;

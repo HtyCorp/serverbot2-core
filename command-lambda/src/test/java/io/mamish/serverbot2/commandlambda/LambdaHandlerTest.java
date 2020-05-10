@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
-import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;

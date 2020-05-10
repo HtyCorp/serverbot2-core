@@ -1,8 +1,6 @@
 package io.mamish.serverbot2.sharedutil.reflect;
 
-import com.sun.source.tree.CatchTree;
 import io.mamish.serverbot2.sharedutil.Pair;
-
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
@@ -13,7 +11,6 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
