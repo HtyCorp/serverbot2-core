@@ -18,7 +18,7 @@ public class SqsRequestResponseClient {
 
     private final SqsAsyncClient realSqsAsyncClient = SqsAsyncClient.create();
     private final SqsClient realSqsClient = SqsClient.create();
-    private final String temporaryQueueUrl = realSqsClient.createQueue(r ->
+    private final String rxTempQueueUrl = realSqsClient.createQueue(r ->
             r.queueName(generateQueueName())).queueUrl();
     private final Map<String, Queue<String>> requestIdToSync =
             Collections.synchronizedMap(new HashMap<>());
@@ -28,9 +28,8 @@ public class SqsRequestResponseClient {
         receiverThread.setDaemon(true);
         receiverThread.start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            realSqsAsyncClient.deleteQueue(r -> r.queueUrl(temporaryQueueUrl));
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                realSqsAsyncClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
     }
 
     public String getQueueUrl(String queueName) {
@@ -45,8 +44,9 @@ public class SqsRequestResponseClient {
         requestIdToSync.put(requestId, sync);
 
         // Send message with request ID in attributes.
-        Map<String, MessageAttributeValue> sqsAttrMap = Map.of(ApiConfig.JSON_REQUEST_ID_KEY,
-                MessageAttributeValue.builder().stringValue(requestId).build());
+        Map<String, MessageAttributeValue> sqsAttrMap = Map.of(
+                ApiConfig.JSON_REQUEST_QUEUE_KEY, stringAttribute(rxTempQueueUrl),
+                ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId));
         realSqsClient.sendMessage(r -> r.messageBody(messageBody)
                 .messageAttributes(sqsAttrMap)
                 .queueUrl(queueUrl));
@@ -89,7 +89,7 @@ public class SqsRequestResponseClient {
             }
 
             // Receive messages
-            List<Message> messages = realSqsClient.receiveMessage(r -> r.queueUrl(temporaryQueueUrl)
+            List<Message> messages = realSqsClient.receiveMessage(r -> r.queueUrl(rxTempQueueUrl)
                 .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)).messages();
 
             // For reach message, remove the queue for that request ID from the map and offer the message to it.
@@ -116,6 +116,10 @@ public class SqsRequestResponseClient {
     private static String generateQueueName() {
         // Should be < 70 chars, so within the 80-char limit for SQS queue names.
         return "api-client-temp-" + IDUtils.epochSeconds() + "-" + IDUtils.randomUUIDJoined();
+    }
+
+    private static MessageAttributeValue stringAttribute(String s) {
+        return MessageAttributeValue.builder().stringValue(s).build();
     }
 
 }
