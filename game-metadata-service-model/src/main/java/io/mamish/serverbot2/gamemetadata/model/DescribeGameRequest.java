@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.gamemetadata.model;
 
-import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
+import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 @ApiRequestInfo(order = 1, name = "DescribeGame", numRequiredFields = 1, description = "Get metadata for a specific game")
 public class DescribeGameRequest {

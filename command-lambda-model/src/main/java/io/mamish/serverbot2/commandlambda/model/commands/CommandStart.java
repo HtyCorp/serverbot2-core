@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.commandlambda.model.commands;
 
-import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
+import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 @ApiRequestInfo(order = 2, name = "start", numRequiredFields = 1,
         description = "Start a game")

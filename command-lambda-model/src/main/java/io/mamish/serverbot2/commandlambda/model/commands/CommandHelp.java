@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.commandlambda.model.commands;
 
-import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
+import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 @ApiRequestInfo(order = 0, name = "help", numRequiredFields = 0,
         description = "Show help for a particular command")

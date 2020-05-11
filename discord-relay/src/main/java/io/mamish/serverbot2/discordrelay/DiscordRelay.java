@@ -26,11 +26,8 @@ public class DiscordRelay {
 
     Logger logger = Logger.getLogger("DiscordRelay");
 
-    private AnnotatedGson annotatedGson;
-    private LambdaClient lambdaClient = LambdaClient.create();
     private DiscordApi discordApi;
     private ChannelMap channelMap;
-
     private ICommandService commandServiceClient;
 
     private RequestMessagePoller messagePoller;

@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.discordrelay.model.service;
 
-import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
+import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 @ApiRequestInfo(order = 0, name = "NewMessage", numRequiredFields = 1,
         description = "Send a message through Discord to the chosen channels or user")

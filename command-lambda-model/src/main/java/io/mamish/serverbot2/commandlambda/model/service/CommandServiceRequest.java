@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.commandlambda.model.service;
 
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
-import io.mamish.serverbot2.sharedutil.reflect.ApiArgumentInfo;
-import io.mamish.serverbot2.sharedutil.reflect.ApiRequestInfo;
+import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
+import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 import java.util.List;
 
