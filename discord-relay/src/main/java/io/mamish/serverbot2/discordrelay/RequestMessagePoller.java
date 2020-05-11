@@ -1,11 +1,11 @@
 package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordServiceHandler;
-import io.mamish.serverbot2.framework.exception.RequestHandlingException;
-import io.mamish.serverbot2.framework.exception.RequestHandlingRuntimeException;
-import io.mamish.serverbot2.framework.exception.RequestValidationException;
-import io.mamish.serverbot2.framework.exception.UnknownRequestException;
-import io.mamish.serverbot2.framework.server.JsonApiHandler;
+import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
+import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.server.UnknownRequestException;
+import io.mamish.serverbot2.framework.server.JsonApiRequestDispatcher;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import org.javacord.api.DiscordApi;
@@ -18,13 +18,13 @@ import java.util.logging.Logger;
 
 public class RequestMessagePoller {
 
-    private JsonApiHandler<IDiscordServiceHandler> requestDispatcher;
+    private JsonApiRequestDispatcher<IDiscordServiceHandler> requestDispatcher;
     private Logger logger;
 
     public RequestMessagePoller(DiscordApi discordApi, ChannelMap channelMap) {
 
         DiscordServiceHandler handlerInstance  = new DiscordServiceHandler(discordApi, channelMap);
-        requestDispatcher = new JsonApiHandler<>(handlerInstance, IDiscordServiceHandler.class);
+        requestDispatcher = new JsonApiRequestDispatcher<>(handlerInstance, IDiscordServiceHandler.class);
         logger = Logger.getLogger("DiscordServiceHandler");
 
         new Thread(this::loopMessagePoll, "DiscordRelaySQSPoller").start();

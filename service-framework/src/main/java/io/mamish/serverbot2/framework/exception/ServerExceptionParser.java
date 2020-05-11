@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.framework.client;
+package io.mamish.serverbot2.framework.exception;
 
-import io.mamish.serverbot2.framework.exception.*;
+import io.mamish.serverbot2.framework.exception.server.*;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -8,18 +8,19 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ApiErrorTransformer {
+public class ServerExceptionParser {
 
-    private static List<Class<? extends ApiException>> exceptionClassList = List.of(
+    private static List<Class<? extends ApiServerException>> exceptionClassList = List.of(
             FrameworkInternalException.class,
             RequestHandlingException.class,
             RequestHandlingRuntimeException.class,
+            RequestValidationException.class,
             SerializationException.class,
             UnknownRequestException.class,
             UnparsableInputException.class
     );
     private static Map<String, Function<String,? extends ApiException>> generatorMap = exceptionClassList.stream()
-        .collect(Collectors.toMap(Class::getSimpleName, ApiErrorTransformer::makeGenerator));
+        .collect(Collectors.toMap(Class::getSimpleName, ServerExceptionParser::makeGenerator));
 
     public static ApiException fromName(String typeSimpleName, String message) {
         var generator = generatorMap.get(typeSimpleName);

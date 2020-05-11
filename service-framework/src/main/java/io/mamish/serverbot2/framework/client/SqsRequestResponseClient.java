@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.framework.client;
 
+import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
@@ -61,11 +62,11 @@ public class SqsRequestResponseClient {
         try {
             response = sync.poll(timeoutSeconds, TimeUnit.SECONDS);
             if (response == null) {
-                throw new ApiClientTimeoutException(requestId);
+                throw new ApiRequestTimeoutException(requestId);
             }
             return response;
         } catch (InterruptedException e) {
-            throw new ApiClientTimeoutException(requestId, e);
+            throw new ApiRequestTimeoutException(requestId, e);
         } finally {
             // Note removal may be performed by receiver thread first.
             requestIdToSync.remove(requestId);

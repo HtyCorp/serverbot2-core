@@ -6,10 +6,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
-import io.mamish.serverbot2.framework.common.ApiErrorInfo;
 import io.mamish.serverbot2.framework.exception.ApiException;
-import io.mamish.serverbot2.framework.exception.SerializationException;
-import io.mamish.serverbot2.framework.server.LambdaStandardApiHandler;
+import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
+import io.mamish.serverbot2.framework.exception.ServerExceptionParser;
+import io.mamish.serverbot2.framework.exception.server.SerializationException;
+import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
@@ -43,7 +44,7 @@ public final class ApiClient {
         });
     }
 
-    public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaStandardApiHandler localFunction) {
+    public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaApiServer localFunction) {
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
             return localFunction.handleRequest(payloadAndId.fst(), null);
         });
@@ -95,8 +96,8 @@ public final class ApiClient {
 
                     // If error provided, generate the exception (basic details only) and throw.
                     if (error != null) {
-                        ApiErrorInfo info = gson.fromJson(error, ApiErrorInfo.class);
-                        ApiException deserialisedException = ApiErrorTransformer.fromName(
+                        ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
+                        ApiException deserialisedException = ServerExceptionParser.fromName(
                                 info.getExceptionTypeName(),
                                 info.getExceptionMessage());
                         throw deserialisedException;

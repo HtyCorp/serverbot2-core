@@ -1,13 +1,13 @@
-package io.mamish.serverbot2.framework.common;
+package io.mamish.serverbot2.framework.exception;
 
-public class ApiErrorInfo {
+public class ServerExceptionDto {
 
     private String exceptionTypeName;
     private String exceptionMessage;
 
-    public ApiErrorInfo() {}
+    public ServerExceptionDto() {}
 
-    public ApiErrorInfo(String exceptionTypeName, String exceptionMessage) {
+    public ServerExceptionDto(String exceptionTypeName, String exceptionMessage) {
         this.exceptionTypeName = exceptionTypeName;
         this.exceptionMessage = exceptionMessage;
     }

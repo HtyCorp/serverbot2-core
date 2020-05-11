@@ -2,21 +2,22 @@ package io.mamish.serverbot2.framework.server;
 
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
-import io.mamish.serverbot2.framework.exception.*;
+import io.mamish.serverbot2.framework.exception.ApiException;
+import io.mamish.serverbot2.framework.exception.server.*;
 import io.mamish.serverbot2.sharedutil.Pair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class AbstractApiHandler<ModelType, OutputType, RawInputType, ParsedInputType> {
+public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
     private ModelType handlerInstance;
     private ApiDefinitionSet<?> apiDefinitionSet;
 
     private Logger logger = Logger.getLogger("AbstractApiHandler");
 
-    public AbstractApiHandler(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
+    public AbstractApiRequestDispatcher(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
         this.handlerInstance = handlerInstance;
         this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass);
     }

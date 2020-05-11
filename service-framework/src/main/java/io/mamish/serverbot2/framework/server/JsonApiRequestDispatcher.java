@@ -2,19 +2,19 @@ package io.mamish.serverbot2.framework.server;
 
 import com.google.gson.*;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
-import io.mamish.serverbot2.framework.common.ApiErrorInfo;
 import io.mamish.serverbot2.framework.exception.ApiException;
-import io.mamish.serverbot2.framework.exception.RequestValidationException;
-import io.mamish.serverbot2.framework.exception.UnparsableInputException;
+import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
+import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.server.UnparsableInputException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 
-public class JsonApiHandler<HandlerType> extends
-        AbstractApiHandler<HandlerType,String,String,JsonObject> {
+public class JsonApiRequestDispatcher<HandlerType> extends
+        AbstractApiRequestDispatcher<HandlerType,String,String,JsonObject> {
 
     private Gson gson = new GsonBuilder().serializeNulls().create();
 
-    public JsonApiHandler(HandlerType handler, Class<HandlerType> handlerInterfaceClass) {
+    public JsonApiRequestDispatcher(HandlerType handler, Class<HandlerType> handlerInterfaceClass) {
         super(handler, handlerInterfaceClass);
     }
 
@@ -75,7 +75,7 @@ public class JsonApiHandler<HandlerType> extends
 
     @Override
     protected String serializeErrorObject(ApiException exception) {
-        ApiErrorInfo info = new ApiErrorInfo(exception.getClass().getSimpleName(), exception.getMessage());
+        ServerExceptionDto info = new ServerExceptionDto(exception.getClass().getSimpleName(), exception.getMessage());
         JsonObject infoObject = gson.toJsonTree(info).getAsJsonObject();
 
         JsonObject finalObject = new JsonObject();

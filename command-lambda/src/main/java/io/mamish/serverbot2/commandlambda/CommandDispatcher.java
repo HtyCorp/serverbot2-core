@@ -5,8 +5,9 @@ import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
 import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
-import io.mamish.serverbot2.framework.exception.*;
-import io.mamish.serverbot2.framework.server.AbstractApiHandler;
+import io.mamish.serverbot2.framework.exception.ApiException;
+import io.mamish.serverbot2.framework.exception.server.*;
+import io.mamish.serverbot2.framework.server.AbstractApiRequestDispatcher;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.ClassUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
@@ -14,7 +15,7 @@ import io.mamish.serverbot2.sharedutil.Pair;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class ApiCommandHandler extends AbstractApiHandler<ICommandHandler,CommandServiceResponse,CommandServiceRequest,CommandServiceRequest> {
+public class CommandDispatcher extends AbstractApiRequestDispatcher<ICommandHandler,CommandServiceResponse,CommandServiceRequest,CommandServiceRequest> {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
@@ -26,7 +27,7 @@ public class ApiCommandHandler extends AbstractApiHandler<ICommandHandler,Comman
             UnknownRequestException.class, // Used if an unknown command is requested by user.
     };
 
-    public ApiCommandHandler(ICommandHandler handler) {
+    public CommandDispatcher(ICommandHandler handler) {
         super(handler, ICommandHandler.class);
     }
 

@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
 
 public class CommandHandler implements ICommandHandler {
 
-    private ApiCommandHandler apiCommandHandler;
+    private CommandDispatcher commandDispatcher;
     private Gson gson = new Gson();
     private Map<String,String> stateMachineArns;
 
     public CommandHandler() {
-        apiCommandHandler = new ApiCommandHandler(this);
+        commandDispatcher = new CommandDispatcher(this);
         stateMachineArns = SfnClient.create().listStateMachines().stateMachines().stream().collect(Collectors.toMap(
                 StateMachineListItem::name,
                 StateMachineListItem::stateMachineArn
@@ -27,7 +27,7 @@ public class CommandHandler implements ICommandHandler {
     }
 
     public CommandServiceResponse handleRequest(CommandServiceRequest request) {
-        return apiCommandHandler.handleRequest(request);
+        return commandDispatcher.handleRequest(request);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class CommandHandler implements ICommandHandler {
 
         if (commandHelp.getCommandName() != null) {
             String name = commandHelp.getCommandName();
-            ApiActionDefinition definition = apiCommandHandler.getApiDefinitionSet().getFromName(name);
+            ApiActionDefinition definition = commandDispatcher.getApiDefinitionSet().getFromName(name);
             if (definition == null) {
                 return new CommandServiceResponse("Can't look up help: '" + name + "' is not a recognised command name.");
             } else {
@@ -48,7 +48,7 @@ public class CommandHandler implements ICommandHandler {
                 return new CommandServiceResponse(detailedHelpBuilder.toString());
             }
         } else {
-            String aggregateHelpString = apiCommandHandler.getApiDefinitionSet().getAll().stream()
+            String aggregateHelpString = commandDispatcher.getApiDefinitionSet().getAll().stream()
                     .map(definition -> definition.getUsageString() + "\n  " + definition.getDescription())
                     .collect(Collectors.joining("\n"));
             return new CommandServiceResponse(aggregateHelpString);
