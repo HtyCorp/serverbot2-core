@@ -28,7 +28,7 @@ public class ApiDefinitionSet<ModelType> {
             try {
                 return new ApiActionDefinition(method);
             } catch (ReflectiveOperationException e) {
-                throw new RuntimeException("Unexpected error while generating API definition");
+                throw new RuntimeException("Unexpected error while generating API definition", e);
             }
         };
         compareByOrderAttribute = Comparator.comparing(ApiActionDefinition::getOrder);

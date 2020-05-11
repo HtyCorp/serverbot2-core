@@ -7,6 +7,9 @@ public class CommandServiceResponse {
     private String optionalMessageContent;
     private String optionalMessageExternalId;
 
+    @SuppressWarnings("unused")
+    public CommandServiceResponse() { }
+
     public CommandServiceResponse(String optionalMessageContent) {
         this.optionalMessageContent = optionalMessageContent;
     }

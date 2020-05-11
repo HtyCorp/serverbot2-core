@@ -60,7 +60,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         ApiActionDefinition definition = apiDefinitionSet.getFromName(targetName);
 
         if (definition == null) {
-            throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.");
+            throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
         }
         Object requestObject = parseRequestObject(definition, parsedInput);
 

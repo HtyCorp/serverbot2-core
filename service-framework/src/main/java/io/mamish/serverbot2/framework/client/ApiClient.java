@@ -95,7 +95,7 @@ public final class ApiClient {
                     JsonElement content = response.get(ApiConfig.JSON_RESPONSE_CONTENT_KEY);
 
                     // If error provided, generate the exception (basic details only) and throw.
-                    if (error != null) {
+                    if (error != null && !error.isJsonNull()) {
                         ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
                         ApiException deserialisedException = ServerExceptionParser.fromName(
                                 info.getExceptionTypeName(),

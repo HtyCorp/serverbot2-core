@@ -67,8 +67,8 @@ public class JsonApiRequestDispatcher<HandlerType> extends
         JsonObject resultObject = gson.toJsonTree(handlerResult).getAsJsonObject();
         JsonObject finalObject = new JsonObject();
 
-        resultObject.add(ApiConfig.JSON_RESPONSE_CONTENT_KEY, resultObject);
-        resultObject.add(ApiConfig.JSON_RESPONSE_ERROR_KEY, null);
+        finalObject.add(ApiConfig.JSON_RESPONSE_CONTENT_KEY, resultObject);
+        finalObject.add(ApiConfig.JSON_RESPONSE_ERROR_KEY, null);
 
         return gson.toJson(finalObject);
     }
