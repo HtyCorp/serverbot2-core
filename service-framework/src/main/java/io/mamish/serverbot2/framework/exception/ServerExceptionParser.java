@@ -19,32 +19,32 @@ public class ServerExceptionParser {
             UnknownRequestException.class,
             UnparsableInputException.class
     );
-    private static Map<String, Function<String,? extends ApiException>> generatorMap = exceptionClassList.stream()
+    private static Map<String, Function<String,? extends ApiServerException>> generatorMap = exceptionClassList.stream()
         .collect(Collectors.toMap(Class::getSimpleName, ServerExceptionParser::makeGenerator));
 
-    public static ApiException fromName(String typeSimpleName, String message) {
+    public static ApiServerException fromName(String typeSimpleName, String message) {
         var generator = generatorMap.get(typeSimpleName);
         if (generator == null) {
-            return new ApiException(message);
+            return new ApiServerException(message);
         } else {
             return generator.apply(message);
         }
     }
 
-    private static <E extends ApiException> Function<String,E> makeGenerator(Class<E> exceptionClass) {
+    private static <E extends ApiServerException> Function<String,E> makeGenerator(Class<E> exceptionClass) {
         try {
             Constructor<E> constructor = exceptionClass.getConstructor(String.class);
             return (String message) -> {
-                ApiException exception;
+                ApiServerException exception;
                 try {
                     exception = constructor.newInstance(message);
                 } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException("Impossible: Exception extending ApiException with unusable message constructor", e);
+                    throw new RuntimeException("Impossible: Exception extending ApiServerException with unusable message constructor", e);
                 }
                 throw exception;
             };
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Impossible: Exception extending ApiException without message constructor", e);
+            throw new RuntimeException("Impossible: Exception extending ApiServerException without message constructor", e);
         }
     }
 

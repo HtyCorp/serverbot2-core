@@ -71,7 +71,7 @@ public final class ApiClient {
     }
 
     /*
-     * Makes a few assumptions that should be documented/validation in models somewhere:
+     * Makes a few assumptions that should be documented/validated in models somewhere:
      * 1) Requests have only one (composite) argument.
      * 2) Definition set is not missing any definitions for the interface.
      */

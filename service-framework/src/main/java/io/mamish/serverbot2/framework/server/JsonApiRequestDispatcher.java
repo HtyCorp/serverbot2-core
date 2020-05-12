@@ -2,8 +2,8 @@ package io.mamish.serverbot2.framework.server;
 
 import com.google.gson.*;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
-import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
+import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.framework.exception.server.UnparsableInputException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
@@ -74,7 +74,7 @@ public class JsonApiRequestDispatcher<HandlerType> extends
     }
 
     @Override
-    protected String serializeErrorObject(ApiException exception) {
+    protected String serializeErrorObject(ApiServerException exception) {
         ServerExceptionDto info = new ServerExceptionDto(exception.getClass().getSimpleName(), exception.getMessage());
         JsonObject infoObject = gson.toJsonTree(info).getAsJsonObject();
 

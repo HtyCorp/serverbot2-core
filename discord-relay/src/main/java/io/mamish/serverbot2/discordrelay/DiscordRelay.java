@@ -15,7 +15,6 @@ import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.event.message.MessageCreateEvent;
-import software.amazon.awssdk.services.lambda.LambdaClient;
 
 import java.util.Arrays;
 import java.util.List;

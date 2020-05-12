@@ -36,12 +36,12 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     protected abstract OutputType serializeResponseObject(ApiActionDefinition definition, Object handlerResult)
             throws SerializationException;
 
-    protected abstract OutputType serializeErrorObject(ApiException exception);
+    protected abstract OutputType serializeErrorObject(ApiServerException exception);
 
     public final OutputType handleRequest(RawInputType rawInput) {
         try {
             return internalHandleRequest(rawInput);
-        } catch (ApiException e) {
+        } catch (ApiServerException e) {
             logger.log(Level.WARNING, "ApiException in API request dispatcher", e);
             return serializeErrorObject(e);
         } catch (Exception e) {
