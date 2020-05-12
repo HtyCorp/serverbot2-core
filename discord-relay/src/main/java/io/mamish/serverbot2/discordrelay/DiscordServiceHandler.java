@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
-import io.mamish.serverbot2.discordrelay.model.service.IDiscordServiceHandler;
+import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
@@ -15,7 +15,7 @@ import org.javacord.api.entity.user.User;
 
 import java.util.logging.Logger;
 
-public class DiscordServiceHandler implements IDiscordServiceHandler {
+public class DiscordServiceHandler implements IDiscordService {
 
     private DiscordApi discordApi;
     private ChannelMap channelMap;
@@ -31,7 +31,7 @@ public class DiscordServiceHandler implements IDiscordServiceHandler {
     }
 
     @Override
-    public void onRequestNewMessage(NewMessageRequest newMessageRequest) {
+    public void requestNewMessage(NewMessageRequest newMessageRequest) {
 
         MessageChannel requestedChannel = newMessageRequest.getRecipientChannel();
         String requestedUserId = newMessageRequest.getRecipientUserId();
@@ -71,7 +71,7 @@ public class DiscordServiceHandler implements IDiscordServiceHandler {
     }
 
     @Override
-    public void onRequestEditMessage(EditMessageRequest editMessageRequest) {
+    public void requestEditMessage(EditMessageRequest editMessageRequest) {
 
         // TODO
 

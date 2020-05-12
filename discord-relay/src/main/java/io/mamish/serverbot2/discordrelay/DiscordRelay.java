@@ -26,17 +26,15 @@ public class DiscordRelay {
     Logger logger = Logger.getLogger("DiscordRelay");
 
     private DiscordApi discordApi;
-    private ChannelMap channelMap;
-    private ICommandService commandServiceClient;
-
-    private RequestMessagePoller messagePoller;
+    private final ChannelMap channelMap;
+    private final ICommandService commandServiceClient;
 
     public DiscordRelay() {
         commandServiceClient = ApiClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
         String apiToken = DiscordConfig.API_TOKEN.getValue();
         discordApi = new DiscordApiBuilder().setToken(apiToken).login().join();
         channelMap = new ChannelMap(discordApi);
-        messagePoller = new RequestMessagePoller(discordApi, channelMap);
+        new RequestMessagePoller(discordApi, channelMap);
         discordApi.addMessageCreateListener(this::onMessageCreate);
     }
 

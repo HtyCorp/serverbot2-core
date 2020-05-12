@@ -14,8 +14,8 @@ import java.util.Optional;
 
 public class ChannelMap {
 
-    private Map<ServerTextChannel, MessageChannel> discordToApp = new HashMap<>();
-    private Map<MessageChannel, ServerTextChannel> appToDiscord = new EnumMap<>(MessageChannel.class);
+    private final Map<ServerTextChannel, MessageChannel> discordToApp = new HashMap<>();
+    private final Map<MessageChannel, ServerTextChannel> appToDiscord = new EnumMap<>(MessageChannel.class);
 
     public ChannelMap(DiscordApi discordApi) {
         putBoth(discordApi, MessageChannel.STANDARD, DiscordConfig.CHANNEL_ID_STANDARD);

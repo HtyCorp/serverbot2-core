@@ -44,10 +44,9 @@ public final class ApiClient {
         });
     }
 
-    public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaApiServer localFunction) {
-        return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            return localFunction.handleRequest(payloadAndId.fst(), null);
-        });
+    public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaApiServer<ModelType> localFunction) {
+        return makeProxyInstance(modelInterfaceClass, payloadAndId ->
+                localFunction.handleRequest(payloadAndId.fst(), null));
     }
 
     public static <ModelType> ModelType sqs(Class<ModelType> modelInterfaceClass, String queueName) {
@@ -61,12 +60,12 @@ public final class ApiClient {
         }
 
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
-        return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            return sqsRequestResponse.sendAndReceive(queueUrl,
-                    payloadAndId.fst(),
-                    ApiConfig.CUSTOM_API_CLIENT_DEFAULT_TIMEOUT,
-                    payloadAndId.snd());
-        });
+        return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
+                queueUrl,
+                payloadAndId.fst(),
+                ApiConfig.CUSTOM_API_CLIENT_DEFAULT_TIMEOUT,
+                payloadAndId.snd())
+        );
 
     }
 
@@ -97,10 +96,9 @@ public final class ApiClient {
                     // If error provided, generate the exception (basic details only) and throw.
                     if (error != null && !error.isJsonNull()) {
                         ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
-                        ApiException deserialisedException = ServerExceptionParser.fromName(
+                        throw ServerExceptionParser.fromName(
                                 info.getExceptionTypeName(),
                                 info.getExceptionMessage());
-                        throw deserialisedException;
                     }
                     // Otherwise, parse the content and return as expected response type.
                     else {

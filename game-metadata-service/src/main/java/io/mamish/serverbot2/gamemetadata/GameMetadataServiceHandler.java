@@ -6,7 +6,7 @@ import io.mamish.serverbot2.sharedutil.reflect.SimpleDynamoDbMapper;
 
 import java.util.List;
 
-public class GameMetadataServiceHandler implements IGameMetadataServiceHandler {
+public class GameMetadataServiceHandler implements IGameMetadataService {
 
     private SimpleDynamoDbMapper<GameMetadata> mapper;
 
@@ -15,13 +15,13 @@ public class GameMetadataServiceHandler implements IGameMetadataServiceHandler {
     }
 
     @Override
-    public ListGamesResponse onRequestListGames(ListGamesRequest request) {
+    public ListGamesResponse requestListGames(ListGamesRequest request) {
         List<GameMetadata> allMetadata = mapper.scan();
         return new ListGamesResponse(allMetadata);
     }
 
     @Override
-    public DescribeGameResponse onRequestDescribeGame(DescribeGameRequest request) {
+    public DescribeGameResponse requestDescribeGame(DescribeGameRequest request) {
         GameMetadata result = mapper.get(request.getGameName());
         if (result == null) {
             return new DescribeGameResponse(false, null);

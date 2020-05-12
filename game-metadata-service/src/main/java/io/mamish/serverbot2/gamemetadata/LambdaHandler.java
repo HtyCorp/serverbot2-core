@@ -1,19 +1,19 @@
 package io.mamish.serverbot2.gamemetadata;
 
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
-import io.mamish.serverbot2.gamemetadata.model.IGameMetadataServiceHandler;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 
-public class LambdaHandler extends LambdaApiServer<IGameMetadataServiceHandler> {
+public class LambdaHandler extends LambdaApiServer<IGameMetadataService> {
 
     private GameMetadataServiceHandler serviceHandler = new GameMetadataServiceHandler();
 
     @Override
-    protected Class<IGameMetadataServiceHandler> getModelClass() {
-        return IGameMetadataServiceHandler.class;
+    protected Class<IGameMetadataService> getModelClass() {
+        return IGameMetadataService.class;
     }
 
     @Override
-    protected IGameMetadataServiceHandler getHandlerInstance() {
+    protected IGameMetadataService getHandlerInstance() {
         return serviceHandler;
     }
 
