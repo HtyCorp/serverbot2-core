@@ -8,3 +8,9 @@ CodeBuild:
 Ubuntu image locator:
  * Example URL ('_' value is epoch milli time): https://cloud-images.ubuntu.com/locator/ec2/releasesTable?_=1588837725000
  * JSON payload containing table of latest AMIs
+
+Error handling:
+ * service-framework needs CloudWatch integration: would be nice to have exception logging handled automatically with exception reason metrics
+
+Services:
+ * Might need an IP / security group management service: may need to change ports at runtime, which means updating all whitelisted IPs.

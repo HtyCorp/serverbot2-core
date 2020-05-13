@@ -1,27 +1,43 @@
 package io.mamish.serverbot2.discordrelay;
 
-import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
-import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
-import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
-import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
+import io.mamish.serverbot2.discordrelay.model.service.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.server.SqsApiServer;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedutil.reflect.SimpleDynamoDbMapper;
 import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.Channel;
+import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.user.User;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
-public class DiscordServiceHandler implements IDiscordService {
+public class DiscordServiceHandler extends SqsApiServer<IDiscordService> implements IDiscordService {
 
-    private DiscordApi discordApi;
-    private ChannelMap channelMap;
-    private SimpleDynamoDbMapper<DynamoMessageItem> messageMapper;
+    private final DiscordApi discordApi;
+    private final ChannelMap channelMap;
+    private final SimpleDynamoDbMapper<DynamoMessageItem> messageMapper;
 
     private Logger logger;
+
+    @Override
+    protected Class<IDiscordService> getModelClass() {
+        return IDiscordService.class;
+    }
+
+    @Override
+    protected IDiscordService getHandlerInstance() {
+        return this;
+    }
+
+    @Override
+    protected String getReceiverQueueName() {
+        return DiscordConfig.SQS_QUEUE_NAME;
+    }
 
     public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap) {
         this.discordApi = discordApi;
@@ -31,7 +47,7 @@ public class DiscordServiceHandler implements IDiscordService {
     }
 
     @Override
-    public void requestNewMessage(NewMessageRequest newMessageRequest) {
+    public NewMessageResponse requestNewMessage(NewMessageRequest newMessageRequest) {
 
         MessageChannel requestedChannel = newMessageRequest.getRecipientChannel();
         String requestedUserId = newMessageRequest.getRecipientUserId();
@@ -46,34 +62,75 @@ public class DiscordServiceHandler implements IDiscordService {
         }
 
         TextChannel channel;
-        try {
-            if (requestedChannel != null) {
-                channel = channelMap.getDiscordChannel(requestedChannel).get();
+
+        if (requestedChannel != null) {
+            Optional<ServerTextChannel> optChannel = channelMap.getDiscordChannel(requestedChannel);
+            if (optChannel.isPresent()) {
+                channel = optChannel.get();
             } else {
-                channel = discordApi.getUserById(requestedUserId).thenCompose(User::openPrivateChannel).join();
+                throw new RequestHandlingException("Discord channel missing for app MessageChannel " + requestedChannel);
             }
-        } catch (Exception e) {
-            throw new RequestHandlingException("Got valid NewMessageRequest recipient params, but failed to look up the user or channel");
+        } else {
+            try {
+                channel = discordApi.getUserById(requestedUserId).thenCompose(User::openPrivateChannel).join();
+            } catch (Exception e) {
+                throw new RequestHandlingException("Failed to open private channel to requested user with ID " + requestedUserId, e);
+            }
         }
 
-        // If no external ID supplied, send a message with no tracking in DynamoDB.
-        if (newMessageRequest.getExternalId() == null) {
-            channel.sendMessage(requestedContent).join();
-        } else {
+        if (requestedExternalId != null) {
             if (messageMapper.has(requestedExternalId)) {
-                // This interface doesn't return a response so just log errors locally.
                 throw new RequestValidationException("Received NewMessageRequest with an already used external ID");
             }
-            Message message = channel.sendMessage(requestedContent).join();
-            messageMapper.put(new DynamoMessageItem(newMessageRequest.getExternalId(), message.getIdAsString()));
         }
+
+        Message message = channel.sendMessage(requestedContent).join();
+
+        if (requestedExternalId != null) {
+            messageMapper.put(new DynamoMessageItem(requestedExternalId, channel.getIdAsString(), message.getIdAsString()));
+        }
+
+        return new NewMessageResponse(channel.getIdAsString(), message.getIdAsString());
 
     }
 
     @Override
-    public void requestEditMessage(EditMessageRequest editMessageRequest) {
+    public EditMessageResponse requestEditMessage(EditMessageRequest editMessageRequest) {
 
-        // TODO
+        String requestedContent = editMessageRequest.getContent();
+        String externalId = editMessageRequest.getExternalId();
+        EditMode editMode = editMessageRequest.getEditMode();
+
+        DynamoMessageItem dbItem = messageMapper.get(externalId);
+        if (dbItem == null) {
+            throw new RequestValidationException("No message entry found for external ID " + externalId);
+        }
+        String channelId = dbItem.getDiscordChannelId();
+        String messageId = dbItem.getDiscordMessageId();
+
+        TextChannel channel;
+        Optional<TextChannel> optChannel = discordApi.getChannelById(channelId).flatMap(Channel::asTextChannel);
+        if (optChannel.isEmpty()) {
+            throw new RequestHandlingException("Could not retrieve original channel of message, from channel ID "
+                    + channelId + " and message ID " + messageId);
+        } else {
+            channel = optChannel.get();
+        }
+
+        // Odd that this isn't an optional like Channel. Doesn't declare exceptions either.
+        // Will have to test effect with deleted messages and see how logging/recovery can be improved.
+        Message message = discordApi.getMessageById(messageId, channel).join();
+
+        String oldContent = message.getContent();
+        String newContent = null;
+        if (editMode == EditMode.REPLACE) {
+            newContent = requestedContent;
+        } else if (editMode == EditMode.APPEND) {
+            newContent = oldContent + "\n" + requestedContent;
+        }
+        message.edit(newContent);
+
+        return new EditMessageResponse(newContent, channelId, messageId);
 
     }
 }

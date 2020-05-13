@@ -8,11 +8,8 @@ import java.util.List;
 
 public class GameMetadataServiceHandler implements IGameMetadataService {
 
-    private SimpleDynamoDbMapper<GameMetadata> mapper;
-
-    public GameMetadataServiceHandler() {
-        mapper = new SimpleDynamoDbMapper<>(GameMetadataConfig.BACKING_TABLE_NAME, GameMetadata.class);
-    }
+    private final SimpleDynamoDbMapper<GameMetadata> mapper
+            = new SimpleDynamoDbMapper<>(GameMetadataConfig.BACKING_TABLE_NAME, GameMetadata.class);
 
     @Override
     public ListGamesResponse requestListGames(ListGamesRequest request) {

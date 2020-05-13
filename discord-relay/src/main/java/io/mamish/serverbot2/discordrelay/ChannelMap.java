@@ -32,6 +32,7 @@ public class ChannelMap {
         return Optional.ofNullable(appToDiscord.get(appChannel));
     }
 
+    // TODO: Need a better strategy than instantly failing if channels are missing.
     private void putBoth(DiscordApi discordApi, MessageChannel appChannel, Parameter channelIdParameter) {
         ServerTextChannel discordChannel = discordApi.getChannelById(channelIdParameter.getValue()).flatMap(Channel::asServerTextChannel).get();
         discordToApp.put(discordChannel, appChannel);

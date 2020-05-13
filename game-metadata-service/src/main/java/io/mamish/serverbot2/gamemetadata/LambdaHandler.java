@@ -5,7 +5,7 @@ import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 
 public class LambdaHandler extends LambdaApiServer<IGameMetadataService> {
 
-    private GameMetadataServiceHandler serviceHandler = new GameMetadataServiceHandler();
+    private final GameMetadataServiceHandler serviceHandler = new GameMetadataServiceHandler();
 
     @Override
     protected Class<IGameMetadataService> getModelClass() {

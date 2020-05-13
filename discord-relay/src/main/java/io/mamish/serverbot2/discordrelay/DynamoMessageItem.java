@@ -8,18 +8,25 @@ public class DynamoMessageItem {
 
     @DdbAttribute(value = DiscordConfig.MESSAGE_TABLE_PKEY, keyType = DdbKeyType.PARTITION)
     private String externalMessageId;
-    @DdbAttribute("DiscordId")
+    @DdbAttribute("DiscordChannelId")
+    private String discordChannelId;
+    @DdbAttribute("DiscordMessageId")
     private String discordMessageId;
 
     public DynamoMessageItem() {}
 
-    public DynamoMessageItem(String externalMessageId, String discordMessageId) {
+    public DynamoMessageItem(String externalMessageId, String discordChannelId, String discordMessageId) {
         this.externalMessageId = externalMessageId;
+        this.discordChannelId = discordChannelId;
         this.discordMessageId = discordMessageId;
     }
 
     public String getExternalMessageId() {
         return externalMessageId;
+    }
+
+    public String getDiscordChannelId() {
+        return discordChannelId;
     }
 
     public String getDiscordMessageId() {

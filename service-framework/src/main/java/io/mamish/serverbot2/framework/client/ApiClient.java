@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
-import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
 import io.mamish.serverbot2.framework.exception.ServerExceptionParser;
 import io.mamish.serverbot2.framework.exception.server.SerializationException;
