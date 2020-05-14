@@ -15,4 +15,6 @@ public class CommonConfig {
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
+    public static final int STANDARD_LAMBDA_MEMORY = 1024;
+
 }

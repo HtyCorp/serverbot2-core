@@ -74,6 +74,7 @@
         <module>game-metadata-service-model</module>
         <module>game-metadata-service</module>
         <module>service-framework</module>
+        <module>resource-reaper</module>
     </modules>
 
     <dependencyManagement>
@@ -90,6 +91,12 @@
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-lambda-java-core</artifactId>
                 <version>1.2.0</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-events -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-lambda-java-events</artifactId>
+                <version>2.2.8</version>
             </dependency>
             <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
             <dependency>

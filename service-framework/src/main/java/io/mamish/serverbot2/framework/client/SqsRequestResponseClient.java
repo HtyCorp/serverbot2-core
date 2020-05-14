@@ -3,6 +3,7 @@ package io.mamish.serverbot2.framework.client;
 import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -12,6 +13,7 @@ import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -19,16 +21,21 @@ public class SqsRequestResponseClient {
 
     private final SqsAsyncClient realSqsAsyncClient = SqsAsyncClient.create();
     private final SqsClient realSqsClient = SqsClient.create();
-    private final String rxTempQueueUrl = realSqsClient.createQueue(r ->
-            r.queueName(generateQueueName())).queueUrl();
+    private final String rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
+            .tags(makeReaperHeartbeatTags())).queueUrl();
     private final Map<String, Queue<String>> requestIdToSync =
             Collections.synchronizedMap(new HashMap<>());
+
+    // How often the tags of the temp queue are updated with the current timestamp to prevent reaper deletion.
+    private static final long REAPER_HEARTBEAT_INTERVAL = ReaperConfig.TTL_SECONDS_API_TEMP_SQS_QUEUE / 2;
 
     public SqsRequestResponseClient() {
         Thread receiverThread = new Thread(this::runReceiveLoop);
         receiverThread.setDaemon(true);
         receiverThread.start();
 
+        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::updateQueueReaperHeartbeat,
+                REAPER_HEARTBEAT_INTERVAL, REAPER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
         Runtime.getRuntime().addShutdownHook(new Thread(() ->
                 realSqsAsyncClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
     }
@@ -116,7 +123,15 @@ public class SqsRequestResponseClient {
 
     private static String generateQueueName() {
         // Should be < 70 chars, so within the 80-char limit for SQS queue names.
-        return "api-client-temp-" + IDUtils.epochSeconds() + "-" + IDUtils.randomUUIDJoined();
+        return String.join("-", ApiConfig.TEMP_QUEUE_URL_PREFIX, IDUtils.epochSeconds(), IDUtils.randomUUIDJoined());
+    }
+
+    private void updateQueueReaperHeartbeat() {
+        realSqsClient.tagQueue(r -> r.queueUrl(rxTempQueueUrl).tags(makeReaperHeartbeatTags()));
+    }
+
+    private static Map<String,String> makeReaperHeartbeatTags() {
+        return Map.of(ReaperConfig.HEARTBEAT_TAG_NAME, IDUtils.epochSeconds());
     }
 
     private static MessageAttributeValue stringAttribute(String s) {

@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 mvn clean install
 cp discord-relay/target/discord-relay.jar relay-docker/discord-relay.jar
 cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/DockerFile

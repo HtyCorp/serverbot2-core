@@ -25,7 +25,7 @@ public final class ApiClient {
 
     private static final Gson gson = new Gson();
     private static final LambdaClient lambdaClient = LambdaClient.builder()
-            .overrideConfiguration(r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CUSTOM_API_CLIENT_DEFAULT_TIMEOUT)))
+            .overrideConfiguration(r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)))
             .build();
 
     // Don't initialise SQS unless used: creates temporary SQS queue needing cleanup later.
@@ -62,7 +62,7 @@ public final class ApiClient {
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
                 queueUrl,
                 payloadAndId.fst(),
-                ApiConfig.CUSTOM_API_CLIENT_DEFAULT_TIMEOUT,
+                ApiConfig.CLIENT_DEFAULT_TIMEOUT,
                 payloadAndId.snd())
         );
 

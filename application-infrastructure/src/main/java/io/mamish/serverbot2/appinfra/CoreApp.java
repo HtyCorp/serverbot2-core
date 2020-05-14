@@ -23,6 +23,7 @@ public class CoreApp {
         new CommandStack(app, "CommandStack", props);
         new StateMachinesStack(app, "StateMachinesStack", props);
         new GameMetadataStack(app, "GameMetadataStack", props);
+        new ReaperStack(app, "ReaperStack", props);
 
         app.synth();
 

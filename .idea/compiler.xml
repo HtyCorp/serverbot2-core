@@ -15,6 +15,7 @@
         <module name="deployment-infrastructure" />
         <module name="shared-util" />
         <module name="app-daemon-model" />
+        <module name="resource-reaper" />
         <module name="game-metadata-service" />
         <module name="application-infrastructure" />
         <module name="app-daemon" />
