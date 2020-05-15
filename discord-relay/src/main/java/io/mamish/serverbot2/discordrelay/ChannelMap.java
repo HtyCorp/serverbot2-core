@@ -18,8 +18,8 @@ public class ChannelMap {
     private final Map<MessageChannel, ServerTextChannel> appToDiscord = new EnumMap<>(MessageChannel.class);
 
     public ChannelMap(DiscordApi discordApi) {
-        putBoth(discordApi, MessageChannel.STANDARD, DiscordConfig.CHANNEL_ID_STANDARD);
-        putBoth(discordApi, MessageChannel.OFFICER, DiscordConfig.CHANNEL_ID_OFFICER);
+        putBoth(discordApi, MessageChannel.WELCOME, DiscordConfig.CHANNEL_ID_WELCOME);
+        putBoth(discordApi, MessageChannel.SERVERS, DiscordConfig.CHANNEL_ID_SERVERS);
         putBoth(discordApi, MessageChannel.ADMIN, DiscordConfig.CHANNEL_ID_ADMIN);
         putBoth(discordApi, MessageChannel.DEBUG, DiscordConfig.CHANNEL_ID_DEBUG);
     }

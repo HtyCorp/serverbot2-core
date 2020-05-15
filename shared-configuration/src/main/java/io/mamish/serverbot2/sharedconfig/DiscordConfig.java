@@ -9,8 +9,8 @@ public class DiscordConfig {
 
     public static Secret API_TOKEN = new Secret("discord-relay/api-token");
 
-    public static final Parameter CHANNEL_ID_STANDARD = new Parameter("/discord-relay/channel-id/standard");
-    public static final Parameter CHANNEL_ID_OFFICER = new Parameter("/discord-relay/channel-id/officer");
+    public static final Parameter CHANNEL_ID_WELCOME = new Parameter("/discord-relay/channel-id/welcome");
+    public static final Parameter CHANNEL_ID_SERVERS = new Parameter("/discord-relay/channel-id/servers");
     public static final Parameter CHANNEL_ID_ADMIN = new Parameter("/discord-relay/channel-id/admin");
     public static final Parameter CHANNEL_ID_DEBUG = new Parameter("/discord-relay/channel-id/debug");
 

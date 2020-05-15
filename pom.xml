@@ -75,6 +75,8 @@
         <module>game-metadata-service</module>
         <module>service-framework</module>
         <module>resource-reaper</module>
+        <module>network-security-service-model</module>
+        <module>network-security-service</module>
     </modules>
 
     <dependencyManagement>

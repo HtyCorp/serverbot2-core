@@ -60,7 +60,7 @@ public class LambdaHandlerTest {
         LambdaHandler handler = new LambdaHandler();
         ICommandService localClient = ApiClient.localLambda(ICommandService.class, handler);
 
-        CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.STANDARD, DUMMY_USER_ID);
+        CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.WELCOME, DUMMY_USER_ID);
         CommandServiceResponse response = localClient.requestUserCommand(request);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));

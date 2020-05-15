@@ -14,3 +14,6 @@ Error handling:
 
 Services:
  * Might need an IP / security group management service: may need to change ports at runtime, which means updating all whitelisted IPs.
+
+Command lambda:
+ * May need separate command namespaces (i.e. interfaces) for different command permission levels (i.e. welcome, servers, admin, debug)
