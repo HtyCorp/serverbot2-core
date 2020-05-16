@@ -9,11 +9,11 @@ import java.util.List;
 @ApiRequestInfo(order = 0, name = "CommandService", numRequiredFields = 3, description = "Run a user command submitted from Discord")
 public class CommandServiceRequest {
 
-    @ApiArgumentInfo(order = 0, name = "words", description = "List of whitespace-split words in user command")
+    @ApiArgumentInfo(order = 0, description = "List of whitespace-split words in user command")
     private List<String> words;
-    @ApiArgumentInfo(order = 1, name = "channel", description = "Abstracted channel command was sent to")
+    @ApiArgumentInfo(order = 1, description = "Abstracted channel command was sent to")
     private MessageChannel channel;
-    @ApiArgumentInfo(order = 2, name = "senderId", description = "Discord ID of sending user")
+    @ApiArgumentInfo(order = 2, description = "Discord ID of sending user")
     private String senderId;
 
     @SuppressWarnings("unused")

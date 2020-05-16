@@ -17,3 +17,6 @@ Services:
 
 Command lambda:
  * May need separate command namespaces (i.e. interfaces) for different command permission levels (i.e. welcome, servers, admin, debug)
+
+Maven:
+ * Have a bunch of Lambdas with main classes defined in build: unnecessary and distracting since handlers have to be manually named anyway

@@ -7,7 +7,7 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
         description = "Show help for a particular command")
 public class CommandHelp extends AbstractCommandDto {
 
-    @ApiArgumentInfo(order = 0, name = "command-name", description = "Name of command to look up")
+    @ApiArgumentInfo(order = 0, description = "Name of command to look up")
     private String commandName;
 
     public String getCommandName() {

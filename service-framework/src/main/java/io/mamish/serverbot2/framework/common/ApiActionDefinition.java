@@ -71,12 +71,10 @@ public class ApiActionDefinition {
         this.orderedFieldsFieldView = orderedFields.stream().map(Pair::fst).collect(Collectors.toUnmodifiableList());
         this.orderedFieldsInfoView = orderedFields.stream().map(Pair::snd).collect(Collectors.toUnmodifiableList());
 
-        List<ApiArgumentInfo> argInfoList = getOrderedFieldsInfoView();
-
         StringBuilder sbUsage = new StringBuilder();
         sbUsage.append(CommonConfig.COMMAND_SIGIL_CHARACTER).append(getName());
-        for (int i = 0; i < argInfoList.size(); i++) {
-            String argName = argInfoList.get(i).name();
+        for (int i = 0; i < orderedFieldsFieldView.size(); i++) {
+            String argName = orderedFieldsFieldView.get(i).getName();
             sbUsage.append(' ');
             if (i < getNumRequiredFields()) {
                 sbUsage.append(argName);
@@ -86,7 +84,9 @@ public class ApiActionDefinition {
         }
 
         this.usageString = sbUsage.toString();
-        this.argumentDescriptionStrings = argInfoList.stream().map(m -> m.name() + ": " + m.description()).collect(Collectors.toList());
+        this.argumentDescriptionStrings = orderedFields.stream()
+                .map(m -> m.fst().getName() + ": " + m.snd().description())
+                .collect(Collectors.toList());
 
     }
 

@@ -7,17 +7,13 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
         description = "Send a message through Discord to the chosen channels or user")
 public class NewMessageRequest {
 
-    @ApiArgumentInfo(order = 0, name = "content",
-            description = "Message content to send")
+    @ApiArgumentInfo(order = 0, description = "Message content to send")
     private String content;
-    @ApiArgumentInfo(order = 1, name = "externalId",
-            description = "Optional external message ID to allow future edits")
+    @ApiArgumentInfo(order = 1, description = "Optional external message ID to allow future edits")
     private String externalId;
-    @ApiArgumentInfo(order = 2, name = "recipientChannel",
-            description = "Application channel to send message to. Mutually exclusive with `recipientUserId`")
+    @ApiArgumentInfo(order = 2, description = "Application channel to send message to. Mutually exclusive with `recipientUserId`")
     private MessageChannel recipientChannel;
-    @ApiArgumentInfo(order = 3, name = "recipientUserId",
-            description = "Discord ID of user to send message to. Mutually exclusive with `recipientChannel`")
+    @ApiArgumentInfo(order = 3, description = "Discord ID of user to send message to. Mutually exclusive with `recipientChannel`")
     private String recipientUserId;
 
     public NewMessageRequest() {}

@@ -7,7 +7,7 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
         description = "Stop a running game")
 public class CommandStop extends AbstractCommandDto {
 
-    @ApiArgumentInfo(order = 0, name = "game-name", description = "Name of game to stop")
+    @ApiArgumentInfo(order = 0, description = "Name of game to stop")
     private String gameName;
 
     public String getGameName() {

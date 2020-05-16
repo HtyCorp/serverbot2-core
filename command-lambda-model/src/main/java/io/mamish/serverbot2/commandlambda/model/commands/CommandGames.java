@@ -7,7 +7,7 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
         description = "List all games or get info on a game")
 public class CommandGames extends AbstractCommandDto {
 
-    @ApiArgumentInfo(order = 0, name = "game-name", description = "Name of game to look up")
+    @ApiArgumentInfo(order = 0, description = "Name of game to look up")
     private String gameName;
 
     public String getGameName() {

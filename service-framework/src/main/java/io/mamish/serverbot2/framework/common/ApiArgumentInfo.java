@@ -9,6 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface ApiArgumentInfo {
     int order();
-    String name(); // TODO: Remove this; it's redundant over actual field name. Need to refactor ApiActionDefinition for change.
     String description();
 }
