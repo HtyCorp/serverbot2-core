@@ -49,9 +49,9 @@ public class LambdaHandlerTest {
     @Test
     public void testHelpSpecificCommand() {
         String expectedResponseMessage =
-                SIGIL+"start game-name\n" +
+                SIGIL+"start gameName\n" +
                 "  Start a game\n" +
-                "    game-name: Name of game to start";
+                "    gameName: Name of game to start";
         testSimpleResponseMessage(expectedResponseMessage,
                 "help", "start");
     }
