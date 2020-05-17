@@ -4,6 +4,7 @@ Discord relay:
  * Static SQS queue?
 CodeBuild:
  * Use local build step bash scripts in buildpsec, instead of running commands directly?
+ * Need to rethink accounts used in build to make testing better.
 
 Ubuntu image locator:
  * Example URL ('_' value is epoch milli time): https://cloud-images.ubuntu.com/locator/ec2/releasesTable?_=1588837725000

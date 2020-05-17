@@ -42,6 +42,18 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>ec2</artifactId>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>kms</artifactId>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-encryption-sdk-java -->
+<!--        <dependency>-->
+<!--            <groupId>com.amazonaws</groupId>-->
+<!--            <artifactId>aws-encryption-sdk-java</artifactId>-->
+<!--            <version>1.6.1</version>-->
+<!--        </dependency>-->
     </dependencies>
 
 </project>

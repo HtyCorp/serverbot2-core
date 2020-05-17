@@ -2,16 +2,16 @@ package io.mamish.serverbot2.networksecurity.model;
 
 import java.util.List;
 
-public class SecurityGroup {
+public class ApplicationSecurityGroup {
 
     private String gameName;
     private String groupId;
     private List<PortPermission> allowedPorts;
-    private List<String> allowedAddresses;
+    private List<DiscordUserIp> allowedAddresses;
 
-    public SecurityGroup() { }
+    public ApplicationSecurityGroup() { }
 
-    public SecurityGroup(String gameName, String groupId, List<PortPermission> allowedPorts, List<String> allowedAddresses) {
+    public ApplicationSecurityGroup(String gameName, String groupId, List<PortPermission> allowedPorts, List<DiscordUserIp> allowedAddresses) {
         this.gameName = gameName;
         this.groupId = groupId;
         this.allowedPorts = allowedPorts;
@@ -30,7 +30,7 @@ public class SecurityGroup {
         return allowedPorts;
     }
 
-    public List<String> getAllowedAddresses() {
+    public List<DiscordUserIp> getAllowedAddresses() {
         return allowedAddresses;
     }
 }
