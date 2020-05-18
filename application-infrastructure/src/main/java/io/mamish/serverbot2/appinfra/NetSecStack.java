@@ -12,7 +12,7 @@ import java.util.List;
 
 public class NetSecStack extends Stack {
 
-    public NetSecStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
+    public NetSecStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
         Key userIdKey = Key.Builder.create(this, "UserIdKey")

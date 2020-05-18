@@ -9,8 +9,10 @@ public class CommonConfig {
 
     public static String PATH = "common-config";
 
+    public static final Parameter S3_DEPLOYED_ARTIFACTS_BUCKET = new Parameter(PATH, "deployed-artifacts-bucket");
+
     public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";
-    public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "/app-vpc-id");
+    public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "app-vpc-id");
 
     public static final String APEX_DOMAIN_NAME = "test.mamish.io";
 

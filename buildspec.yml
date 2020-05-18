@@ -25,13 +25,9 @@ phases:
 artifacts:
   secondary-artifacts:
     # Looking like it won't be necessary to pass these: they are built into the CDK assemblies
-    jar_files:
+    s3_jar_files:
       files:
         - "app-daemon/target/app-daemon.jar"
-        - "discord-relay/target/discord-relay.jar"
-        - "command-lambda/target/command-lambda.jar"
-        - "steps-lambda/target/steps-lambda.jar"
-        - "ip-lambda/target/ip-lambda.jar"
       discard-paths: yes
     cdk_deploy_assembly:
       files:

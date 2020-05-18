@@ -2,7 +2,9 @@ package io.mamish.serverbot2.gamemetadata.model;
 
 public interface IGameMetadataService {
 
-    ListGamesResponse requestListGames(ListGamesRequest request);
-    DescribeGameResponse requestDescribeGame(DescribeGameRequest request);
+    ListGamesResponse listGames(ListGamesRequest request);
+    DescribeGameResponse describeGame(DescribeGameRequest request);
+    LockGameResponse lockGame(LockGameRequest request);
+    UnlockGameResponse unlockGame(UnlockGameRequest request);
 
 }

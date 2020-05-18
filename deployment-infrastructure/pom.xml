@@ -60,6 +60,16 @@
             <artifactId>codebuild</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>ssm</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
