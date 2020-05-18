@@ -12,14 +12,18 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.util.Base64;
+import java.util.Map;
 
 public class CryptoHelper {
+
+    private static final Map<String,String> STANDARD_ENCRYPTION_CONTEXT = Map.of(
+            "service", "NetworkSecurityService"
+    );
 
     private final KmsClient kmsClient = KmsClient.create();
     private final String KEYID = "alias/"+NetSecConfig.KMS_ALIAS;
     private final Base64.Encoder b64Encoder = Base64.getEncoder();
     private final Base64.Decoder b64Decoder = Base64.getDecoder();
-
     private final Cipher cipher;
 
     public CryptoHelper() {
@@ -31,7 +35,9 @@ public class CryptoHelper {
     }
 
     String encrypt(SdkBytes plaintextBytes) {
-        EncryptResponse response = kmsClient.encrypt(r -> r.keyId(KEYID).plaintext(plaintextBytes));
+        EncryptResponse response = kmsClient.encrypt(r -> r.keyId(KEYID)
+                .plaintext(plaintextBytes)
+                .encryptionContext(STANDARD_ENCRYPTION_CONTEXT));
         byte[] bytesOut = response.ciphertextBlob().asByteArray();
         return b64Encoder.encodeToString(bytesOut);
     }
@@ -39,12 +45,14 @@ public class CryptoHelper {
     SdkBytes decrypt(String ciphertextBase64String) {
         byte[] decoded = b64Decoder.decode(ciphertextBase64String);
         SdkBytes bytesIn = SdkBytes.fromByteArray(decoded);
-        return kmsClient.decrypt(r -> r.ciphertextBlob(bytesIn)).plaintext();
+        return kmsClient.decrypt(r -> r.ciphertextBlob(bytesIn)
+                .encryptionContext(STANDARD_ENCRYPTION_CONTEXT)).plaintext();
     }
 
     String generateDataKey() {
         GenerateDataKeyWithoutPlaintextResponse response = kmsClient.generateDataKeyWithoutPlaintext(r -> r.keyId(KEYID)
-                .keySpec(DataKeySpec.AES_128));
+                .keySpec(DataKeySpec.AES_128)
+                .encryptionContext(STANDARD_ENCRYPTION_CONTEXT));
         byte[] bytesOut = response.ciphertextBlob().asByteArray();
         return b64Encoder.encodeToString(bytesOut);
     }

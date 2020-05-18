@@ -12,7 +12,6 @@ import software.amazon.awscdk.services.ec2.SubnetConfiguration;
 import software.amazon.awscdk.services.ec2.SubnetType;
 import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.ecs.*;
-import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.logs.LogGroup;
@@ -63,9 +62,8 @@ public class RelayStack extends Stack {
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")
                 .assumedBy(new ServicePrincipal("ecs-tasks.amazonaws.com"))
                 .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess"),
-                        ManagedPolicy.fromAwsManagedPolicyName("AWSLambdaFullAccess"),
-                        ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
+                        Util.POLICY_SQS_FULL_ACCESS,
+                        Util.POLICY_EC2_FULL_ACCESS
                 ))
                 .build();
 

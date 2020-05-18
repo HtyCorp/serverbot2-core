@@ -7,12 +7,14 @@ import software.amazon.awssdk.services.sqs.SqsClient;
  */
 public class DiscordConfig {
 
-    public static Secret API_TOKEN = new Secret("discord-relay/api-token");
+    public static final String PATH = "discord-relay";
 
-    public static final Parameter CHANNEL_ID_WELCOME = new Parameter("/discord-relay/channel-id/welcome");
-    public static final Parameter CHANNEL_ID_SERVERS = new Parameter("/discord-relay/channel-id/servers");
-    public static final Parameter CHANNEL_ID_ADMIN = new Parameter("/discord-relay/channel-id/admin");
-    public static final Parameter CHANNEL_ID_DEBUG = new Parameter("/discord-relay/channel-id/debug");
+    public static Secret API_TOKEN = new Secret(PATH, "api-token");
+
+    public static final Parameter CHANNEL_ID_WELCOME = new Parameter(PATH, "channel-id/welcome");
+    public static final Parameter CHANNEL_ID_SERVERS = new Parameter(PATH, "channel-id/servers");
+    public static final Parameter CHANNEL_ID_ADMIN = new Parameter(PATH, "channel-id/admin");
+    public static final Parameter CHANNEL_ID_DEBUG = new Parameter(PATH, "channel-id/debug");
 
     // I'm normally avoiding fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
     // Deletion/replacement of these should be manual and very careful anyway.

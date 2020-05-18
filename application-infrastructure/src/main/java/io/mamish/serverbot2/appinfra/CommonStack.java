@@ -26,6 +26,10 @@ public class CommonStack extends Stack {
     private final IHostedZone apexHostedZone;
     private final DnsValidatedCertificate wildcardCertificate;
 
+    public Vpc getApplicationVpc() {
+        return applicationVpc;
+    }
+
     public IHostedZone getApexHostedZone() {
         return apexHostedZone;
     }
@@ -51,7 +55,7 @@ public class CommonStack extends Stack {
                 .build();
 
         StringParameter vpcIdParameter = Util.instantiateConfigSsmParameter(this, "VpcIdParameter",
-                        CommonConfig.APPLICATION_VPC_ID_PARAM, applicationVpc.getVpcId()).build();
+                        CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId()).build();
 
         HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()
                 .domainName(CommonConfig.APEX_DOMAIN_NAME)

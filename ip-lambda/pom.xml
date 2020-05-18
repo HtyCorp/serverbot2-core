@@ -26,6 +26,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>network-security-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
         </dependency>
@@ -35,7 +41,6 @@
             <artifactId>aws-lambda-java-events</artifactId>
             <version>2.2.8</version>
         </dependency>
-
     </dependencies>
 
 

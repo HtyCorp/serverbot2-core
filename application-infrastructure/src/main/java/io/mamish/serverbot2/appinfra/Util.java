@@ -17,6 +17,8 @@ public class Util {
     static final IManagedPolicy POLICY_BASIC_LAMBDA_EXECUTION = ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole");
     static final IManagedPolicy POLICY_STEP_FUNCTIONS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess");
     static final IManagedPolicy POLICY_SQS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess");
+    static final IManagedPolicy POLICY_EC2_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess");
+    static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
 
     static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
@@ -27,6 +29,17 @@ public class Util {
         return Role.Builder.create(parent, id)
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(combinedPolicies);
+    }
+
+    static void addConfigReadPermissionToRole(IRole role, String path) {
+        role.addToPolicy(PolicyStatement.Builder.create()
+                .actions(List.of(
+                        "ssm:GetParameter",
+                        "secretsmanager:GetSecretValue")
+                ).resources(List.of(
+                        "arn:aws:ssm:*:*:parameter/"+path+"/*",
+                        "arn:aws:secretsmanager:*:*:secret:"+path+"/*")
+                ).build());
     }
 
     static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler) {

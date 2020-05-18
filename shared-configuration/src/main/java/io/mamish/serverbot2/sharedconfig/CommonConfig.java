@@ -7,8 +7,10 @@ import java.util.List;
  */
 public class CommonConfig {
 
+    public static String PATH = "common-config";
+
     public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";
-    public static final Parameter APPLICATION_VPC_ID_PARAM = new Parameter("common-config/app-vpc-id");
+    public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "/app-vpc-id");
 
     public static final String APEX_DOMAIN_NAME = "test.mamish.io";
 
@@ -27,5 +29,7 @@ public class CommonConfig {
             // App names and SG names are mapped 1-to-1 so this must be a reserved app name.
             NetSecConfig.REFERENCE_SG_SUFFIX
     );
+
+    public static final String POLICY_NAME_INVOKE_ANY_LAMBDA = "InvokeAnyLambda";
 
 }

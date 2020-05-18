@@ -12,8 +12,9 @@ public class Secret extends ConfigValue {
     private static final SecretsManagerClient secretsManager = SecretsManagerClient.create();
     private static final Function<String,String> fetcher = n -> secretsManager.getSecretValue(r -> r.secretId(n)).secretString();
 
-    public Secret(String name) {
-        super(name, fetcher);
+    public Secret(String path, String name) {
+        // Secrets have no '/' at the start of their path, unlike SSM parameters
+        super(path + "/" + name, fetcher);
     }
 
 }

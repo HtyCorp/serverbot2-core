@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.appinfra;
 
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
@@ -57,7 +58,7 @@ public class IpStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName("ip." + CommonConfig.APEX_DOMAIN_NAME)
+                .domainName(NetSecConfig.AUTH_SUBDOMAIN + CommonConfig.APEX_DOMAIN_NAME)
                 .certificate(commonStack.getWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());

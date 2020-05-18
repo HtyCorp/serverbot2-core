@@ -10,10 +10,10 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
-import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.IpPermission;
 import software.amazon.awssdk.services.ec2.model.IpRange;
 import software.amazon.awssdk.services.ec2.model.SecurityGroup;
+import software.amazon.awssdk.services.kms.model.KmsException;
 
 import java.security.Key;
 import java.util.List;
@@ -24,6 +24,34 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
 
     private final Ec2Client ec2Client = Ec2Client.create();
     private final CryptoHelper crypto = new CryptoHelper();
+    private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
+
+    public LambdaHandler() {
+        // Create reference group if missing. Should optimise this later to make it once-only.
+        try {
+            getManagedGroup(NetSecConfig.REFERENCE_SG_SUFFIX);
+        } catch (RequestHandlingException e) {
+            String dataKeyString = crypto.generateDataKey();
+            Key dataKey = crypto.decryptDataKey(dataKeyString);
+
+            String groupId = ec2Client.createSecurityGroup(r -> r.vpcId(VPCID)
+                    .groupName(makeSgName(NetSecConfig.REFERENCE_SG_SUFFIX))
+                    .description(dataKeyString)
+            ).groupId();
+
+            // Create a common ICMP rule so there's at least one IP and rule in the system to copy
+            ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(groupId)
+                    .ipPermissions(IpPermission.builder()
+                            .ipProtocol("icmp")
+                            .fromPort(-1)
+                            .toPort(-1)
+                            .ipRanges(IpRange.builder()
+                                    .cidrIp("0.0.0.0/32")
+                                    .description(crypto.encryptLocal(SdkBytes.fromUtf8String("REFERENCE"), dataKey))
+                                    .build())
+                            .build()));
+        }
+    }
 
     @Override
     protected Class<INetworkSecurity> getModelClass() {
@@ -40,14 +68,16 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         String gameName = request.getGameName();
         validateRequestedGameName(gameName);
 
-        ec2Client.describeVpcs(r -> r.filters(Filter.builder().name()))
-
+        String dataKeyString = crypto.generateDataKey();
+        Key dataKey = crypto.decryptDataKey(dataKeyString);
+        String newFullName = makeSgName(gameName);
+        String newId;
         try {
-            String dataKeyString = crypto.generateDataKey();
-            String newFullName = makeSgName(gameName);
-            String id = ec2Client.createSecurityGroup(r -> r.groupName(newFullName).description(dataKeyString)).groupId();
-            ManagedSecurityGroup blank = new ManagedSecurityGroup(gameName, newFullName, id, dataKeyString, List.of(), List.of());
-            return new CreateSecurityGroupResponse(blank);
+            newId = ec2Client.createSecurityGroup(r ->
+                    r.groupName(newFullName)
+                    .description(dataKeyString)
+                    .vpcId(VPCID)
+            ).groupId();
         } catch (AwsServiceException e) {
             if (e.awsErrorDetails().errorCode().equals("InvalidGroup.Duplicate")) {
                 throw new RequestHandlingException("Group for name '" + gameName + "' already exists");
@@ -55,38 +85,116 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
             e.printStackTrace();
             throw new RequestHandlingRuntimeException("Could not create new security group", e);
         }
-    }
 
-    // TODO
+        // Copy placeholder rule from reference group
+        ManagedSecurityGroup referenceGroup = getManagedGroup(NetSecConfig.REFERENCE_SG_SUFFIX);
+        // Per the initial definition in constructor, will always be one and only one rule
+        PortPermission referencePort = referenceGroup.getAllowedPorts().get(0);
+
+        List<IpRange> newIpRanges = referenceGroup.getAllowedUsers().stream().map(user -> IpRange.builder()
+                .cidrIp(user.getIpAddress()+"/32")
+                .description(crypto.encryptLocal(SdkBytes.fromUtf8String(user.getDiscordId()), dataKey))
+                .build()
+        ).collect(Collectors.toList());
+
+        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(newId).ipPermissions(IpPermission.builder()
+                .ipProtocol(PortProtocol.toEc2ApiName(referencePort.getProtocol()))
+                .fromPort(referencePort.getPortRangeFrom())
+                .toPort(referencePort.getPortRangeTo())
+                .ipRanges(newIpRanges)
+                .build()));
+
+        ManagedSecurityGroup finalGroup = getManagedGroup(gameName);
+        return new CreateSecurityGroupResponse(finalGroup);
+    }
 
     @Override
     public DescribeSecurityGroupResponse describeSecurityGroup(DescribeSecurityGroupRequest request) {
         String gameName = request.getGameName();
         validateRequestedGameName(gameName);
 
-        SecurityGroup realGroup = getRealGroup(gameName);
-        List<IpPermission> permissions = realGroup.ipPermissions();
-        String groupId = realGroup.groupId();
-
-        ManagedSecurityGroup simplifiedGroup = simplifyGroup(realGroup);
+        ManagedSecurityGroup simplifiedGroup = getManagedGroup(gameName);
         return new DescribeSecurityGroupResponse(simplifiedGroup);
 
     }
 
     @Override
     public ModifyPortsResponse modifyPorts(ModifyPortsRequest request) {
-        return null;
+        String gameName = request.getGameName();
+        validateRequestedGameName(gameName);
+
+        ManagedSecurityGroup currentGroup = getManagedGroup(gameName);
+        String realGroupId = currentGroup.getGroupId();
+
+        boolean icmpChanges = Stream.concat(request.getAddPorts().stream(), request.getRemovePorts().stream())
+                .anyMatch(p -> p.getProtocol().equals(PortProtocol.ICMP));
+        if (icmpChanges) {
+            throw new RequestValidationException("Cannot modify ICMP rules");
+        }
+
+        Key dataKey = crypto.decryptDataKey(currentGroup.getEncryptedDataKey());
+        List<IpPermission> permissionsToRemove = buildIpPermissions(currentGroup, request.getRemovePorts(), dataKey);
+        List<IpPermission> permissionsToAdd = buildIpPermissions(currentGroup, request.getAddPorts(), dataKey);
+
+        ec2Client.revokeSecurityGroupIngress(r -> r.groupId(realGroupId).ipPermissions(permissionsToRemove));
+        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(realGroupId).ipPermissions(permissionsToAdd));
+
+        ManagedSecurityGroup modifiedGroup = getManagedGroup(gameName);
+        return new ModifyPortsResponse(modifiedGroup);
+
+    }
+
+    private List<IpPermission> buildIpPermissions(ManagedSecurityGroup group, List<PortPermission> ports, Key dataKey) {
+
+        List<IpRange> allRanges = group.getAllowedUsers().stream().map(u -> IpRange.builder()
+                .cidrIp(u.getIpAddress() + "/32")
+                .description(crypto.encryptLocal(SdkBytes.fromUtf8String(u.getIpAddress()), dataKey))
+                .build()
+        ).collect(Collectors.toList());
+
+        return ports.stream().map(p -> IpPermission.builder()
+                .ipProtocol(PortProtocol.toEc2ApiName(p.getProtocol()))
+                .fromPort(p.getPortRangeFrom())
+                .toPort(p.getPortRangeTo())
+                .ipRanges(allRanges)
+                .build()
+        ).collect(Collectors.toList());
     }
 
     @Override
     public GenerateIpAuthUrlResponse generateIpAuthUrl(GenerateIpAuthUrlRequest request) {
-        return null;
+        String token = crypto.encrypt(SdkBytes.fromUtf8String(request.getUserId()));
+        String authUrl = "https://"
+                + NetSecConfig.AUTH_SUBDOMAIN
+                + CommonConfig.APEX_DOMAIN_NAME
+                + NetSecConfig.AUTH_PATH
+                + "?token="
+                + token;
+        return new GenerateIpAuthUrlResponse(authUrl);
     }
 
     @Override
     public AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request) {
-        String userId = request.getUserId();
         String ipAddress = request.getUserIpAddress();
+
+        if (request.getEncryptedUserId() == null && request.getUserId() == null) {
+            throw new RequestValidationException("Must specify either encryptedUserId or userId");
+        }
+        if (request.getEncryptedUserId() != null && request.getUserId() != null) {
+            throw new RequestValidationException("Must specify only one of encryptedUserId or userId");
+        }
+
+        final String userId;
+        if (request.getUserId() != null) {
+            userId = request.getUserId();
+        } else {
+            try {
+                userId = crypto.decrypt(request.getEncryptedUserId()).asUtf8String();
+            } catch (KmsException e) {
+                e.printStackTrace();
+                throw new RequestValidationException("Provided token is invalid", e);
+            }
+        }
 
         List<ManagedSecurityGroup> managedGroups = getAllManagedGroups();
 
@@ -109,7 +217,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
                         .ipProtocol(PortProtocol.toEc2ApiName(port.getProtocol()))
                         .fromPort(port.getPortRangeFrom())
                         .toPort(port.getPortRangeTo())
-                        .ipRanges(IpRange.builder().cidrIp(ipAddress).description(encryptedUserId).build())
+                        .ipRanges(IpRange.builder().cidrIp(ipAddress+"/32").description(encryptedUserId).build())
                         .build()
                 ).collect(Collectors.toList());
 
@@ -150,11 +258,15 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
             Key dataKey = crypto.decryptDataKey(dataKeyInDescription);
             users = permissions.get(0).ipRanges().stream().map(r -> new DiscordUserIp(
                     crypto.decryptLocal(r.description(),dataKey).asUtf8String(),
-                    r.cidrIp())
+                    stripCidrMask(r.cidrIp()))
             ).collect(Collectors.toList());
         }
 
         return new ManagedSecurityGroup(gameName, fullName, groupId, encryptedDataKey, ports, users);
+    }
+
+    private String stripCidrMask(String cidr) {
+        return cidr.substring(0, cidr.length() - "/32".length());
     }
 
     private List<ManagedSecurityGroup> getAllManagedGroups() {
@@ -162,6 +274,10 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
                 .filter(sg -> sg.groupName().startsWith(NetSecConfig.SG_NAME_PREFIX))
                 .map(this::simplifyGroup)
                 .collect(Collectors.toList());
+    }
+
+    private ManagedSecurityGroup getManagedGroup(String gameName) {
+        return simplifyGroup(getRealGroup(gameName));
     }
 
     private SecurityGroup getRealGroup(String gameName) {
