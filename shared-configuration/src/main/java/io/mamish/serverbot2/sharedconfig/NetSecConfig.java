@@ -2,7 +2,8 @@ package io.mamish.serverbot2.sharedconfig;
 
 public class NetSecConfig {
 
-    public static final String SG_NAME_PREFIX = "NetSecSG";
+    public static final String SG_NAME_PREFIX = "NetSecSG-";
+    public static final String REFERENCE_SG_SUFFIX = "ReferenceManagedGroup";
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 

@@ -18,12 +18,13 @@ public class CoreApp {
         StackProps props = StackProps.builder().env(env).build();
 
         CommonStack commonStack = new CommonStack(app, "CommonStack", props);
-        new IpStack(app, "IpStack", props, commonStack);
-        new RelayStack(app, "RelayStack", props);
-        new CommandStack(app, "CommandStack", props);
-        new StateMachinesStack(app, "StateMachinesStack", props);
-        new GameMetadataStack(app, "GameMetadataStack", props);
-        new ReaperStack(app, "ReaperStack", props);
+        new IpStack(app, "IpAuthService", props, commonStack);
+        new RelayStack(app, "DiscordRelayService", props);
+        new CommandStack(app, "CommandService", props);
+        new StateMachinesStack(app, "StateMachinesService", props);
+        new GameMetadataStack(app, "GameMetadataService", props);
+        new NetSecStack(app, "NetSecService", props);
+        new ReaperStack(app, "ResourceReaper", props);
 
         app.synth();
 

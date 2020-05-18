@@ -2,15 +2,15 @@ package io.mamish.serverbot2.networksecurity.model;
 
 public class ModifyPortsResponse {
 
-    private ApplicationSecurityGroup modifiedGroup;
+    private ManagedSecurityGroup modifiedGroup;
 
     public ModifyPortsResponse() { }
 
-    public ModifyPortsResponse(ApplicationSecurityGroup modifiedGroup) {
+    public ModifyPortsResponse(ManagedSecurityGroup modifiedGroup) {
         this.modifiedGroup = modifiedGroup;
     }
 
-    public ApplicationSecurityGroup getModifiedGroup() {
+    public ManagedSecurityGroup getModifiedGroup() {
         return modifiedGroup;
     }
 }

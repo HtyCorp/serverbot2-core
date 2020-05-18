@@ -6,9 +6,15 @@ import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
 import software.amazon.awscdk.services.certificatemanager.ValidationMethod;
+import software.amazon.awscdk.services.ec2.SubnetConfiguration;
+import software.amazon.awscdk.services.ec2.SubnetType;
+import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
+import software.amazon.awscdk.services.ssm.StringParameter;
+
+import java.util.List;
 
 public class CommonStack extends Stack {
 
@@ -16,8 +22,9 @@ public class CommonStack extends Stack {
         this(parent, id, null);
     }
 
-    private IHostedZone apexHostedZone;
-    private DnsValidatedCertificate wildcardCertificate;
+    private final Vpc applicationVpc;
+    private final IHostedZone apexHostedZone;
+    private final DnsValidatedCertificate wildcardCertificate;
 
     public IHostedZone getApexHostedZone() {
         return apexHostedZone;
@@ -29,6 +36,22 @@ public class CommonStack extends Stack {
 
     public CommonStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
+
+        List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
+                .name("main")
+                .subnetType(SubnetType.PUBLIC)
+                .cidrMask(24)
+                .build());
+
+        applicationVpc = Vpc.Builder.create(this, "ApplicationVpc")
+                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                //.flowLogs() // TODO: for idle connection tracker
+                .maxAzs(3)
+                .subnetConfiguration(singlePublicSubnet)
+                .build();
+
+        StringParameter vpcIdParameter = Util.instantiateConfigSsmParameter(this, "VpcIdParameter",
+                        CommonConfig.APPLICATION_VPC_ID_PARAM, applicationVpc.getVpcId()).build();
 
         HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()
                 .domainName(CommonConfig.APEX_DOMAIN_NAME)

@@ -21,22 +21,14 @@ public class CommandStack extends Stack {
     public CommandStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
-        List<IManagedPolicy> policyList = List.of(
+        Role functionRole = Util.standardLambdaRole(this, "CommandFunctionExecutionRole", List.of(
                 ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"),
                 ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess"),
                 ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess")
-        );
-        Role functionRole = Role.Builder.create(this, "CommandFunctionExecutionRole")
-                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
-                .managedPolicies(policyList)
-                .build();
+        )).build();
 
-        Function function = Function.Builder.create(this, "CommandFunction")
-                .functionName(CommandLambdaConfig.FUNCTION_NAME)
-                .runtime(Runtime.JAVA_11)
-                .code(Util.mavenJarAsset("command-lambda"))
-                .handler("io.mamish.serverbot2.commandlambda.LambdaHandler")
-                .role(functionRole)
-                .build();
+        Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
+                "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole).build();
+
     }
 }

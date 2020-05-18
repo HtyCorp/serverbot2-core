@@ -2,15 +2,15 @@ package io.mamish.serverbot2.networksecurity.model;
 
 public class DescribeSecurityGroupResponse {
 
-    private ApplicationSecurityGroup securityGroup;
+    private ManagedSecurityGroup securityGroup;
 
     public DescribeSecurityGroupResponse() { }
 
-    public DescribeSecurityGroupResponse(ApplicationSecurityGroup securityGroup) {
+    public DescribeSecurityGroupResponse(ManagedSecurityGroup securityGroup) {
         this.securityGroup = securityGroup;
     }
 
-    public ApplicationSecurityGroup getSecurityGroup() {
+    public ManagedSecurityGroup getSecurityGroup() {
         return securityGroup;
     }
 }
