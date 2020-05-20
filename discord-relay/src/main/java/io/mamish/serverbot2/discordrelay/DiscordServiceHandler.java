@@ -5,7 +5,7 @@ import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.framework.server.SqsApiServer;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedutil.reflect.SimpleDynamoDbMapper;
+import io.mamish.serverbot2.dynamomapper.DynamoObjectMapper;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -20,7 +20,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
 
     private final DiscordApi discordApi;
     private final ChannelMap channelMap;
-    private final SimpleDynamoDbMapper<DynamoMessageItem> messageMapper;
+    private final DynamoObjectMapper<DynamoMessageItem> messageMapper;
 
     private Logger logger;
 
@@ -42,7 +42,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap) {
         this.discordApi = discordApi;
         this.channelMap = channelMap;
-        messageMapper = new SimpleDynamoDbMapper<>(DiscordConfig.MESSAGE_TABLE_NAME, DynamoMessageItem.class);
+        messageMapper = new DynamoObjectMapper<>(DiscordConfig.MESSAGE_TABLE_NAME, DynamoMessageItem.class);
         logger = Logger.getLogger("DiscordServiceHandler");
     }
 

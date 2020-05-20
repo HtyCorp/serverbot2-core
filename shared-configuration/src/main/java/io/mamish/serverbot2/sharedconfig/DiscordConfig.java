@@ -1,7 +1,5 @@
 package io.mamish.serverbot2.sharedconfig;
 
-import software.amazon.awssdk.services.sqs.SqsClient;
-
 /**
  * Configuration values used by Discord relay and shared to other packages.
  */
@@ -22,7 +20,7 @@ public class DiscordConfig {
     public static final String MESSAGE_TABLE_PKEY = "externalId";
 
     public static final String SQS_QUEUE_NAME = "DiscordRelayRequestsQueue";
-    public static final ConfigValue SQS_QUEUE_URL_RESOLVED = new ConfigValue(SQS_QUEUE_NAME,
-            n -> SqsClient.create().getQueueUrl(r -> r.queueName(n)).queueUrl());
+//    public static final ConfigValue SQS_QUEUE_URL_RESOLVED = new ConfigValue(SQS_QUEUE_NAME,
+//            n -> SqsClient.create().getQueueUrl(r -> r.queueName(n)).queueUrl());
 
 }

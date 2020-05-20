@@ -1,16 +1,14 @@
 package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedutil.reflect.DdbAttribute;
-import io.mamish.serverbot2.sharedutil.reflect.DdbKeyType;
+import io.mamish.serverbot2.dynamomapper.DynamoKey;
+import io.mamish.serverbot2.dynamomapper.DynamoKeyType;
 
 public class DynamoMessageItem {
 
-    @DdbAttribute(value = DiscordConfig.MESSAGE_TABLE_PKEY, keyType = DdbKeyType.PARTITION)
+    @DynamoKey(DynamoKeyType.PARTITION)
     private String externalMessageId;
-    @DdbAttribute("DiscordChannelId")
     private String discordChannelId;
-    @DdbAttribute("DiscordMessageId")
     private String discordMessageId;
 
     public DynamoMessageItem() {}

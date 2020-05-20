@@ -9,6 +9,8 @@ public class DescribeGameRequest {
     @ApiArgumentInfo(order = 0, description = "Name of game to fetch metadata of")
     private String gameName;
 
+    public DescribeGameRequest() { }
+
     public DescribeGameRequest(String gameName) {
         this.gameName = gameName;
     }

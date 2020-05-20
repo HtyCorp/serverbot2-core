@@ -5,6 +5,5 @@ public interface IGameMetadataService {
     ListGamesResponse listGames(ListGamesRequest request);
     DescribeGameResponse describeGame(DescribeGameRequest request);
     LockGameResponse lockGame(LockGameRequest request);
-    UnlockGameResponse unlockGame(UnlockGameRequest request);
 
 }

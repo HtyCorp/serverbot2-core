@@ -1,29 +1,23 @@
 package io.mamish.serverbot2.gamemetadata.model;
 
-import io.mamish.serverbot2.sharedutil.reflect.DdbAttribute;
-import io.mamish.serverbot2.sharedutil.reflect.DdbKeyType;
+import io.mamish.serverbot2.dynamomapper.DynamoKey;
+import io.mamish.serverbot2.dynamomapper.DynamoKeyType;
 
 public class GameMetadata {
 
-    @DdbAttribute(value = "gameName", keyType = DdbKeyType.PARTITION)
-    String gameName;
-
-    @DdbAttribute("fullName")
-    String fullName;
-
-    @DdbAttribute("launchState")
-    LaunchState launchState;
-
-    @DdbAttribute("sfnExecutionId")
-    String sfnExecutionId;
+    @DynamoKey(DynamoKeyType.PARTITION)
+    private String gameName;
+    private String fullName;
+    private LaunchState launchState;
+    private String instanceQueueUrl;
 
     public GameMetadata() { }
 
-    public GameMetadata(String gameName, String fullName, LaunchState launchState, String sfnExecutionId) {
+    public GameMetadata(String gameName, String fullName, LaunchState launchState, String instanceQueueUrl) {
         this.gameName = gameName;
         this.fullName = fullName;
         this.launchState = launchState;
-        this.sfnExecutionId = sfnExecutionId;
+        this.instanceQueueUrl = instanceQueueUrl;
     }
 
     public String getGameName() {
@@ -38,7 +32,8 @@ public class GameMetadata {
         return launchState;
     }
 
-    public String getSfnExecutionId() {
-        return sfnExecutionId;
+    public String getInstanceQueueUrl() {
+        return instanceQueueUrl;
     }
+
 }

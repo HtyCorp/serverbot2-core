@@ -17,11 +17,12 @@
         <module name="app-daemon-model" />
         <module name="network-security-service-model" />
         <module name="resource-reaper" />
+        <module name="game-metadata-service-model" />
         <module name="game-metadata-service" />
         <module name="network-security-service" />
         <module name="application-infrastructure" />
         <module name="app-daemon" />
-        <module name="game-metadata-service-model" />
+        <module name="dynamo-object-mapper" />
         <module name="steps-lambda-model" />
         <module name="discord-relay" />
         <module name="ip-lambda" />

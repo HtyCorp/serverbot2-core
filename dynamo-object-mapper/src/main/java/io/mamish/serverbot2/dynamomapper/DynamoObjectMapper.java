@@ -1,14 +1,12 @@
-package io.mamish.serverbot2.sharedutil.reflect;
+package io.mamish.serverbot2.dynamomapper;
 
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
-import software.amazon.awssdk.services.dynamodb.model.ScanResponse;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,37 +20,56 @@ import java.util.stream.Collectors;
  *
  * @param <DtoType> The type of the DTO object generated and processed by the mapper.
  */
-public class SimpleDynamoDbMapper<DtoType> {
+public class DynamoObjectMapper<DtoType> {
 
     private Constructor<DtoType> constructor;
     private Map<String, Field> registeredAttributes = new HashMap<>();
     private Pair<String, Field> partitionKeyField;
     private Pair<String, Field> sortKeyField;
 
-    private String tableName;
-    private boolean consistentRead;
+    private final String tableName;
+    private final boolean consistentRead;
 
-    private DynamoDbClient ddbClient = DynamoDbClient.create();
+    private final DynamoDbClient ddbClient = DynamoDbClient.create();
+    private final ValueParser valueParser = new ValueParser();
+    private final ValuePrinter valuePrinter = new ValuePrinter();
 
-    public SimpleDynamoDbMapper(String tableName, Class<DtoType> dtoClass) {
+    // TODO: Obviously this doesn't work because not all fields are strings... Redo.
+    // Possible redesign: POJOs with explicit Dynamo attribute descriptors as member fields
+    // Stores field names to allow more reliable references (i.e. not strings) in conditions etc, e.g:
+    // new EqualsCondition(MyObject::getState, State.READY);
+    private final DtoType referenceNameObject;
+
+    public DynamoObjectMapper(String tableName, Class<DtoType> dtoClass) {
         this(tableName, dtoClass, true);
     }
 
-    public SimpleDynamoDbMapper(String tableName, Class<DtoType> dtoClass, boolean consistentRead) {
+    public DynamoObjectMapper(String tableName, Class<DtoType> dtoClass, boolean consistentRead) {
 
         this.tableName = tableName;
         this.consistentRead = consistentRead;
 
-        for (Field field: dtoClass.getDeclaredFields()) {
-            DdbAttribute attr = field.getAnnotation(DdbAttribute.class);
-            if (attr != null) {
-                registeredAttributes.put(attr.value(), field);
-                if (attr.keyType().equals(DdbKeyType.PARTITION)) {
-                    partitionKeyField = new Pair<>(attr.value(), field);
-                } else if (attr.keyType().equals(DdbKeyType.SORT)) {
-                    sortKeyField = new Pair<>(attr.value(), field);
+        try {
+            referenceNameObject = dtoClass.getConstructor().newInstance();
+
+            for (Field field: dtoClass.getDeclaredFields()) {
+                String name = field.getName();
+
+                field.setAccessible(true);
+                field.set(referenceNameObject, name);
+
+                registeredAttributes.put(name, field);
+                DynamoKey attr = field.getAnnotation(DynamoKey.class);
+                if (attr != null) {
+                    if (attr.value().equals(DynamoKeyType.PARTITION)) {
+                        partitionKeyField = new Pair<>(name, field);
+                    } else if (attr.value().equals(DynamoKeyType.SORT)) {
+                        sortKeyField = new Pair<>(name, field);
+                    }
                 }
             }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalArgumentException("Error while performing initial DTO type processing", e);
         }
 
     }
@@ -88,8 +105,44 @@ public class SimpleDynamoDbMapper<DtoType> {
     }
 
     public void put(DtoType item) {
+        put(item, null);
+    }
+
+    public void put(DtoType item, EqualsCondition condition) throws ConditionalCheckFailedException {
         Map<String,AttributeValue> attributes = toAttributes(item);
-        ddbClient.putItem(r -> r.tableName(tableName).item(attributes));
+        PutItemRequest.Builder putItem = PutItemRequest.builder().tableName(tableName).item(attributes);
+        if (condition != null) {
+            addConditionExpression(condition, putItem);
+        }
+        ddbClient.putItem(putItem.build());
+    }
+
+    private void addConditionExpression(EqualsCondition condition, PutItemRequest.Builder request) {
+        request.expressionAttributeValues(Map.of(
+                ":expected", mkString(valuePrinter.printObject(condition.getExpectedValue()))
+        )).expressionAttributeNames(Map.of(
+                "#C", condition.getAttributeName()
+        )).conditionExpression("#C = :expected");
+    }
+
+    public void update(String pkey, UpdateSetter setter) {
+        Map<String, AttributeValue> keyMap = Map.of(partitionKeyField.fst(), mkString(pkey));
+        ddbClient.updateItem(r -> r.key(keyMap).expressionAttributeValues(Map.of(
+                ":setvalue", mkString(valuePrinter.printObject(setter.getNewValue()))
+        )).expressionAttributeNames(Map.of(
+                "#V", setter.getAttributeName()
+        )).conditionExpression("#C = :expected").updateExpression("SET #V = :setvalue"));
+    }
+
+    public void update(String pkey, EqualsCondition condition, UpdateSetter setter) {
+        Map<String, AttributeValue> keyMap = Map.of(partitionKeyField.fst(), mkString(pkey));
+        ddbClient.updateItem(r -> r.key(keyMap).expressionAttributeValues(Map.of(
+                ":expected", mkString(valuePrinter.printObject(condition.getExpectedValue())),
+                ":setvalue", mkString(valuePrinter.printObject(setter.getNewValue()))
+        )).expressionAttributeNames(Map.of(
+                "#C", condition.getAttributeName(),
+                "#V", setter.getAttributeName()
+        )).conditionExpression("#C = :expected").updateExpression("SET #V = :setvalue"));
     }
 
     public DtoType fromAttributes(Map<String,AttributeValue> attributeMap) {
@@ -101,17 +154,7 @@ public class SimpleDynamoDbMapper<DtoType> {
                 Class<?> fieldType = field.getType();
 
                 String mapValue = attributeMap.containsKey(key) ? attributeMap.get(key).s() : null;
-                Object valueObject;
-                if (fieldType.equals(String.class)) {
-                    valueObject = mapValue;
-                } else if (Enum.class.isAssignableFrom(fieldType)) {
-                    Method valueOf = fieldType.getMethod("valueOf", String.class);
-                    valueObject = valueOf.invoke(null, mapValue);
-                    //valueObject = Enum.valueOf((Class<Enum>)fieldType, mapValue);
-                } else {
-                    throw new IllegalArgumentException("DTO type has an illegal field type " + fieldType.getCanonicalName());
-                }
-
+                Object valueObject = valueParser.parseString(mapValue, fieldType);
                 field.set(dto, valueObject);
             }
             return dto;
@@ -131,19 +174,10 @@ public class SimpleDynamoDbMapper<DtoType> {
             for (Map.Entry<String,Field> entry: registeredAttributes.entrySet()) {
                 String key = entry.getKey();
                 Field field = entry.getValue();
-                Class<?> fieldType = field.getType();
 
-                Object fieldValue = field.get(dto);
-                String valueString;
-                if (fieldType.equals(String.class)) {
-                    valueString = (String) fieldValue;
-                } else if (Enum.class.isAssignableFrom(fieldType)){
-                    valueString = fieldValue.toString();
-                } else {
-                    throw new IllegalArgumentException("Invalid field type " + fieldType.getCanonicalName());
-                }
-
+                String valueString = valuePrinter.printObject(field.get(dto));
                 AttributeValue ddbValue = AttributeValue.builder().s(valueString).build();
+
                 resultAttributes.put(key, ddbValue);
             }
             return resultAttributes;
