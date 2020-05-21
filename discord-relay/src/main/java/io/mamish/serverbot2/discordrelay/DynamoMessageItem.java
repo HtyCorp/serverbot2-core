@@ -1,12 +1,9 @@
 package io.mamish.serverbot2.discordrelay;
 
-import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.dynamomapper.DynamoKey;
-import io.mamish.serverbot2.dynamomapper.DynamoKeyType;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 public class DynamoMessageItem {
 
-    @DynamoKey(DynamoKeyType.PARTITION)
     private String externalMessageId;
     private String discordChannelId;
     private String discordMessageId;
@@ -19,15 +16,28 @@ public class DynamoMessageItem {
         this.discordMessageId = discordMessageId;
     }
 
+    @DynamoDbPartitionKey
     public String getExternalMessageId() {
         return externalMessageId;
+    }
+
+    public void setExternalMessageId(String externalMessageId) {
+        this.externalMessageId = externalMessageId;
     }
 
     public String getDiscordChannelId() {
         return discordChannelId;
     }
 
+    public void setDiscordChannelId(String discordChannelId) {
+        this.discordChannelId = discordChannelId;
+    }
+
     public String getDiscordMessageId() {
         return discordMessageId;
+    }
+
+    public void setDiscordMessageId(String discordMessageId) {
+        this.discordMessageId = discordMessageId;
     }
 }

@@ -9,6 +9,8 @@ public class CommonConfig {
 
     public static String PATH = "common-config";
 
+    // IMPORTANT: If changing SSM parameter name, must update name in userdata resource file at:
+    // workflow-service/src/main/resources/NewInstanceUserdata.txt
     public static final Parameter S3_DEPLOYED_ARTIFACTS_BUCKET = new Parameter(PATH, "deployed-artifacts-bucket");
 
     public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";

@@ -9,26 +9,26 @@
         <module name="service-framework" />
         <module name="discord-relay-model" />
         <module name="command-lambda-model" />
-        <module name="steps-lambda" />
         <module name="command-lambda" />
         <module name="shared-configuration" />
         <module name="deployment-infrastructure" />
         <module name="shared-util" />
         <module name="app-daemon-model" />
         <module name="network-security-service-model" />
-        <module name="resource-reaper" />
-        <module name="game-metadata-service-model" />
+        <module name="workflow-service" />
+        <module name="discord-relay" />
+        <module name="workflow-service-model" />
         <module name="game-metadata-service" />
         <module name="network-security-service" />
         <module name="application-infrastructure" />
         <module name="app-daemon" />
-        <module name="dynamo-object-mapper" />
-        <module name="steps-lambda-model" />
-        <module name="discord-relay" />
+        <module name="game-metadata-service-model" />
+        <module name="resource-reaper" />
         <module name="ip-lambda" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="dynamo-object-mapper" target="11" />
       <module name="untitled" target="11" />
     </bytecodeTargetLevel>
   </component>

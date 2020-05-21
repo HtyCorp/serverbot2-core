@@ -22,11 +22,6 @@
             <artifactId>service-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>dynamo-object-mapper</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
 </project>
