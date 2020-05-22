@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 public class UbuntuAmiLocator {
 
+    // Observed from browser/GUI: query string param seems to be epoch millis, to prevent caching.
     private static final String baseReleasesUri = "https://cloud-images.ubuntu.com/locator/ec2/releasesTable?_=";
     private static final HttpClient http = HttpClient.newBuilder().build();
 
@@ -76,7 +77,7 @@ public class UbuntuAmiLocator {
         try {
             return http.send(HttpRequest.newBuilder()
                     .GET()
-                    .uri(URI.create(baseReleasesUri + IDUtils.epochSeconds()))
+                    .uri(URI.create(baseReleasesUri + IDUtils.epochMillis()))
                     .build(),
                     HttpResponse.BodyHandlers.ofString()
             ).body();

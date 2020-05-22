@@ -8,10 +8,6 @@ CodeBuild:
  * Use local build step bash scripts in buildpsec, instead of running commands directly?
  * Need to rethink accounts used in build to make testing better.
 
-Ubuntu image locator:
- * Example URL ('_' value is epoch milli time): https://cloud-images.ubuntu.com/locator/ec2/releasesTable?_=1588837725000
- * JSON payload containing table of latest AMIs
-
 Error handling:
  * service-framework needs CloudWatch integration: would be nice to have exception logging handled automatically with exception reason metrics
 
@@ -19,7 +15,7 @@ Command lambda:
  * May need separate command namespaces (i.e. interfaces) for different command permission levels (i.e. welcome, servers, admin, debug)
 
 Maven:
- * Have a bunch of Lambdas with main classes defined in build: unnecessary and distracting since handlers have to be manually named anyway
+ * Currently have a bunch of Lambdas with main classes defined in build: unnecessary and distracting since handlers have to be manually named anyway
  * Would be nice in concept to remove SDK dependencies from model modules: should ideally just be data classes
 
 Reflection stuff:
@@ -30,7 +26,10 @@ Naming stuff:
  * DTO -> POJO
 
 Config:
- * Should split 'public' and 'private' vars: e.g. nothing but Discord relay uses bot token, so why point out the secret for anyone else
+ * Per 'Lambda service units' note below, should fold private constants/secrets/parameters into model
+ * Should make public/private path prefix top-level so "public" permission can be granted more easily
+    *  Maybe keep 'private' path below module name to avoid accidentally exposing all private stuff
+       * e.g. "public/discord-relay" for relay public, "discord-relay/private" for relay private
 
 Instance userdata:
  * Service start script needs absolute path for java11 (minecraft server is an issue otherwise)
@@ -38,3 +37,14 @@ Instance userdata:
 Dynamo mapper:
  * Any further work to be extension on top of existing V2 enhanced client
  * Add null-check/`has()` method with reduced attributes to minimise data transfer
+
+Lambda service units:
+ * Should add more service metadata to model modules:
+    * Allows standardised CDK Lambda/SQS constructs based on model
+    * Allows standardised public/private Secret/Parameter config access
+    * Allows standardised invocation permission based on dependency analysis
+    * Possible stack deploy ordering for dependency, maybe (though zero downtime is not a priority as it is)
+    * No explicit SQS/Lambda endpoint specification needed in ApiClient
+
+Dependency analysis:
+ * Concept: use Maven dependency report to determine which modules depend on other models (for permissions and deploy order)

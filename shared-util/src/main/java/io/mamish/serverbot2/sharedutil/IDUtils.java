@@ -7,6 +7,14 @@ public class IDUtils {
 
     private IDUtils() {}
 
+    public static String slash(String... segment) {
+        return String.join("/", segment);
+    }
+
+    public static String kebab(String... segments) {
+        return String.join("-", segments);
+    }
+
     public static String randomUUID() {
         return UUID.randomUUID().toString();
     }

@@ -13,6 +13,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>shared-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>ssm</artifactId>
         </dependency>

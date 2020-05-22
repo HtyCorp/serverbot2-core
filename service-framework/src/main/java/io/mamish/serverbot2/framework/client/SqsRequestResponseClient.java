@@ -123,7 +123,7 @@ public class SqsRequestResponseClient {
 
     private static String generateQueueName() {
         // Should be < 70 chars, so within the 80-char limit for SQS queue names.
-        return String.join("-", ApiConfig.TEMP_QUEUE_URL_PREFIX, IDUtils.epochSeconds(), IDUtils.randomUUIDJoined());
+        return IDUtils.kebab(ApiConfig.TEMP_QUEUE_URL_PREFIX, IDUtils.epochSeconds(), IDUtils.randomUUIDJoined());
     }
 
     private void updateQueueReaperHeartbeat() {
