@@ -11,5 +11,12 @@
 
     <artifactId>workflow-service-model</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>service-framework</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

@@ -16,8 +16,7 @@ import java.util.stream.Collectors;
 
 public class GameMetadataServiceHandler implements IGameMetadataService {
 
-    private static final String GAME_NAME_REGEX = "[a-z0-9]+";
-    private static final Pattern GAME_NAME_REGEX_PATTERN = Pattern.compile(GAME_NAME_REGEX);
+    private static final Pattern GAME_NAME_REGEX = Pattern.compile("[a-z0-9]+");
 
     DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.create();
     DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
@@ -140,8 +139,8 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
     }
 
     private void validateGameName(String name) throws RequestValidationException {
-        if (GAME_NAME_REGEX_PATTERN.matcher(name).matches()) {
-            throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + GAME_NAME_REGEX + ")");
+        if (GAME_NAME_REGEX.matcher(name).matches()) {
+            throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + GAME_NAME_REGEX.pattern() + ")");
         }
     }
 

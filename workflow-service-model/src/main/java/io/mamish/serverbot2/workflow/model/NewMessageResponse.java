@@ -1,4 +1,4 @@
 package io.mamish.serverbot2.workflow.model;
 
-public class SendMessageResponse {
+public class NewMessageResponse {
 }
