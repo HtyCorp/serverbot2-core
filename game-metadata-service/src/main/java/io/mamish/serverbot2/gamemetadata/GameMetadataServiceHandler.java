@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class GameMetadataServiceHandler implements IGameMetadataService {
 
-    private static final Pattern GAME_NAME_REGEX = Pattern.compile("[a-z0-9]+");
+    private static final Pattern GAME_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]*");
 
     DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.create();
     DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,

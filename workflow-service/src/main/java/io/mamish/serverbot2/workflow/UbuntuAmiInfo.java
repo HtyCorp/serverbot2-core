@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.workflow;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

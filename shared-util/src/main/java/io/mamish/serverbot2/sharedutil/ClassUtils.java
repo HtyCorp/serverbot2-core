@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.sharedutil;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class ClassUtils {
@@ -10,4 +11,11 @@ public class ClassUtils {
         return Arrays.stream(classes).anyMatch(c -> c.isInstance(object));
     }
 
+    public static Field field(Class<?> clazz, String name) {
+        try {
+            return clazz.getField(name);
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

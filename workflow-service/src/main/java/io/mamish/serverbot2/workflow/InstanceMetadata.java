@@ -8,8 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-/* I forgot I was running on Lambda, not EC2, so this whole class is unnecessary. Oops.
- */
+// I forgot I was running on Lambda, not EC2, so this whole class is unnecessary. Oops.
 public class InstanceMetadata {
 
     private String accountId;
@@ -57,7 +56,4 @@ public class InstanceMetadata {
         return privateIp;
     }
 
-    public static URI getIdentityMetadataUri() {
-        return identityMetadataUri;
-    }
 }

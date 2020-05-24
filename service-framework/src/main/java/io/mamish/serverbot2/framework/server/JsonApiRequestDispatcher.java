@@ -60,13 +60,12 @@ public class JsonApiRequestDispatcher<HandlerType> extends
 
     @Override
     protected String serializeResponseObject(ApiActionDefinition definition, Object handlerResult) {
-        if (handlerResult == null) {
-            return null;
+        JsonObject resultObject = null;
+        if (handlerResult != null) {
+            resultObject = gson.toJsonTree(handlerResult).getAsJsonObject();
         }
 
-        JsonObject resultObject = gson.toJsonTree(handlerResult).getAsJsonObject();
         JsonObject finalObject = new JsonObject();
-
         finalObject.add(ApiConfig.JSON_RESPONSE_CONTENT_KEY, resultObject);
         finalObject.add(ApiConfig.JSON_RESPONSE_ERROR_KEY, null);
 

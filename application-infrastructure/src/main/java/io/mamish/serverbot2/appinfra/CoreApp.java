@@ -21,7 +21,7 @@ public class CoreApp {
         new IpStack(app, "IpAuthService", props, commonStack);
         new RelayStack(app, "DiscordRelayService", props);
         new CommandStack(app, "CommandService", props);
-        new StateMachinesStack(app, "StateMachinesService", props);
+        new WorkflowsStack(app, "Workflows", props);
         new GameMetadataStack(app, "GameMetadataService", props);
         new NetSecStack(app, "NetSecService", props);
         new ReaperStack(app, "ResourceReaper", props);

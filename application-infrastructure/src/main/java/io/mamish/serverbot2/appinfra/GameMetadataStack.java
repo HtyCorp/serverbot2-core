@@ -4,11 +4,9 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
-import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.lambda.Function;
-import software.amazon.awscdk.services.lambda.Runtime;
 
 import java.util.List;
 
@@ -24,16 +22,13 @@ public class GameMetadataStack extends Stack {
         Role functionRole = Role.Builder.create(this, "ServiceRole")
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .managedPolicies(List.of(
-                        ManagedPolicy.fromAwsManagedPolicyName("AWSLambdaBasicExecutionRole"),
-                        ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess"))
-                ).build();
+                        Util.POLICY_BASIC_LAMBDA_EXECUTION,
+                        Util.POLICY_DYNAMODB_FULL_ACCESS
+                )).build();
 
-        Function function = Function.Builder.create(this, "ServiceFunction")
-                .runtime(Runtime.JAVA_11)
+        Function function = Util.standardJavaFunction(this, "ServiceFunction", "game-metadata-service",
+                "io.mamish.serverbot2.gamemetadata.LambdaHandler", functionRole)
                 .functionName(GameMetadataConfig.FUNCTION_NAME)
-                .role(functionRole)
-                .code(Util.mavenJarAsset("game-metadata-service"))
-                .handler("io.mamish.serverbot2.gamemetadata.LambdaHandler")
                 .build();
 
     }

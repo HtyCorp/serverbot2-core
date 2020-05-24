@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.workflow;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -40,13 +39,12 @@ public class UbuntuAmiLocator {
     }
 
     private UbuntuAmiInfo getAmiByCriteria(List<UbuntuAmiInfo> options) {
-        List<UbuntuAmiInfo> finalOptions = options.stream().filter(ami -> {
-            return AMI_CRITERIA.entrySet().stream().allMatch(e -> {
-                var actualValue = e.getKey().apply(ami);
-                var matchValue = e.getValue();
-                return actualValue.equals(matchValue);
-            });
-        }).collect(Collectors.toList());
+        List<UbuntuAmiInfo> finalOptions = options.stream().filter(ami ->
+                AMI_CRITERIA.entrySet().stream().allMatch(e -> {
+                        var actualValue = e.getKey().apply(ami);
+                        var matchValue = e.getValue();
+                        return actualValue.equals(matchValue);
+        })).collect(Collectors.toList());
 
         if (finalOptions.size() == 0) {
             throw new RequestHandlingException("No AMI options found matching criteria");

@@ -6,17 +6,17 @@ public class GameMetadata {
     private String fullName;
     private GameReadyState gameReadyState;
     private String instanceId;
-    private String instanceQueueUrl;
+    private String instanceQueueName;
     private String taskCompletionToken;
 
     public GameMetadata() { }
 
-    public GameMetadata(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueUrl, String taskCompletionToken) {
+    public GameMetadata(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueName, String taskCompletionToken) {
         this.gameName = gameName;
         this.fullName = fullName;
         this.gameReadyState = gameReadyState;
         this.instanceId = instanceId;
-        this.instanceQueueUrl = instanceQueueUrl;
+        this.instanceQueueName = instanceQueueName;
         this.taskCompletionToken = taskCompletionToken;
     }
 
@@ -36,8 +36,8 @@ public class GameMetadata {
         return instanceId;
     }
 
-    public String getInstanceQueueUrl() {
-        return instanceQueueUrl;
+    public String getInstanceQueueName() {
+        return instanceQueueName;
     }
 
     public String getTaskCompletionToken() {

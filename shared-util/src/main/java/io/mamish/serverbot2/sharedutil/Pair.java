@@ -2,8 +2,8 @@ package io.mamish.serverbot2.sharedutil;
 
 public class Pair<A,B> {
 
-    private A a;
-    private B b;
+    private final A a;
+    private final B b;
 
     public Pair(A a, B b) {
         this.a = a;

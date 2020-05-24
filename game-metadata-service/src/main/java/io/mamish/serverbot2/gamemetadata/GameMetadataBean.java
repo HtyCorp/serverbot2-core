@@ -16,17 +16,17 @@ public class GameMetadataBean {
     private String fullName;
     private GameReadyState gameReadyState;
     private String instanceId;
-    private String instanceQueueUrl;
+    private String instanceQueueName;
     private String taskCompletionToken;
 
     public GameMetadataBean() { }
 
-    public GameMetadataBean(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueUrl, String taskCompletionToken) {
+    public GameMetadataBean(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueName, String taskCompletionToken) {
         this.gameName = gameName;
         this.fullName = fullName;
         this.gameReadyState = gameReadyState;
         this.instanceId = instanceId;
-        this.instanceQueueUrl = instanceQueueUrl;
+        this.instanceQueueName = instanceQueueName;
         this.taskCompletionToken = taskCompletionToken;
     }
 
@@ -37,7 +37,7 @@ public class GameMetadataBean {
         setIfNotNull(request::getFullName, this::setFullName);
         setIfNotNull(request::getState, this::setGameReadyState);
         setIfNotNull(request::getInstanceId, this::setInstanceId);
-        setIfNotNull(request::getInstanceQueueUrl, this::setInstanceQueueUrl);
+        setIfNotNull(request::getInstanceQueueName, this::setInstanceQueueName);
         setIfNotNull(request::getTaskCompletionToken, this::setTaskCompletionToken);
     }
 
@@ -81,12 +81,12 @@ public class GameMetadataBean {
         this.instanceId = instanceId;
     }
 
-    public String getInstanceQueueUrl() {
-        return instanceQueueUrl;
+    public String getInstanceQueueName() {
+        return instanceQueueName;
     }
 
-    public void setInstanceQueueUrl(String instanceQueueUrl) {
-        this.instanceQueueUrl = instanceQueueUrl;
+    public void setInstanceQueueName(String instanceQueueName) {
+        this.instanceQueueName = instanceQueueName;
     }
 
     public String getTaskCompletionToken() {
@@ -98,7 +98,7 @@ public class GameMetadataBean {
     }
 
     public GameMetadata toModel() {
-        return new GameMetadata(gameName, fullName, gameReadyState, instanceQueueUrl, instanceQueueUrl, taskCompletionToken);
+        return new GameMetadata(gameName, fullName, gameReadyState, instanceQueueName, instanceQueueName, taskCompletionToken);
     }
 
 }

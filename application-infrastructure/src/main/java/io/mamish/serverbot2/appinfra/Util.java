@@ -27,6 +27,7 @@ public class Util {
     static final IManagedPolicy POLICY_EC2_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess");
     static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
     static final IManagedPolicy POLICY_S3_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess");
+    static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
 
     static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
@@ -46,7 +47,7 @@ public class Util {
                         arn(stack, null, null, "secretsmanager", "secret:"+path+"/*")
                 )).collect(Collectors.toList());
 
-        role.addToPolicy(PolicyStatement.Builder.create()
+        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of(
                         "ssm:GetParameter",
                         "secretsmanager:GetSecretValue")
@@ -59,7 +60,7 @@ public class Util {
                 .map(name -> arn(stack, null, null, "lambda", "function:"+name))
                 .collect(Collectors.toList());
 
-        role.addToPolicy(PolicyStatement.Builder.create()
+        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("lambda:Invoke"))
                 .resources(lambdaArns)
                 .build());

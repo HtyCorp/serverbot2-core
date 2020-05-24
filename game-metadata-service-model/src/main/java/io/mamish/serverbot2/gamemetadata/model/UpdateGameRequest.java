@@ -20,19 +20,19 @@ public class UpdateGameRequest {
     private String instanceId;
 
     @ApiArgumentInfo(order = 4, description = "URL of queue the instance listens for messages on")
-    private String instanceQueueUrl;
+    private String instanceQueueName;
 
     @ApiArgumentInfo(order = 5, description = "Task token for current execution state in Step Functions")
     private String taskCompletionToken;
 
     public UpdateGameRequest() { }
 
-    public UpdateGameRequest(String gameName, String fullName, GameReadyState state, String instanceId, String instanceQueueUrl, String taskCompletionToken) {
+    public UpdateGameRequest(String gameName, String fullName, GameReadyState state, String instanceId, String instanceQueueName, String taskCompletionToken) {
         this.gameName = gameName;
         this.fullName = fullName;
         this.state = state;
         this.instanceId = instanceId;
-        this.instanceQueueUrl = instanceQueueUrl;
+        this.instanceQueueName = instanceQueueName;
         this.taskCompletionToken = taskCompletionToken;
     }
 
@@ -52,8 +52,8 @@ public class UpdateGameRequest {
         return instanceId;
     }
 
-    public String getInstanceQueueUrl() {
-        return instanceQueueUrl;
+    public String getInstanceQueueName() {
+        return instanceQueueName;
     }
 
     public String getTaskCompletionToken() {
