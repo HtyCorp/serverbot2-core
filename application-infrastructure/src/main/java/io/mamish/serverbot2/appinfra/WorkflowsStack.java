@@ -36,31 +36,40 @@ public class WorkflowsStack extends Stack {
                 Duration.seconds(WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS));
         LambdaInvoke stopInstance = makeSynchronousTask(taskFunc, MachineTaskNames.StopInstance);
         LambdaInvoke deleteGameResources = makeSynchronousTask(taskFunc, MachineTaskNames.DeleteGameResources);
+        Succeed succeed = Succeed.Builder.create(this, "SuccessState").build();
 
-        IChainable createGameTaskChain = createGameMetadata
+        IChainable createGameTaskChain =
+                createGameMetadata
                 .next(createGameResources)
                 .next(waitInstanceReady)
                 .next(waitServerStop)
-                .next(stopInstance);
+                .next(stopInstance)
+                .next(succeed);
         makeStateMachine(MachineNames.CreateGame, createGameTaskChain);
 
-        IChainable runGameTaskChain = lockGame
+        IChainable runGameTaskChain =
+                lockGame
                 .next(startInstance)
                 .next(waitInstanceReady)
                 .next(startServer)
                 .next(waitServerStop)
-                .next(stopInstance);
+                .next(stopInstance)
+                .next(succeed);
         makeStateMachine(MachineNames.RunGame, runGameTaskChain);
 
-        IChainable editGameTaskChain = lockGame
+        IChainable editGameTaskChain =
+                lockGame
                 .next(startInstance)
                 .next(waitInstanceReady)
                 .next(waitServerStop)
-                .next(stopInstance);
+                .next(stopInstance)
+                .next(succeed);
         makeStateMachine(MachineNames.EditGame, editGameTaskChain);
 
-        IChainable deleteGameTaskChain = lockGame
-                .next(deleteGameResources);
+        IChainable deleteGameTaskChain =
+                lockGame
+                .next(deleteGameResources)
+                .next(succeed);
         makeStateMachine(MachineNames.DeleteGame, deleteGameTaskChain);
 
     }
