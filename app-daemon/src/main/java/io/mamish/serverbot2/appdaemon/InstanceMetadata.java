@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.workflow;
+package io.mamish.serverbot2.appdaemon;
 
 import com.google.gson.Gson;
 
@@ -8,7 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-// I forgot I was running on Lambda, not EC2, so this whole class is unnecessary. Oops.
+// TODO: Might need to update to IMDSv2 (not sure if instance-identity category is restricted in V2 mode)
 public class InstanceMetadata {
 
     private String accountId;

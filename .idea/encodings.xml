@@ -2,6 +2,7 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/app-daemon-model/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app-daemon/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/application-infrastructure/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/application-infrastructure/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/command-lambda-model/src/main/java" charset="UTF-8" />

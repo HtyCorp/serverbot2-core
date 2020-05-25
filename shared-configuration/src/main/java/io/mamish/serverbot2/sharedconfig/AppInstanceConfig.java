@@ -14,6 +14,7 @@ public class AppInstanceConfig {
 
     public static final String QUEUE_NAME_PREFIX = "AppDaemonQueue";
     public static final String INSTANCE_NAME_PREFIX = "AppInstance";
+    public static final String APP_NAME_INSTANCE_TAG_KEY = "Serverbot2AppName";
 
     // Will redesign this later to use instance-specific roles.
     // Would need to work this as a new service or add into network-security, maybe.

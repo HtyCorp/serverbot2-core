@@ -47,7 +47,7 @@ After=Network.target
 [Service]
 Type=simple
 User=ubuntu
-ExecStart=/opt/serverbot2/script/run_daemon.jar
+ExecStart=/opt/serverbot2/script/run_daemon.sh
 [Install]
 WantedBy=multi-user.target
 EOF

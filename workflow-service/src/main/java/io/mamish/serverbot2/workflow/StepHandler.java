@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.workflow;
 
+import com.fasterxml.jackson.core.Base64Variants;
 import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
 import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
@@ -9,10 +10,14 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
+import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +48,7 @@ public class StepHandler {
                 "Name", instanceFriendlyName,
                 "Project", "Serverbot2",
                 "Purpose", "AppInstance",
-                "Serverbot2Game", gameName
+                AppInstanceConfig.APP_NAME_INSTANCE_TAG_KEY, gameName
         );
 
         // Subnet choice: nothing fancy, just pick the first one returned by DescribeSubnets in the app VPC
@@ -53,15 +58,24 @@ public class StepHandler {
                 .build())
         ).subnets().get(0).subnetId();
 
-        RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
-                r.imageId(amiLocator.getIdealAmi().getAmiId())
-                .instanceType(InstanceType.M5_LARGE)
-                .tagSpecifications(instanceAndVolumeTags(tagMap))
-                .iamInstanceProfile(r2 -> r2.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
-                .minCount(1)
-                .maxCount(1)
-                .keyName(AppInstanceConfig.COMMON_KEYPAIR_NAME));
-        String newInstanceId = runInstancesResponse.instances().get(0).instanceId();
+        String newInstanceId;
+        try {
+            InputStream userdataStream = getClass().getClassLoader().getResourceAsStream("NewInstanceUserdata.txt");
+            String userdataString = Base64.getEncoder().encodeToString(userdataStream.readAllBytes());
+
+            RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
+                    r.imageId(amiLocator.getIdealAmi().getAmiId())
+                            .instanceType(InstanceType.M5_LARGE)
+                            .tagSpecifications(instanceAndVolumeTags(tagMap))
+                            .iamInstanceProfile(r2 -> r2.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
+                            .minCount(1)
+                            .maxCount(1)
+                            .keyName(AppInstanceConfig.COMMON_KEYPAIR_NAME)
+                            .userData(userdataString));
+            newInstanceId = runInstancesResponse.instances().get(0).instanceId();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read instance userdata resource file", e);
+        }
 
         String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName);
         sqsClient.createQueue(r -> r.queueName(queueName));
