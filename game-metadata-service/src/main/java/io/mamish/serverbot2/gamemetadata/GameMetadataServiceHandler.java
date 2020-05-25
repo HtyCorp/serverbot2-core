@@ -4,6 +4,7 @@ import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
@@ -16,13 +17,15 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
     private static final Pattern GAME_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]*");
 
+    private static final String ERR_MSG_GAME_LOCKED = "Game in STOPPED state. Must call LockGame to modify it";
+
     DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.create();
     DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
             TableSchema.fromBean(GameMetadataBean.class));
 
     @Override
     public ListGamesResponse listGames(ListGamesRequest request) {
-        List<GameMetadata> allMetadata = table.scan().items().stream()
+        List<GameMetadata> allMetadata = consistentTableScan().stream()
                 .map(GameMetadataBean::toModel)
                 .collect(Collectors.toList());
         return new ListGamesResponse(allMetadata);
@@ -33,7 +36,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         String name = request.getGameName();
         validateGameName(name);
 
-        GameMetadataBean result = table.getItem(partitionKey(name));
+        GameMetadataBean result = consistentTableGet(name);
         if (result == null) {
             return new DescribeGameResponse(false, null);
         } else {
@@ -74,7 +77,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         String name = request.getGameName();
         validateGameName(name);
 
-        GameMetadataBean currentItem = table.getItem(partitionKey(name));
+        GameMetadataBean currentItem = consistentTableGet(name);
         if (currentItem == null) {
             throw new RequestValidationException("No game '" + name + "' present in table");
         }
@@ -82,13 +85,8 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         GameMetadataBean updateItem = new GameMetadataBean();
         updateItem.setGameReadyState(GameReadyState.BUSY);
 
-        Expression checkIsStopped = Expression.builder()
-                .expression("gameReadyState = :stopped")
-                .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
-                .build();
-
         try {
-            table.updateItem(r -> r.item(updateItem).ignoreNulls(true).conditionExpression(checkIsStopped));
+            table.updateItem(r -> r.item(updateItem).ignoreNulls(true).conditionExpression(conditionIsInStoppedState(true)));
         } catch (ConditionalCheckFailedException e) {
             throw new RequestHandlingException("Game state is invalid for locking");
         }
@@ -98,34 +96,52 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
     @Override
     public UpdateGameResponse updateGame(UpdateGameRequest request) {
-        String LOCKED_ERR_MSG = "Table item in STOPPED state. Must call LockGame to update it";
-
         String name = request.getGameName();
         validateGameName(name);
 
-        GameMetadataBean item = table.getItem(partitionKey(request.getGameName()));
+        GameMetadataBean item = consistentTableGet(name);
         if (item == null) {
             throw new RequestValidationException("No game '" + name + "' present in table");
         }
         if (item.getGameReadyState().equals(GameReadyState.STOPPED)) {
-            throw new RequestHandlingException(LOCKED_ERR_MSG);
+            throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
         }
 
         // Field changes are implemented in GameMetadataBean to reduce chance of missing fields accidentally.
         item.updateFromApiUpdateRequest(request);
 
-        Expression checkIsNotStopped = Expression.builder()
-                .expression("gameReadyState != :stopped")
-                .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
-                .build();
-
         try {
-            table.updateItem(r -> r.item(item).ignoreNulls(true).conditionExpression(checkIsNotStopped));
+            table.updateItem(r -> r.item(item).ignoreNulls(true).conditionExpression(conditionIsInStoppedState(false)));
         } catch (ConditionalCheckFailedException e) {
-            throw new RequestHandlingException(LOCKED_ERR_MSG);
+            throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
         }
 
         return new UpdateGameResponse(item.toModel());
+
+    }
+
+    @Override
+    public DeleteGameResponse deleteGame(DeleteGameRequest request) {
+        String name = request.getGameName();
+        validateGameName(name);
+
+        try {
+            // We do this in addition to the DeleteItem return to make it possible to differentiate between
+            // "item in stopped state" and "item doesn't exist" error cases.
+            GameMetadataBean existing = consistentTableGet(name);
+            if (existing == null) {
+                throw new RequestHandlingException("No game '" + name + "' present in table");
+            }
+
+            GameMetadataBean deletedItem = table.deleteItem(r ->
+                    r.conditionExpression(conditionIsInStoppedState(false))
+                    .key(partitionKey(name)));
+
+            return new DeleteGameResponse(deletedItem.toModel());
+        } catch (ConditionalCheckFailedException e) {
+            e.printStackTrace();
+            throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
+        }
 
     }
 
@@ -133,6 +149,22 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         if (GAME_NAME_REGEX.matcher(name).matches()) {
             throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + GAME_NAME_REGEX.pattern() + ")");
         }
+    }
+
+    private Expression conditionIsInStoppedState(boolean inStoppedState) {
+        String operator = (inStoppedState) ? "=" : "!=";
+        return Expression.builder()
+                .expression("gameReadyState "+operator+" :stopped")
+                .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
+                .build();
+    }
+
+    private GameMetadataBean consistentTableGet(String gameName) {
+        return table.getItem(r -> r.key(partitionKey(gameName)).consistentRead(true));
+    }
+
+    private SdkIterable<GameMetadataBean> consistentTableScan() {
+        return table.scan(r -> r.consistentRead(true)).items();
     }
 
     private Key partitionKey(String gameName) {

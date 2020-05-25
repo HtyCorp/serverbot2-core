@@ -7,5 +7,6 @@ public interface IGameMetadataService {
     CreateGameResponse createGame(CreateGameRequest request);
     LockGameResponse lockGame(LockGameRequest request);
     UpdateGameResponse updateGame(UpdateGameRequest request);
+    DeleteGameResponse deleteGame(DeleteGameRequest request);
 
 }

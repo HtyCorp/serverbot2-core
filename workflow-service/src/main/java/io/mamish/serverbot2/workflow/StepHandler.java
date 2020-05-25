@@ -97,9 +97,11 @@ public class StepHandler {
     }
 
     void deleteGameResources(ExecutionState executionState) {
-        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        String name = executionState.getGameName();
+        GameMetadata gameMetadata = getGameMetadata(name);
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+        gameMetadataServiceClient.deleteGame(new DeleteGameRequest(name));
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {
