@@ -1,9 +1,9 @@
 package io.mamish.serverbot2.workflow;
 
+import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
+import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
-import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
-import io.mamish.serverbot2.gamemetadata.model.LockGameRequest;
-import io.mamish.serverbot2.gamemetadata.model.UpdateGameRequest;
+import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
@@ -12,7 +12,6 @@ import io.mamish.serverbot2.workflow.model.ExecutionState;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,10 +25,9 @@ public class StepHandler {
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
     private final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
 
-    // TODO
-
     void createGameMetadata(ExecutionState executionState) {
-
+        gameMetadataServiceClient.createGame(new CreateGameRequest(executionState.getGameName(),
+                "New game (use !setname after completing installation)"));
     }
 
     void lockGame(ExecutionState executionState) {
@@ -66,7 +64,7 @@ public class StepHandler {
         String newInstanceId = runInstancesResponse.instances().get(0).instanceId();
 
         String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName);
-        CreateQueueResponse createQueueResponse = sqsClient.createQueue(r -> r.queueName(queueName));
+        sqsClient.createQueue(r -> r.queueName(queueName));
 
         gameMetadataServiceClient.updateGame(new UpdateGameRequest(gameName, null, null,
                 newInstanceId, queueName, null));
@@ -74,27 +72,34 @@ public class StepHandler {
     }
 
     void startInstance(ExecutionState executionState) {
-
+        String instanceId = getGameMetadata(executionState.getGameName()).getInstanceId();
+        ec2Client.startInstances(r -> r.instanceIds(instanceId));
     }
 
     void waitInstanceReady(ExecutionState executionState) {
-
+        setCallbackTaskToken(executionState.getGameName(), executionState.getTaskToken());
     }
 
     void startServer(ExecutionState executionState) {
-
+        String appDaemonQueueName = getGameMetadata(executionState.getGameName()).getInstanceQueueName();
+        IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
+        appDaemonClient.startApp(new StartAppRequest());
     }
 
     void waitServerStop(ExecutionState executionState) {
-
+        setCallbackTaskToken(executionState.getGameName(), executionState.getTaskToken());
     }
 
     void stopInstance(ExecutionState executionState) {
-
+        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+        sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
     }
 
     void deleteGameResources(ExecutionState executionState) {
-
+        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+        sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {
@@ -105,6 +110,25 @@ public class StepHandler {
                 TagSpecification.builder().resourceType(ResourceType.INSTANCE).tags(tags).build(),
                 TagSpecification.builder().resourceType(ResourceType.VOLUME).tags(tags).build()
         );
+    }
+
+    private GameMetadata getGameMetadata(String gameName) {
+        return gameMetadataServiceClient.describeGame(new DescribeGameRequest(gameName)).getGame();
+    }
+
+    private String getQueueUrl(String queueName) {
+        return sqsClient.getQueueUrl(r -> r.queueName(queueName)).queueUrl();
+    }
+
+    private void setCallbackTaskToken(String gameName, String taskToken) {
+        gameMetadataServiceClient.updateGame(new UpdateGameRequest(
+                gameName,
+                null,
+                null,
+                null,
+                null,
+                taskToken
+        ));
     }
 
 }

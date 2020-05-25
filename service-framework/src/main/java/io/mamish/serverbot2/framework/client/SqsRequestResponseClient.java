@@ -21,23 +21,37 @@ public class SqsRequestResponseClient {
 
     private final SqsAsyncClient realSqsAsyncClient = SqsAsyncClient.create();
     private final SqsClient realSqsClient = SqsClient.create();
-    private final String rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
-            .tags(makeReaperHeartbeatTags())).queueUrl();
     private final Map<String, Queue<String>> requestIdToSync =
             Collections.synchronizedMap(new HashMap<>());
 
     // How often the tags of the temp queue are updated with the current timestamp to prevent reaper deletion.
     private static final long REAPER_HEARTBEAT_INTERVAL = ReaperConfig.TTL_SECONDS_API_TEMP_SQS_QUEUE / 2;
 
-    public SqsRequestResponseClient() {
-        Thread receiverThread = new Thread(this::runReceiveLoop);
-        receiverThread.setDaemon(true);
-        receiverThread.start();
+    // Lazily initialize this: don't want to create temp SQS queue if it won't be used.
+    private volatile String rxTempQueueUrl;
 
-        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::updateQueueReaperHeartbeat,
-                REAPER_HEARTBEAT_INTERVAL, REAPER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
-        Runtime.getRuntime().addShutdownHook(new Thread(() ->
-                realSqsAsyncClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
+    public SqsRequestResponseClient() {
+        // empty: queue initialization is delayed until required
+    }
+
+    private synchronized void initialiseResources() {
+
+        if (rxTempQueueUrl == null) {
+
+            rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
+                    .tags(makeReaperHeartbeatTags())).queueUrl();
+
+            Thread receiverThread = new Thread(this::runReceiveLoop);
+            receiverThread.setDaemon(true);
+            receiverThread.start();
+
+            Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::updateQueueReaperHeartbeat,
+                    REAPER_HEARTBEAT_INTERVAL, REAPER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
+            Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                    realSqsAsyncClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
+
+        }
+
     }
 
     public String getQueueUrl(String queueName) {
@@ -45,6 +59,10 @@ public class SqsRequestResponseClient {
     }
 
     public String sendAndReceive(String queueUrl, String messageBody, int timeoutSeconds, String requestId) {
+
+        if (rxTempQueueUrl == null) {
+            initialiseResources();
+        }
 
         // Could potentially use SynchronousQueue instead.
         // Would need to start async receive before send to guarantee correctness (e.g. with CompletableFuture).

@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.appinfra;
 
-import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.workflow.model.MachineNames;
 import io.mamish.serverbot2.workflow.model.MachineTaskNames;
@@ -19,12 +18,6 @@ import java.util.Map;
 
 public class WorkflowsStack extends Stack {
 
-    private final Gson gson = new Gson();
-
-    public WorkflowsStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
-
     public WorkflowsStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
@@ -36,16 +29,15 @@ public class WorkflowsStack extends Stack {
         LambdaInvoke lockGame = makeSynchronousTask(taskFunc, MachineTaskNames.LockGame);
         LambdaInvoke createGameResources = makeSynchronousTask(taskFunc, MachineTaskNames.CreateGameResources);
         LambdaInvoke startInstance = makeSynchronousTask(taskFunc, MachineTaskNames.StartInstance);
-        LambdaInvoke waitInstanceReady = lambdaCallbackInvokeTask(taskFunc, MachineTaskNames.WaitInstanceReady,
+        LambdaInvoke waitInstanceReady = makeCallbackTask(taskFunc, MachineTaskNames.WaitInstanceReady,
                 Duration.seconds(WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS));
         LambdaInvoke startServer = makeSynchronousTask(taskFunc, MachineTaskNames.StartServer);
-        LambdaInvoke waitServerStop = lambdaCallbackInvokeTask(taskFunc, MachineTaskNames.WaitServerStop,
+        LambdaInvoke waitServerStop = makeCallbackTask(taskFunc, MachineTaskNames.WaitServerStop,
                 Duration.seconds(WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS));
         LambdaInvoke stopInstance = makeSynchronousTask(taskFunc, MachineTaskNames.StopInstance);
         LambdaInvoke deleteGameResources = makeSynchronousTask(taskFunc, MachineTaskNames.DeleteGameResources);
 
         IChainable createGameTaskChain = createGameMetadata
-                .next(lockGame)
                 .next(createGameResources)
                 .next(waitInstanceReady)
                 .next(waitServerStop)
@@ -101,7 +93,7 @@ public class WorkflowsStack extends Stack {
                 .build();
     }
 
-    private LambdaInvoke lambdaCallbackInvokeTask(IFunction function, MachineTaskNames name, Duration heartbeat) {
+    private LambdaInvoke makeCallbackTask(IFunction function, MachineTaskNames name, Duration heartbeat) {
         Map<String,Object> payloadMap = new HashMap<>(basePayloadMap(name));
         payloadMap.put("taskToken", "$$.Task.Token");
         TaskInput payload = TaskInput.fromObject(payloadMap);

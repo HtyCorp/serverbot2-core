@@ -9,7 +9,7 @@ import java.util.function.Function;
 public class ConfigValue {
 
     private String name;
-    private String value;
+    private volatile String value;
     private Function<String,String> fetcher;
 
     public ConfigValue(String name, Function<String,String> fetcher) {

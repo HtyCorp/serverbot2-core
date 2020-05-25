@@ -24,13 +24,12 @@ import java.util.function.Function;
 public final class ApiClient {
 
     private static final Gson gson = new Gson();
+    private static final SqsRequestResponseClient sqsRequestResponse = new SqsRequestResponseClient();
     private static final LambdaClient lambdaClient = LambdaClient.builder()
             .overrideConfiguration(r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)))
             .build();
 
-    // Don't initialise SQS unless used: creates temporary SQS queue needing cleanup later.
-    private static final Object sqsRequestReponseLock = new Object();
-    private static SqsRequestResponseClient sqsRequestResponse;
+
 
     private ApiClient() {}
 
@@ -49,15 +48,6 @@ public final class ApiClient {
     }
 
     public static <ModelType> ModelType sqs(Class<ModelType> modelInterfaceClass, String queueName) {
-
-        if (sqsRequestResponse == null) {
-            synchronized(sqsRequestReponseLock) {
-                if (sqsRequestResponse == null) {
-                    sqsRequestResponse = new SqsRequestResponseClient();
-                }
-            }
-        }
-
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
                 queueUrl,
@@ -65,7 +55,6 @@ public final class ApiClient {
                 ApiConfig.CLIENT_DEFAULT_TIMEOUT,
                 payloadAndId.snd())
         );
-
     }
 
     /*

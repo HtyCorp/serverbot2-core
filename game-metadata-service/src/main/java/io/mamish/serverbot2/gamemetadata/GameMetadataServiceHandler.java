@@ -9,8 +9,6 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -51,7 +49,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         GameMetadataBean newItem = new GameMetadataBean(
                 name,
                 request.getFullName(),
-                GameReadyState.BUSY_WORKING,
+                GameReadyState.BUSY,
                 null,
                 null,
                 null
@@ -82,11 +80,11 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         }
 
         GameMetadataBean updateItem = new GameMetadataBean();
-        updateItem.setGameReadyState(GameReadyState.RUNNING);
+        updateItem.setGameReadyState(GameReadyState.BUSY);
 
         Expression checkIsStopped = Expression.builder()
                 .expression("gameReadyState = :stopped")
-                .putExpressionValue(":stopped", mkString(GameReadyState.READY_TO_RUN))
+                .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
                 .build();
 
         try {
@@ -109,7 +107,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         if (item == null) {
             throw new RequestValidationException("No game '" + name + "' present in table");
         }
-        if (item.getGameReadyState().equals(GameReadyState.READY_TO_RUN)) {
+        if (item.getGameReadyState().equals(GameReadyState.STOPPED)) {
             throw new RequestHandlingException(LOCKED_ERR_MSG);
         }
 
@@ -118,7 +116,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
         Expression checkIsNotStopped = Expression.builder()
                 .expression("gameReadyState != :stopped")
-                .putExpressionValue(":stopped", mkString(GameReadyState.READY_TO_RUN))
+                .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
                 .build();
 
         try {
@@ -129,13 +127,6 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
         return new UpdateGameResponse(item.toModel());
 
-    }
-
-    private <T> void updateIfNotNull(Supplier<T> getter, Consumer<T> setter) {
-        T value = getter.get();
-        if (value != null) {
-            setter.accept(value);
-        }
     }
 
     private void validateGameName(String name) throws RequestValidationException {
