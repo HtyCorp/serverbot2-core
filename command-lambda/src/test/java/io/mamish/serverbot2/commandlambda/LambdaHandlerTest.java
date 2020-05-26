@@ -32,7 +32,7 @@ public class LambdaHandlerTest {
     public void testStartMissingArgument() {
 
         String expectedResponseMessage = "Error: Expected at least 1 argument but got 0."
-                + "\nUsage: "+SIGIL+"start game-name"
+                + "\nUsage: "+SIGIL+"start gameName"
                 + "\nUse '"+SIGIL+"help start' for details.";
 
         testSimpleResponseMessage(expectedResponseMessage,
