@@ -23,11 +23,9 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
 
     private final DiscordApi discordApi;
     private final ChannelMap channelMap;
-    private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.create();
-    private final DynamoDbTable<DynamoMessageItem> messageTable = ddbClient.table(DiscordConfig.MESSAGE_TABLE_NAME,
-            TableSchema.fromBean(DynamoMessageItem.class));
+    private final DynamoMessageTable messageTable;
 
-    private Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     @Override
     protected Class<IDiscordService> getModelClass() {
@@ -39,10 +37,11 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         return this;
     }
 
-    public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap) {
+    public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap, DynamoMessageTable messageTable) {
         super(DiscordConfig.SQS_QUEUE_NAME);
         this.discordApi = discordApi;
         this.channelMap = channelMap;
+        this.messageTable = messageTable;
     }
 
     @Override
@@ -78,7 +77,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         }
 
         if (requestedExternalId != null) {
-            if (messageTable.getItem(partition(requestedExternalId)) != null) {
+            if (messageTable.has(requestedExternalId)) {
                 throw new RequestValidationException("Received NewMessageRequest with an already used external ID");
             }
         }
@@ -86,7 +85,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         Message message = channel.sendMessage(requestedContent).join();
 
         if (requestedExternalId != null) {
-            messageTable.putItem(new DynamoMessageItem(requestedExternalId, channel.getIdAsString(),
+            messageTable.put(new DynamoMessageItem(requestedExternalId, channel.getIdAsString(),
                     message.getIdAsString()));
         }
 
@@ -101,7 +100,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         String externalId = editMessageRequest.getExternalId();
         EditMode editMode = editMessageRequest.getEditMode();
 
-        DynamoMessageItem dbItem = messageTable.getItem(partition(externalId));
+        DynamoMessageItem dbItem = messageTable.get(externalId);
         if (dbItem == null) {
             throw new RequestValidationException("No message entry found for external ID " + externalId);
         }
@@ -132,10 +131,6 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
 
         return new EditMessageResponse(newContent, channelId, messageId);
 
-    }
-
-    private static Key partition(String value) {
-        return Key.builder().partitionValue(value).build();
     }
 
 }
