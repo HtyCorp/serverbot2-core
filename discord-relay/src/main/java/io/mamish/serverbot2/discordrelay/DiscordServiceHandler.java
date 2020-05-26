@@ -39,12 +39,8 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         return this;
     }
 
-    @Override
-    protected String getReceiverQueueName() {
-        return DiscordConfig.SQS_QUEUE_NAME;
-    }
-
     public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap) {
+        super(DiscordConfig.SQS_QUEUE_NAME);
         this.discordApi = discordApi;
         this.channelMap = channelMap;
     }

@@ -62,7 +62,7 @@ public final class ApiClient {
      * 1) Requests have only one (composite) argument.
      * 2) Definition set is not missing any definitions for the interface.
      */
-    public static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
+    private static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
                 Function<Pair<String,String>,String> senderReceiver) {
         ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass);
         @SuppressWarnings("unchecked")

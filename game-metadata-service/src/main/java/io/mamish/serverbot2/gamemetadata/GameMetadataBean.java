@@ -5,6 +5,7 @@ import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
 import io.mamish.serverbot2.gamemetadata.model.UpdateGameRequest;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,6 +74,8 @@ public class GameMetadataBean {
         this.gameReadyState = gameReadyState;
     }
 
+    public static final String INDEX_BY_INSTANCE = "allByInstanceId";
+    @DynamoDbSecondaryPartitionKey(indexNames = {INDEX_BY_INSTANCE})
     public String getInstanceId() {
         return instanceId;
     }

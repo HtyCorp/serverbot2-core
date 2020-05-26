@@ -23,16 +23,27 @@ public class InstanceMetadata {
             URI.create("http://169.254.169.254/latest/dynamic/instance-identity/document");
     private static final HttpClient http = HttpClient.newBuilder().build();
 
+    private static volatile InstanceMetadata instance;
+
     public static InstanceMetadata fetch() {
-        try {
-            String data = http.send(HttpRequest.newBuilder()
-                    .GET()
-                    .uri(identityMetadataUri).build(),
-                    HttpResponse.BodyHandlers.ofString()
-            ).body();
-            return gson.fromJson(data, InstanceMetadata.class);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+        if (instance == null) {
+            setInstance();
+        }
+        return instance;
+    }
+
+    private static synchronized void setInstance() {
+        if (instance == null) {
+            try {
+                String data = http.send(HttpRequest.newBuilder()
+                                .GET()
+                                .uri(identityMetadataUri).build(),
+                        HttpResponse.BodyHandlers.ofString()
+                ).body();
+                instance = gson.fromJson(data, InstanceMetadata.class);
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

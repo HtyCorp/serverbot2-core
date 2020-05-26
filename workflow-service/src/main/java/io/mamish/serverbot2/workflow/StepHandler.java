@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.workflow;
 
-import com.fasterxml.jackson.core.Base64Variants;
 import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
 import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
@@ -10,7 +9,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
-import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;

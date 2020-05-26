@@ -6,10 +6,12 @@ import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,20 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
             return new DescribeGameResponse(false, null);
         } else {
             return new DescribeGameResponse(true, result.toModel());
+        }
+    }
+
+    @Override
+    public IdentifyInstanceResponse identifyInstance(IdentifyInstanceRequest request) {
+        DynamoDbIndex<GameMetadataBean> index = table.index(GameMetadataBean.INDEX_BY_INSTANCE);
+        QueryConditional matchInstanceId = QueryConditional.keyEqualTo(partitionKey(request.getInstanceId()));
+        Optional<GameMetadataBean> maybeMetadata = index.query(r -> r.queryConditional(matchInstanceId)).stream()
+                .flatMap(p -> p.items().stream())
+                .findFirst();
+        if (maybeMetadata.isPresent()) {
+            return new IdentifyInstanceResponse(maybeMetadata.get().toModel());
+        } else {
+            throw new RequestHandlingException("No game found matching instance ID " + request.getInstanceId());
         }
     }
 

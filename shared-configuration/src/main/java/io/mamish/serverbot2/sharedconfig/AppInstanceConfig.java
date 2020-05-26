@@ -22,4 +22,8 @@ public class AppInstanceConfig {
 
     public static final String COMMON_KEYPAIR_NAME = "DefaultAppKeypair";
 
+    public static final int APP_SHUTDOWN_TIMEOUT_SECONDS = 20;
+
+    public static final String APP_LOGS_GROUP_PREFIX = "serverbot2/app/serverlogs";
+
 }

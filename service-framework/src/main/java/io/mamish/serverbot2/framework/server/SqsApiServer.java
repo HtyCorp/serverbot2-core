@@ -20,15 +20,15 @@ public abstract class SqsApiServer<ModelType> {
     private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(getHandlerInstance(),getModelClass());
     private final SqsClient sqsClient = SqsClient.create();
     private final SqsAsyncClient sqsAsyncClient = SqsAsyncClient.create();
-    private final String receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(getReceiverQueueName())).queueUrl();
     private final Logger logger = Logger.getLogger("SqsStandardApiHandler");
+    private final String receiveQueueUrl;
 
     protected abstract Class<ModelType> getModelClass();
     protected abstract ModelType getHandlerInstance();
-    protected abstract String getReceiverQueueName();
 
-    public SqsApiServer() {
+    public SqsApiServer(String queueName) {
         // Don't run as daemon: this is intended as a forever-running server thread.
+        receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(queueName)).queueUrl();
         new Thread(this::runReceiveLoop, THREAD_NAME).start();
     }
 
