@@ -5,20 +5,37 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 public class ApiGatewayLambdaHandlerTest {
 
-    @Test
-    public void testDummyResponse() {
+// Tests disabled until I figure out how to mock various APIs for this
+
+//    @Test
+//    public void testBadHttpMethod() {
+//        var response = generateResponse(new APIGatewayProxyRequestEvent()
+//            .withHttpMethod("POST")
+//            .withPath("/")
+//            .withBody("\"some\":\"body\"}")
+//            .withQueryStringParameters(Map.of("token", "dummyToken"))
+//        );
+//        Assertions.assertEquals(400, response.getStatusCode());
+//        Assertions.assertEquals("Sorry, this request is invalid [bad HTTP method 'POST']", response.getBody());
+//    }
+//
+//    @Test
+//    public void testMissingTokenParam() {
+//        var response = generateResponse(new APIGatewayProxyRequestEvent()
+//                .withHttpMethod("GET")
+//                .withPath("/")
+//        );
+//        Assertions.assertEquals(400, response.getStatusCode());
+//        Assertions.assertEquals("Sorry, this request is invalid [missing token]", response.getBody());
+//    }
+
+    private APIGatewayProxyResponseEvent generateResponse(APIGatewayProxyRequestEvent request) {
         ApiGatewayLambdaHandler handler = new ApiGatewayLambdaHandler();
-        APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent()
-                .withPath("/")
-                .withBody("Some body content")
-                .withHttpMethod("GET");
-
-        APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
-
-        Assertions.assertEquals(200, response.getStatusCode());
-        Assertions.assertEquals("Hello, I haven't been implemented yet. Bye!", response.getBody());
+        return handler.handleRequest(request, null);
     }
 
 }
