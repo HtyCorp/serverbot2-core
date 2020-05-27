@@ -14,6 +14,9 @@ import software.amazon.awscdk.services.codepipeline.StageOptions;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
 import software.amazon.awscdk.services.codepipeline.actions.S3DeployAction;
+import software.amazon.awscdk.services.iam.ManagedPolicy;
+import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
@@ -60,12 +63,18 @@ public class DeploymentStack extends Stack {
         Artifact synthDeploymentInfra = Artifact.artifact("cdk_deploy_assembly");
         Artifact synthAppInfra = Artifact.artifact("cdk_app_assembly");
 
+        // Should remove this once we have a clearer test methodology where unit tests need no service access
+        Role codeBuildRole = Role.Builder.create(this, "CodeBuildAdminRole")
+                .assumedBy(new ServicePrincipal("codebuild.amazonaws.com"))
+                .managedPolicies(List.of(ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess")))
+                .build();
         BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
                 .buildImage(LinuxBuildImage.STANDARD_4_0)
                 .computeType(ComputeType.MEDIUM)
                 .build();
         PipelineProject codeBuildProject = PipelineProject.Builder.create(this, "CodeBuildProject")
                 .environment(codeBuildBuildEnvironment)
+                .role(codeBuildRole)
                 .build();
 
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
