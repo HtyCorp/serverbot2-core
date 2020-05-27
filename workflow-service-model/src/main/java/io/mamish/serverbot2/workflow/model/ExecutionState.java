@@ -9,7 +9,7 @@ public class ExecutionState {
     private String randomId2;
 
     // Provided by state machine context
-    private MachineTaskNames taskName;
+    private Tasks taskName;
     private String taskToken;
 
     public ExecutionState() { }
@@ -37,7 +37,7 @@ public class ExecutionState {
         return randomId2;
     }
 
-    public MachineTaskNames getTaskName() {
+    public Tasks getTaskName() {
         return taskName;
     }
 

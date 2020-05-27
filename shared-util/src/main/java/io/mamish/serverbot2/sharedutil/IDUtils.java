@@ -1,18 +1,24 @@
 package io.mamish.serverbot2.sharedutil;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class IDUtils {
 
     private IDUtils() {}
 
-    public static String slash(String... segment) {
-        return String.join("/", segment);
+    public static String slash(Object... segments) {
+        return joinWith("/", segments);
     }
 
-    public static String kebab(String... segments) {
-        return String.join("-", segments);
+    public static String kebab(Object... segments) {
+        return joinWith("-", segments);
+    }
+
+    public static String joinWith(String delim, Object[] segments) {
+        return Arrays.stream(segments).map(Object::toString).collect(Collectors.joining(delim));
     }
 
     public static String randomUUID() {
