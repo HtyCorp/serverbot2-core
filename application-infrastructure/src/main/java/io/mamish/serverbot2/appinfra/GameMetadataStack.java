@@ -45,7 +45,6 @@ public class GameMetadataStack extends Stack {
         // Function and attached role
 
         Role functionRole = Util.standardLambdaRole(this, "ServiceRole", List.of(
-                Util.POLICY_BASIC_LAMBDA_EXECUTION,
                 Util.POLICY_DYNAMODB_FULL_ACCESS
         )).build();
 

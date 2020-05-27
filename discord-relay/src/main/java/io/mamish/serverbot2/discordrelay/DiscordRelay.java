@@ -23,6 +23,10 @@ import java.util.logging.Logger;
 
 public class DiscordRelay {
 
+    public static void main(String[] args) {
+        new DiscordRelay();
+    }
+
     Logger logger = Logger.getLogger("DiscordRelay");
 
     private final ChannelMap channelMap;

@@ -24,8 +24,6 @@
         </plugins>
     </build>
 
-
-
     <dependencies>
         <!-- Local module dependencies -->
         <dependency>

@@ -124,7 +124,9 @@ public class DeploymentStack extends Stack {
         // CDK deploy action for application assembly
 
         PipelineDeployStackAction updateApplicationAction = PipelineDeployStackAction.Builder.create()
-                .stack(this)
+                // TODO: This is totally wrong. `stack` has to be a reference to the app infra stack we want to deploy.
+                // Might be best to merge deployinfra and appinfra packages to make this all easier.
+                //.stack(this)
                 .input(synthAppInfra)
                 .adminPermissions(true)
                 .build();

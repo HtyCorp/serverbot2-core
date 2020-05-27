@@ -12,7 +12,7 @@
     <artifactId>workflow-service</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.workflow.Daemon</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.workflow.LambdaHandler</module.assemblyJarMainClass>
     </properties>
 
     <build>

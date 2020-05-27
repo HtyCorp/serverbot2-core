@@ -12,7 +12,7 @@
     <artifactId>ip-lambda</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.iplambda.ApiGatetwayLambdaHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler</module.assemblyJarMainClass>
     </properties>
 
     <build>
