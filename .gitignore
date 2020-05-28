@@ -3,3 +3,4 @@
 /relay-docker
 /relay-docker/*
 /application-infrastructure/cdk.context.json
+*.log
