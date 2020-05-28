@@ -2,6 +2,8 @@ package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
+import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -20,6 +22,10 @@ public class CommandStack extends Stack {
                 ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess"),
                 ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess")
         )).build();
+
+        Util.addLambdaInvokePermissionToRole(this, functionRole,
+                GameMetadataConfig.FUNCTION_NAME,
+                NetSecConfig.FUNCTION_NAME);
 
         Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
                 "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole)
