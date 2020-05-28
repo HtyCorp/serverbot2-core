@@ -43,7 +43,7 @@ public class Util {
     public static void addConfigPathReadPermissionToRole(Stack stack, IRole role, String... paths) {
         List<String> secretAndParameterArns = Arrays.stream(paths)
                 .flatMap(path -> Stream.of(
-                        arn(stack, null, null, "ssm", "parameter/"+path),
+                        arn(stack, null, null, "ssm", "parameter/"+path+"/*"),
                         arn(stack, null, null, "secretsmanager", "secret:"+path+"/*")
                 )).collect(Collectors.toList());
 

@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -21,7 +22,8 @@ public class CommandStack extends Stack {
         )).build();
 
         Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
-                "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole).build();
+                "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole)
+                .functionName(CommandLambdaConfig.FUNCTION_NAME).build();
 
     }
 }

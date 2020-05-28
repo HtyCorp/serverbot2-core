@@ -1,8 +1,10 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.dynamodb.Attribute;
@@ -38,7 +40,7 @@ public class RelayStack extends Stack {
         // Table configured for destroy since
         Table messageTable = Table.Builder.create(this, "DiscordRelayMessageTable")
                 .tableName(DiscordConfig.MESSAGE_TABLE_NAME)
-                //.removalPolicy(RemovalPolicy.DESTROY)
+                .removalPolicy(RemovalPolicy.DESTROY)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .partitionKey(messageTablePartitionKey)
                 .build();
@@ -67,6 +69,9 @@ public class RelayStack extends Stack {
                         Util.POLICY_EC2_FULL_ACCESS
                 ))
                 .build();
+
+        Util.addConfigPathReadPermissionToRole(this, taskRole, DiscordConfig.PATH_ALL);
+        Util.addLambdaInvokePermissionToRole(this, taskRole, CommandLambdaConfig.FUNCTION_NAME);
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "DiscordRelayTask")
                 .compatibility(Compatibility.FARGATE)

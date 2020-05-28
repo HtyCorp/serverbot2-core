@@ -1,7 +1,9 @@
 package io.mamish.serverbot2.discordrelay;
 
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
+@DynamoDbBean
 public class DynamoMessageItem {
 
     private String externalMessageId;

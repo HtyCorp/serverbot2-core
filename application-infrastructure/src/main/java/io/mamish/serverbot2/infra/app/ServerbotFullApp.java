@@ -45,7 +45,8 @@ public class ServerbotFullApp {
         netSecStack = new NetSecStack(cdkApp, "NetSecService", coreStackProps);
         reaperStack = new ReaperStack(cdkApp, "ResourceReaper", coreStackProps);
 
-        new DeploymentStack(this, "DeploymentPipeline");
+        // Disabled for now since appdelivery doesn't support stacks with assets
+        // new DeploymentStack(this, "DeploymentPipeline");
 
         cdkApp.synth();
 

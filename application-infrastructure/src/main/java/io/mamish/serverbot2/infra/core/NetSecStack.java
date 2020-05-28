@@ -24,7 +24,7 @@ public class NetSecStack extends Stack {
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
             Util.POLICY_EC2_FULL_ACCESS
         )).build();
-        userIdKey.grant(functionRole);
+        userIdKey.grant(functionRole, "kms:GenerateDataKey", "kms:Decrypt");
 
         Function serviceFunction = Util.standardJavaFunction(this, "NetSecService", "network-security-service",
                 "io.mamish.serverbot2.networksecurity.LambdaHandler", functionRole)
