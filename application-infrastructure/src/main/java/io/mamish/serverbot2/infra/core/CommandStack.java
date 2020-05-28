@@ -1,5 +1,6 @@
-package io.mamish.serverbot2.appinfra;
+package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Util;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -10,9 +11,6 @@ import software.amazon.awscdk.services.lambda.Function;
 import java.util.List;
 
 public class CommandStack extends Stack {
-    public CommandStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
 
     public CommandStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);

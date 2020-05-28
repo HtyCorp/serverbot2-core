@@ -24,17 +24,11 @@ phases:
       - "echo \"Build completed at $(date)\""
 artifacts:
   secondary-artifacts:
-    # Looking like it won't be necessary to pass these: they are built into the CDK assemblies
     s3_jar_files:
       files:
         - "app-daemon/target/app-daemon.jar"
       discard-paths: yes
-    cdk_deploy_assembly:
-      files:
-        - "**/*"
-      discard-paths: no
-      base-directory: "deployment-infrastructure/target/cdk-assembly"
-    cdk_app_assembly:
+    cdk_assembly:
       files:
         - "**/*"
       discard-paths: no

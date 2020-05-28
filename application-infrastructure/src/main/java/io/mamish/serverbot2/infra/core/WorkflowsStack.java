@@ -1,5 +1,6 @@
-package io.mamish.serverbot2.appinfra;
+package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.Machines;

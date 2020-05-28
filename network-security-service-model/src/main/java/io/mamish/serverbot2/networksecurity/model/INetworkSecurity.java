@@ -7,5 +7,6 @@ public interface INetworkSecurity {
     ModifyPortsResponse modifyPorts(ModifyPortsRequest request);
     GenerateIpAuthUrlResponse generateIpAuthUrl(GenerateIpAuthUrlRequest request);
     AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request);
+    DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroupRequest request);
 
 }

@@ -1,5 +1,6 @@
-package io.mamish.serverbot2.appinfra;
+package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;

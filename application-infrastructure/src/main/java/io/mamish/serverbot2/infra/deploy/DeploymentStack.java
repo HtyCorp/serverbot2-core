@@ -1,14 +1,18 @@
-package io.mamish.serverbot2.deployinfra;
+package io.mamish.serverbot2.infra.deploy;
 
+import io.mamish.serverbot2.infra.app.ServerbotFullApp;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DeploymentConfig;
 import software.amazon.awscdk.appdelivery.PipelineDeployStackAction;
-import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.SecretValue;
+import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
 import software.amazon.awscdk.services.codebuild.ComputeType;
 import software.amazon.awscdk.services.codebuild.LinuxBuildImage;
 import software.amazon.awscdk.services.codebuild.PipelineProject;
 import software.amazon.awscdk.services.codepipeline.Artifact;
+import software.amazon.awscdk.services.codepipeline.IAction;
 import software.amazon.awscdk.services.codepipeline.Pipeline;
 import software.amazon.awscdk.services.codepipeline.StageOptions;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
@@ -20,15 +24,14 @@ import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DeploymentStack extends Stack {
-    public DeploymentStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
 
-    public DeploymentStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public DeploymentStack(ServerbotFullApp app, String id) {
+        super(app.cdkApp, id, app.coreStackProps);
 
         // Top-level pipeline definition to add stages to.
 
@@ -60,8 +63,7 @@ public class DeploymentStack extends Stack {
         // CodeBuild project with JAR and CDK assembly output artifacts
 
         Artifact s3JarFiles = Artifact.artifact("s3_jar_files");
-        Artifact synthDeploymentInfra = Artifact.artifact("cdk_deploy_assembly");
-        Artifact synthAppInfra = Artifact.artifact("cdk_app_assembly");
+        Artifact synthAppInfra = Artifact.artifact("cdk_assembly");
 
         // Should remove this once we have a clearer test methodology where unit tests need no service access
         Role codeBuildRole = Role.Builder.create(this, "CodeBuildAdminRole")
@@ -81,7 +83,7 @@ public class DeploymentStack extends Stack {
                 .project(codeBuildProject)
                 .actionName("PackageJarsAndSynthCDK")
                 .input(sourceOutput)
-                .outputs(List.of(s3JarFiles, synthDeploymentInfra, synthAppInfra))
+                .outputs(List.of(s3JarFiles, synthAppInfra))
                 .build();
         pipeline.addStage(StageOptions.builder()
                 .stageName("BuildAll")
@@ -90,15 +92,8 @@ public class DeploymentStack extends Stack {
 
         // CDK self-update/deploy action for this pipeline
 
-        PipelineDeployStackAction updateSelfAction = PipelineDeployStackAction.Builder.create()
-                .stack(this)
-                .input(synthDeploymentInfra)
-                .adminPermissions(true)
-                .build();
-        pipeline.addStage(StageOptions.builder()
-                .stageName("SelfUpdateDeploymentInfra")
-                .actions(List.of(updateSelfAction))
-                .build());
+        addStackDeployStage(pipeline, synthAppInfra, "SelfUpdateDeploymentPipeline",
+                this);
 
         // S3 deploy stage for app daemon (deployed to S3 rather than by any CDK mechanism)
 
@@ -121,20 +116,46 @@ public class DeploymentStack extends Stack {
                 .actions(List.of(artifactDeployAction))
                 .build());
 
-        // CDK deploy action for application assembly
+        // CDK stack deployments
 
-        PipelineDeployStackAction updateApplicationAction = PipelineDeployStackAction.Builder.create()
-                // TODO: This is totally wrong. `stack` has to be a reference to the app infra stack we want to deploy.
-                // Might be best to merge deployinfra and appinfra packages to make this all easier.
-                //.stack(this)
-                .input(synthAppInfra)
+        // Stage 1 app deploy: common infrastructure only
+        addStackDeployStage(pipeline, synthAppInfra, "DeployCommonInfra",
+                app.commonStack);
+
+        // Stage 2 app deploy: passive services
+        addStackDeployStage(pipeline, synthAppInfra, "DeployPassiveServices",
+                app.appInstanceShareStack,
+                app.gameMetadataStack,
+                app.netSecStack,
+                app.reaperStack);
+
+        // Stage 3: worker services depending on passive services
+        addStackDeployStage(pipeline, synthAppInfra, "DeployWorkerServices",
+                app.ipStack,
+                app.workflowsStack);
+
+        // Stage 4: command service depending on all other services
+        addStackDeployStage(pipeline, synthAppInfra, "DeployCommandService",
+                app.commandStack);
+
+        // Stage 5: Discord delay depending on command service
+        addStackDeployStage(pipeline, synthAppInfra, "DeployDiscordRelay",
+                app.relayStack);
+
+    }
+
+    private void addStackDeployStage(Pipeline pipeline, Artifact synthArtifact, String stageName, Stack... targetStacks) {
+        List<IAction> deployActions = Arrays.stream(targetStacks).map(stack -> PipelineDeployStackAction.Builder.create()
+                .input(synthArtifact)
+                .stack(stack)
                 .adminPermissions(true)
-                .build();
-        pipeline.addStage(StageOptions.builder()
-                .stageName("UpdateApplicationInfra")
-                .actions(List.of(updateApplicationAction))
-                .build());
+                .build()
+        ).collect(Collectors.toList());
 
+        pipeline.addStage(StageOptions.builder()
+                .stageName(stageName)
+                .actions(deployActions)
+                .build());
     }
 
 }

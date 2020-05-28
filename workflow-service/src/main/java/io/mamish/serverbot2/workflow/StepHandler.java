@@ -4,9 +4,14 @@ import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
 import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.gamemetadata.model.*;
+import io.mamish.serverbot2.networksecurity.model.CreateSecurityGroupRequest;
+import io.mamish.serverbot2.networksecurity.model.DeleteSecurityGroupRequest;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
+import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -27,6 +32,7 @@ public class StepHandler {
     private final SqsClient sqsClient = SqsClient.create();
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
     private final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
+    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
 
     void createGameMetadata(ExecutionState executionState) {
         gameMetadataServiceClient.createGame(new CreateGameRequest(executionState.getGameName(),
@@ -49,6 +55,10 @@ public class StepHandler {
                 AppInstanceConfig.APP_NAME_INSTANCE_TAG_KEY, gameName
         );
 
+        ManagedSecurityGroup newSecurityGroup = networkSecurityServiceClient.createSecurityGroup(
+                new CreateSecurityGroupRequest(gameName)
+        ).getCreatedGroup();
+
         // Subnet choice: nothing fancy, just pick the first one returned by DescribeSubnets in the app VPC
         String subnetId = ec2Client.describeSubnets(r -> r.filters(Filter.builder()
                 .name("vpc-id")
@@ -63,6 +73,8 @@ public class StepHandler {
 
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
                     r.imageId(amiLocator.getIdealAmi().getAmiId())
+                            .subnetId(subnetId)
+                            .securityGroupIds(newSecurityGroup.getGroupId())
                             .instanceType(InstanceType.M5_LARGE)
                             .tagSpecifications(instanceAndVolumeTags(tagMap))
                             .iamInstanceProfile(r2 -> r2.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
@@ -114,6 +126,7 @@ public class StepHandler {
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
         gameMetadataServiceClient.deleteGame(new DeleteGameRequest(name));
+        networkSecurityServiceClient.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {

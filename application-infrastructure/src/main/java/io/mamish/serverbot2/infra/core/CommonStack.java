@@ -1,5 +1,6 @@
-package io.mamish.serverbot2.appinfra;
+package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
@@ -17,10 +18,6 @@ import software.amazon.awscdk.services.ssm.StringParameter;
 import java.util.List;
 
 public class CommonStack extends Stack {
-
-    public CommonStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
 
     private final Vpc applicationVpc;
     private final IHostedZone apexHostedZone;

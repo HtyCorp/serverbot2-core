@@ -228,6 +228,17 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
 
     }
 
+    @Override
+    public DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroupRequest request) {
+        String name = request.getGameName();
+        validateRequestedGameName(name);
+
+        String realGroupId = getRealGroup(name).groupId();
+        ec2Client.deleteSecurityGroup(r -> r.groupId(realGroupId));
+
+        return new DeleteSecurityGroupResponse(realGroupId);
+    }
+
     private ManagedSecurityGroup simplifyGroup(SecurityGroup realGroup) {
 
         if (!realGroup.groupName().startsWith(NetSecConfig.SG_NAME_PREFIX)) {
