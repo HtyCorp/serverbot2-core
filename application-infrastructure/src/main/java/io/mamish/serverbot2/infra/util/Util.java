@@ -61,7 +61,7 @@ public class Util {
                 .collect(Collectors.toList());
 
         role.addToPrincipalPolicy(PolicyStatement.Builder.create()
-                .actions(List.of("lambda:Invoke"))
+                .actions(List.of("lambda:InvokeFunction"))
                 .resources(lambdaArns)
                 .build());
     }

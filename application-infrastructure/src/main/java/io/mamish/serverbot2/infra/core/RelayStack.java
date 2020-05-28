@@ -19,6 +19,7 @@ import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
+import software.amazon.awscdk.services.sqs.Queue;
 
 import java.util.List;
 
@@ -43,6 +44,12 @@ public class RelayStack extends Stack {
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .partitionKey(messageTablePartitionKey)
+                .build();
+
+        // SQS queue for requests
+
+        Queue queue = Queue.Builder.create(this, "RequestsQueue")
+                .queueName(DiscordConfig.SQS_QUEUE_NAME)
                 .build();
 
         // Whole bunch of ECS (Fargate) resources
