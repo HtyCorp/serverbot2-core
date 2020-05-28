@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.discordrelay;
 
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.client.ApiClient;
@@ -79,8 +79,8 @@ public class DiscordRelay {
             return;
         }
 
-        CommandServiceRequest commandRequest = new CommandServiceRequest(words, oAppChannel.get(), author.getIdAsString());
-        CommandServiceResponse commandResponse = commandServiceClient.requestUserCommand(commandRequest);
+        ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(words, oAppChannel.get(), author.getIdAsString());
+        ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
 
         if (commandResponse.getOptionalMessageContent() != null) {
             Message newMessage = channel.sendMessage(commandResponse.getOptionalMessageContent()).join();

@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.client.ApiClient;
@@ -60,8 +60,8 @@ public class LambdaHandlerTest {
         LambdaHandler handler = new LambdaHandler();
         ICommandService localClient = ApiClient.localLambda(ICommandService.class, handler);
 
-        CommandServiceRequest request = new CommandServiceRequest(List.of(requestArgs), MessageChannel.WELCOME, DUMMY_USER_ID);
-        CommandServiceResponse response = localClient.requestUserCommand(request);
+        ProcessUserCommandRequest request = new ProcessUserCommandRequest(List.of(requestArgs), MessageChannel.WELCOME, DUMMY_USER_ID);
+        ProcessUserCommandResponse response = localClient.processUserCommand(request);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));
 

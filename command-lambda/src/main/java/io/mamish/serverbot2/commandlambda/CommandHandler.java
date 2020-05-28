@@ -2,8 +2,8 @@ package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
 import io.mamish.serverbot2.commandlambda.model.commands.*;
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceRequest;
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import software.amazon.awssdk.services.sfn.SfnClient;
 import software.amazon.awssdk.services.sfn.model.StateMachineListItem;
@@ -26,18 +26,18 @@ public class CommandHandler implements ICommandHandler {
         ));
     }
 
-    public CommandServiceResponse handleRequest(CommandServiceRequest request) {
+    public ProcessUserCommandResponse handleRequest(ProcessUserCommandRequest request) {
         return commandDispatcher.handleRequest(request);
     }
 
     @Override
-    public CommandServiceResponse onCommandHelp(CommandHelp commandHelp) {
+    public ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp) {
 
         if (commandHelp.getCommandName() != null) {
             String name = commandHelp.getCommandName();
             ApiActionDefinition definition = commandDispatcher.getApiDefinitionSet().getFromName(name);
             if (definition == null) {
-                return new CommandServiceResponse("Can't look up help: '" + name + "' is not a recognised command name.");
+                return new ProcessUserCommandResponse("Can't look up help: '" + name + "' is not a recognised command name.");
             } else {
                 StringBuilder detailedHelpBuilder = new StringBuilder();
                 detailedHelpBuilder.append(definition.getUsageString());
@@ -45,34 +45,34 @@ public class CommandHandler implements ICommandHandler {
                 for (String argString: definition.getArgumentDescriptionStrings()) {
                     detailedHelpBuilder.append("\n    ").append(argString);
                 }
-                return new CommandServiceResponse(detailedHelpBuilder.toString());
+                return new ProcessUserCommandResponse(detailedHelpBuilder.toString());
             }
         } else {
             String aggregateHelpString = commandDispatcher.getApiDefinitionSet().getAll().stream()
                     .map(definition -> definition.getUsageString() + "\n  " + definition.getDescription())
                     .collect(Collectors.joining("\n"));
-            return new CommandServiceResponse(aggregateHelpString);
+            return new ProcessUserCommandResponse(aggregateHelpString);
         }
     }
 
     @Override
-    public CommandServiceResponse onCommandGames(CommandGames commandGames) {
-        return new CommandServiceResponse("Echo 'games': " + gson.toJson(commandGames));
+    public ProcessUserCommandResponse onCommandGames(CommandGames commandGames) {
+        return new ProcessUserCommandResponse("Echo 'games': " + gson.toJson(commandGames));
     }
 
     @Override
-    public CommandServiceResponse onCommandStart(CommandStart commandStart) {
-        return new CommandServiceResponse("Echo 'start': " + gson.toJson(commandStart));
+    public ProcessUserCommandResponse onCommandStart(CommandStart commandStart) {
+        return new ProcessUserCommandResponse("Echo 'start': " + gson.toJson(commandStart));
     }
 
     @Override
-    public CommandServiceResponse onCommandStop(CommandStop commandStop) {
-        return new CommandServiceResponse("Echo 'stop': " + gson.toJson(commandStop));
+    public ProcessUserCommandResponse onCommandStop(CommandStop commandStop) {
+        return new ProcessUserCommandResponse("Echo 'stop': " + gson.toJson(commandStop));
     }
 
     @Override
-    public CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        return new CommandServiceResponse("Echo 'addip': " + gson.toJson(commandAddIp));
+    public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
+        return new ProcessUserCommandResponse("Echo 'addip': " + gson.toJson(commandAddIp));
     }
 
     private String getStateMachineArn(String name) throws NoSuchElementException {

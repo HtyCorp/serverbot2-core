@@ -1,13 +1,13 @@
 package io.mamish.serverbot2.commandlambda.model.commands;
 
-import io.mamish.serverbot2.commandlambda.model.service.CommandServiceResponse;
+import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 
 public interface ICommandHandler {
     
-    CommandServiceResponse onCommandHelp(CommandHelp commandHelp);
-    CommandServiceResponse onCommandGames(CommandGames commandGames);
-    CommandServiceResponse onCommandStart(CommandStart commandStart);
-    CommandServiceResponse onCommandStop(CommandStop commandStop);
-    CommandServiceResponse onCommandAddIp(CommandAddIp commandAddIp);
+    ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp);
+    ProcessUserCommandResponse onCommandGames(CommandGames commandGames);
+    ProcessUserCommandResponse onCommandStart(CommandStart commandStart);
+    ProcessUserCommandResponse onCommandStop(CommandStop commandStop);
+    ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp);
 
 }

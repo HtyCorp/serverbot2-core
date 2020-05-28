@@ -2,19 +2,19 @@ package io.mamish.serverbot2.commandlambda.model.service;
 
 import java.util.Objects;
 
-public class CommandServiceResponse {
+public class ProcessUserCommandResponse {
 
     private String optionalMessageContent;
     private String optionalMessageExternalId;
 
     @SuppressWarnings("unused")
-    public CommandServiceResponse() { }
+    public ProcessUserCommandResponse() { }
 
-    public CommandServiceResponse(String optionalMessageContent) {
+    public ProcessUserCommandResponse(String optionalMessageContent) {
         this.optionalMessageContent = optionalMessageContent;
     }
 
-    public CommandServiceResponse(String optionalMessageContent, String optionalMessageExternalId) {
+    public ProcessUserCommandResponse(String optionalMessageContent, String optionalMessageExternalId) {
         this.optionalMessageContent = optionalMessageContent;
         this.optionalMessageExternalId = optionalMessageExternalId;
     }
@@ -31,7 +31,7 @@ public class CommandServiceResponse {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CommandServiceResponse that = (CommandServiceResponse) o;
+        ProcessUserCommandResponse that = (ProcessUserCommandResponse) o;
         return Objects.equals(optionalMessageContent, that.optionalMessageContent) &&
                 Objects.equals(optionalMessageExternalId, that.optionalMessageExternalId);
     }
