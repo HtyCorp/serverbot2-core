@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
-import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
+import io.mamish.serverbot2.commandlambda.model.commands.servers.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;

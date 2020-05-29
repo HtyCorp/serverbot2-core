@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.infra.app;
 
 import io.mamish.serverbot2.infra.core.*;
-import io.mamish.serverbot2.infra.deploy.DeploymentStack;
 import io.mamish.serverbot2.sharedconfig.DeploymentConfig;
 import software.amazon.awscdk.core.App;
 import software.amazon.awscdk.core.Environment;

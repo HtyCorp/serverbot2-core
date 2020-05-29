@@ -2,10 +2,6 @@ package io.mamish.serverbot2.iplambda;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 public class ApiGatewayLambdaHandlerTest {
 

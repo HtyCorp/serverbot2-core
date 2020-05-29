@@ -1,7 +1,12 @@
 package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
-import io.mamish.serverbot2.commandlambda.model.commands.*;
+import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
+import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandGames;
+import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStart;
+import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStop;
+import io.mamish.serverbot2.commandlambda.model.commands.servers.ICommandHandler;
+import io.mamish.serverbot2.commandlambda.model.commands.welcome.CommandAddIp;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
