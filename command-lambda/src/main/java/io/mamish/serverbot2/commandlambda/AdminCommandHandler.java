@@ -49,7 +49,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         if (CommonConfig.RESERVED_APP_NAMES.contains(commandNewGame.getGameName())) {
             throw new RequestValidationException("'" + name + "' is a reserved name and can't be used.");
         }
-        ExecutionState state = sfnRunner.StartExecution(
+        ExecutionState state = sfnRunner.startExecution(
                 Machines.CreateGame,
                 name,
                 commandNewGame.getOriginalRequest().getMessageId(),

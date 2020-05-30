@@ -4,11 +4,6 @@ import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
-import software.amazon.awssdk.services.sfn.SfnClient;
-import software.amazon.awssdk.services.sfn.model.StateMachineListItem;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LambdaHandler extends LambdaApiServer<ICommandService> implements ICommandService {
 

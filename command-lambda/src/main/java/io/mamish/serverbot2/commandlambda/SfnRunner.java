@@ -17,7 +17,7 @@ public class SfnRunner {
     private final SfnClient sfnClient = SfnClient.create();
     private final Map<Machines,String> stateMachineArns = generateNameToArnMap();
 
-    public ExecutionState StartExecution(Machines targetMachine, String gameName,
+    public ExecutionState startExecution(Machines targetMachine, String gameName,
                                          String sourceMessageId, String sourceUserId) {
         ExecutionState inputState = new ExecutionState(
                 sourceUserId,
@@ -32,6 +32,10 @@ public class SfnRunner {
                 .input(inputStateJson));
 
         return inputState;
+    }
+
+    public void completeTask(String taskToken) {
+        sfnClient.sendTaskSuccess(r -> r.taskToken(taskToken).output("{}"));
     }
 
     private String generateExecutionId(String messageId, String userId) {

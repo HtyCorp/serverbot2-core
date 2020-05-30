@@ -46,7 +46,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     @Override
-    public NewMessageResponse requestNewMessage(NewMessageRequest newMessageRequest) {
+    public NewMessageResponse newMessage(NewMessageRequest newMessageRequest) {
 
         MessageChannel requestedChannel = newMessageRequest.getRecipientChannel();
         String requestedUserId = newMessageRequest.getRecipientUserId();
@@ -95,7 +95,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     @Override
-    public EditMessageResponse requestEditMessage(EditMessageRequest editMessageRequest) {
+    public EditMessageResponse editMessage(EditMessageRequest editMessageRequest) {
 
         String requestedContent = editMessageRequest.getContent();
         String externalId = editMessageRequest.getExternalId();
