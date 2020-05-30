@@ -11,18 +11,13 @@
     <file url="file://$PROJECT_DIR$/discord-relay/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/game-metadata-service-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/game-metadata-service/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/game-metadata-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ip-lambda/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/network-security-service-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/network-security-service/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/network-security-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/resource-reaper/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/resource-reaper/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/service-framework/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/service-framework/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-configuration/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/shared-util/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/shared-util/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/workflow-service-model/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/workflow-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/workflow-service/src/main/resources" charset="UTF-8" />

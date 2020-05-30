@@ -20,12 +20,24 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         String sourceIp = request.getRequestContext().getIdentity().getSourceIp();
 
+        String path = request.getPath();
+        if (!path.equals("/")) {
+            return generateError("Sorry, this request is invalid [bad path '" + path + "']", 400);
+        }
+
         String method = request.getHttpMethod();
         if (!method.equals("GET")) {
             return generateError("Sorry, this request is invalid [bad HTTP method '" + method + "']", 400);
         }
 
-        String encryptedUserIdToken = request.getQueryStringParameters().get("token");
+        // This map is actually null rather than just empty if no params are provided
+        // Probably due to the specifics of the Lambda runtime parser
+        Map<String,String> queryParams = request.getQueryStringParameters();
+        if (queryParams == null) {
+            return generateError("Sorry, this request is invalid [missing token]", 400);
+        }
+
+        String encryptedUserIdToken = queryParams.get("token");
         if (encryptedUserIdToken == null) {
             return generateError("Sorry, this request is invalid [missing token]", 400);
         }

@@ -2,7 +2,6 @@ package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
@@ -20,10 +19,6 @@ import software.amazon.awscdk.services.route53.targets.ApiGateway;
 import java.util.List;
 
 public class IpStack extends Stack {
-
-    public IpStack(Construct parent, String id, CommonStack commonStack) {
-        this(parent, id, null, commonStack);
-    }
 
     public IpStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
@@ -50,7 +45,7 @@ public class IpStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(NetSecConfig.AUTH_SUBDOMAIN + CommonConfig.APEX_DOMAIN_NAME)
+                .domainName(NetSecConfig.AUTH_SUBDOMAIN + "." + CommonConfig.APEX_DOMAIN_NAME)
                 .certificate(commonStack.getWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
@@ -61,7 +56,7 @@ public class IpStack extends Stack {
 
         ARecord apiAliasRecord = ARecord.Builder.create(this, "IpApiAliasRecord")
                 .zone(commonStack.getApexHostedZone())
-                .recordName("ip")
+                .recordName(NetSecConfig.AUTH_SUBDOMAIN)
                 .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
                 .ttl(Duration.minutes(5))
                 .build();

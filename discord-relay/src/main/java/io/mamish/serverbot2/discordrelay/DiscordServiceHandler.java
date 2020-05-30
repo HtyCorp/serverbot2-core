@@ -2,21 +2,22 @@ package io.mamish.serverbot2.discordrelay;
 
 import io.mamish.serverbot2.discordrelay.model.service.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.framework.server.SqsApiServer;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedutil.Utils;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.user.User;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class DiscordServiceHandler extends SqsApiServer<IDiscordService> implements IDiscordService {
@@ -45,7 +46,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     @Override
-    public NewMessageResponse requestNewMessage(NewMessageRequest newMessageRequest) {
+    public NewMessageResponse newMessage(NewMessageRequest newMessageRequest) {
 
         MessageChannel requestedChannel = newMessageRequest.getRecipientChannel();
         String requestedUserId = newMessageRequest.getRecipientUserId();
@@ -94,7 +95,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     @Override
-    public EditMessageResponse requestEditMessage(EditMessageRequest editMessageRequest) {
+    public EditMessageResponse editMessage(EditMessageRequest editMessageRequest) {
 
         String requestedContent = editMessageRequest.getContent();
         String externalId = editMessageRequest.getExternalId();
@@ -130,6 +131,38 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         message.edit(newContent);
 
         return new EditMessageResponse(newContent, channelId, messageId);
+
+    }
+
+    @Override
+    public ModifyRoleMembershipResponse modifyRoleMembership(ModifyRoleMembershipRequest modifyRoleMembershipRequest) {
+        MessageChannel channel = modifyRoleMembershipRequest.getRoleChannel();
+        RoleModifyOperation modifyOperation = modifyRoleMembershipRequest.getRoleModifyOperation();
+
+        if (!Utils.equalsAny(channel, MessageChannel.SERVERS, MessageChannel.DEBUG)) {
+            throw new RequestValidationException("Requested channel " + channel + "does not support join/leave");
+        }
+        if (!Utils.equalsAny(modifyOperation, RoleModifyOperation.ADD_USER, RoleModifyOperation.REMOVE_USER)) {
+            throw new RequestValidationException("Requested modification type " + modifyOperation + "not valid");
+        }
+
+        String roleId;
+        if (channel == MessageChannel.SERVERS) roleId = DiscordConfig.CHANNEL_ROLE_SERVERS.getValue();
+        else if (channel == MessageChannel.DEBUG) roleId = DiscordConfig.CHANNEL_ROLE_DEBUG.getValue();
+        else throw new RequestHandlingRuntimeException("Impossible state: invalid message channel passed validation");
+
+        User targetUser = discordApi.getUserById(modifyRoleMembershipRequest.getUserDiscordId()).join();
+        Role targetRole = discordApi.getRoleById(roleId).get();
+
+        Function<User, CompletableFuture<Void>> operation;
+        if (modifyOperation == RoleModifyOperation.ADD_USER) operation = targetRole::addUser;
+        else if (modifyOperation == RoleModifyOperation.REMOVE_USER) operation = targetRole::removeUser;
+        else throw new RequestHandlingRuntimeException("Impossible state: invalid operation type");
+
+        // TODO: Determine how this responds if request doesn't change membership.
+        operation.apply(targetUser).join();
+
+        return new ModifyRoleMembershipResponse();
 
     }
 

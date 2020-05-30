@@ -22,6 +22,10 @@ public class DiscordConfig {
     public static final Parameter CHANNEL_ID_ADMIN = new Parameter(PATH_PUBLIC, "channel-id/admin");
     public static final Parameter CHANNEL_ID_DEBUG = new Parameter(PATH_PUBLIC, "channel-id/debug");
 
+    // Note only these two are supplied since the other channels don't support/require dynamic join/leave.
+    public static final Parameter CHANNEL_ROLE_SERVERS = new Parameter(PATH_PUBLIC, "role-id/servers");
+    public static final Parameter CHANNEL_ROLE_DEBUG = new Parameter(PATH_PUBLIC, "role-id/debug");
+
     // I'm normally avoiding fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
     // Deletion/replacement of these should be manual and very careful anyway.
     public static final String MESSAGE_TABLE_NAME = "DiscordRelayMessages";

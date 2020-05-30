@@ -12,10 +12,12 @@ import java.util.logging.Logger;
 
 public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
-    private ModelType handlerInstance;
-    private ApiDefinitionSet<?> apiDefinitionSet;
+    private final ModelType handlerInstance;
+    private final ApiDefinitionSet<?> apiDefinitionSet;
 
-    private Logger logger = Logger.getLogger("AbstractApiHandler");
+    private final Logger logger = Logger.getLogger("AbstractApiHandler");
+
+    private AbstractApiRequestDispatcher<?, OutputType, RawInputType, ?> nextChainDispatcher;
 
     public AbstractApiRequestDispatcher(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
         this.handlerInstance = handlerInstance;
@@ -38,6 +40,10 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
 
     protected abstract OutputType serializeErrorObject(ApiServerException exception);
 
+    public final void setNextChainDispatcher(AbstractApiRequestDispatcher<?,OutputType,RawInputType,?> nextChainDispatcher) {
+        this.nextChainDispatcher = nextChainDispatcher;
+    }
+
     public final OutputType handleRequest(RawInputType rawInput) {
         try {
             return internalHandleRequest(rawInput);
@@ -59,9 +65,16 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         ParsedInputType parsedInput = nameAndRemainingInput.snd();
         ApiActionDefinition definition = apiDefinitionSet.getFromName(targetName);
 
+        // If this dispatcher doesn't have any such request definition but is chained to another dispatch,
+        // invoke that dispatcher to see if it can get a result.
         if (definition == null) {
-            throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
+            if (nextChainDispatcher != null) {
+                return nextChainDispatcher.internalHandleRequest(rawInput);
+            } else {
+                throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
+            }
         }
+
         Object requestObject = parseRequestObject(definition, parsedInput);
 
         Object invokeResult;

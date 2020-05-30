@@ -3,7 +3,7 @@ package io.mamish.serverbot2.discordrelay.model.service;
 import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
 import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
-@ApiRequestInfo(order = 0, name = "EditMessage", numRequiredFields = 3,
+@ApiRequestInfo(order = 1, name = "EditMessage", numRequiredFields = 3,
         description = "Edit a message previously sent with NewMessage, using the previous external ID")
 public class EditMessageRequest {
 

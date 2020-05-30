@@ -1,9 +1,9 @@
 package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
+import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
-import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -18,6 +18,7 @@ public class LambdaHandlerTest {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
     private static final String DUMMY_USER_ID = "12345678901234567";
+    private static final String DUMMY_MESSAGE_ID = "23456789012345678";
 
     private Logger logger = Logger.getLogger("LambdaHandlerTest");
     private Gson gson = new Gson();
@@ -60,7 +61,11 @@ public class LambdaHandlerTest {
         LambdaHandler handler = new LambdaHandler();
         ICommandService localClient = ApiClient.localLambda(ICommandService.class, handler);
 
-        ProcessUserCommandRequest request = new ProcessUserCommandRequest(List.of(requestArgs), MessageChannel.WELCOME, DUMMY_USER_ID);
+        ProcessUserCommandRequest request = new ProcessUserCommandRequest(
+                List.of(requestArgs),
+                MessageChannel.SERVERS,
+                DUMMY_USER_ID,
+                DUMMY_MESSAGE_ID);
         ProcessUserCommandResponse response = localClient.processUserCommand(request);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));

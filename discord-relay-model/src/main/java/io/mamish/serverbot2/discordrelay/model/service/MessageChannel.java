@@ -5,6 +5,10 @@ public enum MessageChannel {
     WELCOME,
     SERVERS,
     ADMIN,
-    DEBUG
+    DEBUG;
+
+    public String toLowerCase() {
+        return toString().toLowerCase();
+    }
 
 }

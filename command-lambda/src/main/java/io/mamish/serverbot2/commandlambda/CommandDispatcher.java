@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
-import io.mamish.serverbot2.commandlambda.model.commands.ICommandHandler;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
@@ -14,23 +13,23 @@ import io.mamish.serverbot2.sharedutil.Pair;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class CommandDispatcher extends AbstractApiRequestDispatcher<ICommandHandler, ProcessUserCommandResponse,
+public class CommandDispatcher<ModelType> extends AbstractApiRequestDispatcher<ModelType, ProcessUserCommandResponse,
         ProcessUserCommandRequest, ProcessUserCommandRequest> {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
 
     /*
      * Some ApiServerException subtypes are thrown by the dispatcher superclass, so their messages aren't user-
-     * friendly. If caught, they return a generic error message in Discord. The types in this array are created in
-     * this module specifically, so their messages are user-friendly and can be passed on directly.
+     * friendly. If caught, they return a generic error message in Discord. The types in this array, meanwhile, are
+     * created in this module specifically, so their messages are user-friendly and can be passed on directly.
      */
     private static final Class<?>[] allowedExceptionsForUserMessage = new Class<?>[] {
             RequestHandlingException.class, // Explicitly thrown handling exceptions have crafted messages.
             RequestValidationException.class, // Used for invalid or missing request arguments.
     };
 
-    public CommandDispatcher(ICommandHandler handler) {
-        super(handler, ICommandHandler.class);
+    public CommandDispatcher(ModelType handler, Class<ModelType> modelTypeClass) {
+        super(handler, modelTypeClass);
     }
 
     @Override

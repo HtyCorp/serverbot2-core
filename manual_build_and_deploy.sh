@@ -1,10 +1,12 @@
 #!/bin/sh
 
+set -e
+
 cd ~/environment/serverbot2/serverbot2-core
 
 npm install -g aws-cdk
 
-mvn clean install
+mvn clean install -Dmaven.test.skip=true
 
 if [[ ! -d relay-docker ]]
 then
@@ -16,10 +18,34 @@ cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Do
 cd application-infrastructure
 cdk synth
 DEPLOY="cdk deploy --require-approval=never"
-$DEPLOY CommonResources
-$DEPLOY AppInstanceResources GameMetadataService NetSecService ResourceReaper
-$DEPLOY IpAuthService WorkflowService
-$DEPLOY CommandService
-$DEPLOY DiscordRelay
+
+# Phase 1: common resources
+echo "Running phase 1 deployment..."
+$DEPLOY CommonResources &
+wait
+
+# Phase 2: passive services
+echo "Running phase 2 deployment..."
+$DEPLOY AppInstanceResources &
+$DEPLOY GameMetadataService &
+$DEPLOY NetSecService &
+$DEPLOY ResourceReaper &
+wait
+
+# Phase 3: intermediate services depending on passive services
+echo "Running phase 3 deployment..."
+$DEPLOY IpAuthService &
+$DEPLOY WorkflowService &
+wait 
+
+# Phase 4: Command service depending on all previous services
+echo "Running phase 4 deployment..."
+$DEPLOY CommandService &
+wait
+
+# Phase 5: Discord relay relying on Command service
+echo "Running phase 5 deployment..."
+$DEPLOY DiscordRelay &
+wait
 
 echo "Done!"

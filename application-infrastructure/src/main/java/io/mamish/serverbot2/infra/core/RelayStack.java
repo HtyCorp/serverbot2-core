@@ -11,9 +11,6 @@ import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
 import software.amazon.awscdk.services.dynamodb.Table;
-import software.amazon.awscdk.services.ec2.SubnetConfiguration;
-import software.amazon.awscdk.services.ec2.SubnetType;
-import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
@@ -25,11 +22,7 @@ import java.util.List;
 
 public class RelayStack extends Stack {
 
-    public RelayStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
-
-    public RelayStack(Construct parent, String id, StackProps props) {
+    public RelayStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
 
         // Data stores for relay
@@ -54,19 +47,8 @@ public class RelayStack extends Stack {
 
         // Whole bunch of ECS (Fargate) resources
 
-        SubnetConfiguration publicSubnetConfiguration = SubnetConfiguration.builder()
-                .name("PublicSubnet")
-                .subnetType(SubnetType.PUBLIC)
-                .build();
-
-        Vpc vpc = Vpc.Builder.create(this, "DiscordRelayVpc")
-                .maxAzs(1)
-                .natGateways(0)
-                .subnetConfiguration(List.of(publicSubnetConfiguration))
-                .build();
-
         Cluster cluster = Cluster.Builder.create(this, "DiscordRelayCluster")
-                .vpc(vpc)
+                .vpc(commonStack.getServiceVpc())
                 .build();
 
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")

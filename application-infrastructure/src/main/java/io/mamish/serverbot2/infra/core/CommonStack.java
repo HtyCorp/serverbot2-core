@@ -13,15 +13,19 @@ import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
-import software.amazon.awscdk.services.ssm.StringParameter;
 
 import java.util.List;
 
 public class CommonStack extends Stack {
 
+    private final Vpc serviceVpc;
     private final Vpc applicationVpc;
     private final IHostedZone apexHostedZone;
     private final DnsValidatedCertificate wildcardCertificate;
+
+    public Vpc getServiceVpc() {
+        return serviceVpc;
+    }
 
     public Vpc getApplicationVpc() {
         return applicationVpc;
@@ -44,6 +48,12 @@ public class CommonStack extends Stack {
                 .cidrMask(24)
                 .build());
 
+        serviceVpc = Vpc.Builder.create(this, "ServiceVpc")
+                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                .maxAzs(3)
+                .subnetConfiguration(singlePublicSubnet)
+                .build();
+
         applicationVpc = Vpc.Builder.create(this, "ApplicationVpc")
                 .cidr(CommonConfig.APPLICATION_VPC_CIDR)
                 //.flowLogs() // TODO: for idle connection tracker
@@ -51,7 +61,7 @@ public class CommonStack extends Stack {
                 .subnetConfiguration(singlePublicSubnet)
                 .build();
 
-        StringParameter vpcIdParameter = Util.instantiateConfigSsmParameter(this, "VpcIdParameter",
+        Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
                         CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId()).build();
 
         HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()

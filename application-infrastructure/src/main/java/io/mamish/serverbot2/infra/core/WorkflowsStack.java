@@ -5,10 +5,7 @@ import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.Machines;
 import io.mamish.serverbot2.workflow.model.Tasks;
-import software.amazon.awscdk.core.Construct;
-import software.amazon.awscdk.core.Duration;
-import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
+import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.IFunction;
 import software.amazon.awscdk.services.logs.LogGroup;
@@ -143,7 +140,7 @@ public class WorkflowsStack extends Stack {
 
     private StateMachine makeStateMachine(Machines machine, IChainable definition) {
         LogGroup logGroup = LogGroup.Builder.create(this, machine+"Logs")
-                .logGroupName("StateMachines/"+machine)
+                .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
         LogOptions logOptions = LogOptions.builder()

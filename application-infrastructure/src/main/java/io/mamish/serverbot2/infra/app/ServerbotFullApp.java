@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.infra.app;
 
 import io.mamish.serverbot2.infra.core.*;
-import io.mamish.serverbot2.infra.deploy.DeploymentStack;
 import io.mamish.serverbot2.sharedconfig.DeploymentConfig;
 import software.amazon.awscdk.core.App;
 import software.amazon.awscdk.core.Environment;
@@ -37,8 +36,8 @@ public class ServerbotFullApp {
 
         commonStack = new CommonStack(cdkApp, "CommonResources", coreStackProps);
         ipStack = new  IpStack(cdkApp, "IpAuthService", coreStackProps, commonStack);
+        relayStack = new RelayStack(cdkApp, "DiscordRelay", coreStackProps, commonStack);
         appInstanceShareStack = new AppInstanceShareStack(cdkApp, "AppInstanceResources", coreStackProps);
-        relayStack = new RelayStack(cdkApp, "DiscordRelay", coreStackProps);
         commandStack = new CommandStack(cdkApp, "CommandService", coreStackProps);
         workflowsStack = new WorkflowsStack(cdkApp, "WorkflowService", coreStackProps);
         gameMetadataStack = new GameMetadataStack(cdkApp, "GameMetadataService", coreStackProps);

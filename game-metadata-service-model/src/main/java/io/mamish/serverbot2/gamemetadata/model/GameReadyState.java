@@ -4,5 +4,10 @@ public enum GameReadyState {
     NEW,
     STOPPED,
     BUSY,
-    RUNNING
+    RUNNING;
+
+    public String toLowerCase() {
+        return toString().toLowerCase();
+    }
+
 }
