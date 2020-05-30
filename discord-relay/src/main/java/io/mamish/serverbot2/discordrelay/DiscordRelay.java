@@ -79,7 +79,11 @@ public class DiscordRelay {
             return;
         }
 
-        ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(words, oAppChannel.get(), author.getIdAsString());
+        ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
+                words,
+                oAppChannel.get(),
+                author.getIdAsString(),
+                receivedMessage.getIdAsString());
         ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
 
         if (commandResponse.getOptionalMessageContent() != null) {

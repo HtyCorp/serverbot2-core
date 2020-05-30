@@ -4,11 +4,11 @@ public enum PortProtocol {
 
     TCP, UDP, ICMP;
 
-    public static String toEc2ApiName(PortProtocol protocol) {
+    public static String toLowerCaseName(PortProtocol protocol) {
         return protocol.name().toLowerCase();
     }
 
-    public static PortProtocol fromEc2ApiName(String apiName) {
+    public static PortProtocol fromLowerCaseName(String apiName) {
         return PortProtocol.valueOf(apiName.toUpperCase());
     }
 

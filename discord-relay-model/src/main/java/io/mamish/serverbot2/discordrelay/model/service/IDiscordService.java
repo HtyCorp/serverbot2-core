@@ -4,5 +4,6 @@ public interface IDiscordService {
 
     NewMessageResponse requestNewMessage(NewMessageRequest newMessageRequest);
     EditMessageResponse requestEditMessage(EditMessageRequest editMessageRequest);
+    ModifyRoleMembershipResponse modifyRoleMembership(ModifyRoleMembershipRequest removeFromRoleRequest);
 
 }

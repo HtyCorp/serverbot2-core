@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
 import io.mamish.serverbot2.commandlambda.model.commands.welcome.CommandJoin;
 import io.mamish.serverbot2.commandlambda.model.commands.welcome.CommandLeave;
 import io.mamish.serverbot2.commandlambda.model.commands.welcome.IWelcomeCommandHandler;

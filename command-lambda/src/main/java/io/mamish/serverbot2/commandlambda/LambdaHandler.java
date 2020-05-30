@@ -12,18 +12,17 @@ import java.util.stream.Collectors;
 
 public class LambdaHandler extends LambdaApiServer<ICommandService> implements ICommandService {
 
-    private final ServersCommandHandler serversCommandHandler;
-    private final WelcomeCommandHandler welcomeCommandHandler;
+    private final AdminCommandHandler adminCommandHandler;
 
     public LambdaHandler() {
-        SfnClient sfnClient = SfnClient.create();
-        Map<String,String> stateMachineArns = sfnClient.listStateMachines().stateMachines().stream().collect(Collectors.toMap(
-                StateMachineListItem::name,
-                StateMachineListItem::stateMachineArn
-        ));
-        serversCommandHandler = new ServersCommandHandler(sfnClient, stateMachineArns);
-        welcomeCommandHandler = new WelcomeCommandHandler();
+        SfnRunner sfnRunner = new SfnRunner();
+        adminCommandHandler = new AdminCommandHandler(sfnRunner);
+        ServersCommandHandler serversCommandHandler = new ServersCommandHandler(sfnRunner);
+        WelcomeCommandHandler welcomeCommandHandler = new WelcomeCommandHandler();
 
+        // Chaining: admin -> debug (pending) -> servers -> welcome
+        // Commands from lower in chain can be used implicitly from a higher-level channel.
+        adminCommandHandler.setNextChainHandler(serversCommandHandler);
         serversCommandHandler.setNextChainHandler(welcomeCommandHandler);
     }
 
@@ -40,6 +39,6 @@ public class LambdaHandler extends LambdaApiServer<ICommandService> implements I
     @Override
     public ProcessUserCommandResponse processUserCommand(ProcessUserCommandRequest commandRequest) {
         // Will automatically be passed to the other chained handlers if case of an unknown request.
-        return serversCommandHandler.handleRequest(commandRequest);
+        return adminCommandHandler.handleRequest(commandRequest);
     }
 }

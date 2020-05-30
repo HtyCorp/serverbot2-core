@@ -98,7 +98,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         ).collect(Collectors.toList());
 
         ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(newId).ipPermissions(IpPermission.builder()
-                .ipProtocol(PortProtocol.toEc2ApiName(referencePort.getProtocol()))
+                .ipProtocol(PortProtocol.toLowerCaseName(referencePort.getProtocol()))
                 .fromPort(referencePort.getPortRangeFrom())
                 .toPort(referencePort.getPortRangeTo())
                 .ipRanges(newIpRanges)
@@ -153,7 +153,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         ).collect(Collectors.toList());
 
         return ports.stream().map(p -> IpPermission.builder()
-                .ipProtocol(PortProtocol.toEc2ApiName(p.getProtocol()))
+                .ipProtocol(PortProtocol.toLowerCaseName(p.getProtocol()))
                 .fromPort(p.getPortRangeFrom())
                 .toPort(p.getPortRangeTo())
                 .ipRanges(allRanges)
@@ -204,7 +204,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
                         sg.getAllowedPorts().forEach(port ->
                                 ec2Client.revokeSecurityGroupIngress(r -> r.groupId(sg.getGroupId())
                                         .cidrIp(user.getIpAddress())
-                                        .ipProtocol(PortProtocol.toEc2ApiName(port.getProtocol()))
+                                        .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
                                         .fromPort(port.getPortRangeFrom())
                                         .toPort(port.getPortRangeTo())))));
 
@@ -214,7 +214,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
                 String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userId), dataKey);
 
                 List<IpPermission> newPermissions = sg.getAllowedPorts().stream().map(port -> IpPermission.builder()
-                        .ipProtocol(PortProtocol.toEc2ApiName(port.getProtocol()))
+                        .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
                         .fromPort(port.getPortRangeFrom())
                         .toPort(port.getPortRangeTo())
                         .ipRanges(IpRange.builder().cidrIp(ipAddress+"/32").description(encryptedUserId).build())

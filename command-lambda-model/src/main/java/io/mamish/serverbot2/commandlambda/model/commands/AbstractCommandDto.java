@@ -12,7 +12,7 @@ public abstract class AbstractCommandDto {
 
     // This exists so command handlers can get the original user request (e.g. source sender and channel).
     // Would consider building a more general request stacking mechanism, if use by more components.
-    protected ProcessUserCommandRequest getOriginalRequest() {
+    public ProcessUserCommandRequest getOriginalRequest() {
         return originalRequest;
     }
 

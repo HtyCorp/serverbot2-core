@@ -4,7 +4,6 @@ import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
-import io.mamish.serverbot2.framework.server.AbstractApiRequestDispatcher;
 
 import java.util.stream.Collectors;
 
