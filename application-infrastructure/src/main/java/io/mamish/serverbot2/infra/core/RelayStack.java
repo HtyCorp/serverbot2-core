@@ -25,11 +25,7 @@ import java.util.List;
 
 public class RelayStack extends Stack {
 
-    public RelayStack(Construct parent, String id) {
-        this(parent, id, null);
-    }
-
-    public RelayStack(Construct parent, String id, StackProps props) {
+    public RelayStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
 
         // Data stores for relay
@@ -54,19 +50,8 @@ public class RelayStack extends Stack {
 
         // Whole bunch of ECS (Fargate) resources
 
-        SubnetConfiguration publicSubnetConfiguration = SubnetConfiguration.builder()
-                .name("PublicSubnet")
-                .subnetType(SubnetType.PUBLIC)
-                .build();
-
-        Vpc vpc = Vpc.Builder.create(this, "DiscordRelayVpc")
-                .maxAzs(1)
-                .natGateways(0)
-                .subnetConfiguration(List.of(publicSubnetConfiguration))
-                .build();
-
         Cluster cluster = Cluster.Builder.create(this, "DiscordRelayCluster")
-                .vpc(vpc)
+                .vpc(commonStack.getServiceVpc())
                 .build();
 
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")

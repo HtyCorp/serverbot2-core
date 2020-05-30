@@ -20,10 +20,6 @@ import java.util.List;
 
 public class IpStack extends Stack {
 
-    public IpStack(Construct parent, String id, CommonStack commonStack) {
-        this(parent, id, null, commonStack);
-    }
-
     public IpStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
 

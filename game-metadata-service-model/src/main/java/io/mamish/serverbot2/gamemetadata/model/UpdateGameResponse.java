@@ -4,8 +4,7 @@ public class UpdateGameResponse {
 
     private GameMetadata newMetadata;
 
-    public UpdateGameResponse() {
-    }
+    public UpdateGameResponse() { }
 
     public UpdateGameResponse(GameMetadata newMetadata) {
         this.newMetadata = newMetadata;
