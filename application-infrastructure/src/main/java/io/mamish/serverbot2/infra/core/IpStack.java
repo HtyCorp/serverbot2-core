@@ -45,7 +45,7 @@ public class IpStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(NetSecConfig.AUTH_SUBDOMAIN + CommonConfig.APEX_DOMAIN_NAME)
+                .domainName(NetSecConfig.AUTH_SUBDOMAIN + "." + CommonConfig.APEX_DOMAIN_NAME)
                 .certificate(commonStack.getWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
@@ -56,7 +56,7 @@ public class IpStack extends Stack {
 
         ARecord apiAliasRecord = ARecord.Builder.create(this, "IpApiAliasRecord")
                 .zone(commonStack.getApexHostedZone())
-                .recordName("ip")
+                .recordName(NetSecConfig.AUTH_SUBDOMAIN)
                 .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
                 .ttl(Duration.minutes(5))
                 .build();

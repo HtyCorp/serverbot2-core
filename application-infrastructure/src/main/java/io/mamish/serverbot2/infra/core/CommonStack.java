@@ -13,7 +13,6 @@ import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
-import software.amazon.awscdk.services.ssm.StringParameter;
 
 import java.util.List;
 
