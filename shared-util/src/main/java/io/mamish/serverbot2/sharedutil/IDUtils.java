@@ -17,7 +17,11 @@ public class IDUtils {
         return joinWith("-", segments);
     }
 
-    public static String joinWith(String delim, Object[] segments) {
+    public static String colon(Object... segments) {
+        return joinWith(":", segments);
+    }
+
+    public static String joinWith(String delim, Object... segments) {
         return Arrays.stream(segments).map(Object::toString).collect(Collectors.joining(delim));
     }
 

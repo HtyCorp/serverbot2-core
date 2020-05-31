@@ -4,9 +4,11 @@ import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
+import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.*;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -23,7 +25,7 @@ import java.util.stream.Stream;
 public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements INetworkSecurity {
 
     private final Ec2Client ec2Client = Ec2Client.create();
-    private final CryptoHelper crypto = new CryptoHelper();
+    private final Crypto crypto = new Crypto();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
 
     public LambdaHandler() {
@@ -31,12 +33,13 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         try {
             getManagedGroup(NetSecConfig.REFERENCE_SG_SUFFIX);
         } catch (RequestHandlingException e) {
-            String dataKeyString = crypto.generateDataKey();
-            Key dataKey = crypto.decryptDataKey(dataKeyString);
+            Pair<Key,String> generated = crypto.generateDataKey();
+            Key dataKey = generated.fst();
+            String dataKeyCiphertext = generated.snd();
 
             String groupId = ec2Client.createSecurityGroup(r -> r.vpcId(VPCID)
                     .groupName(makeSgName(NetSecConfig.REFERENCE_SG_SUFFIX))
-                    .description(dataKeyString)
+                    .description(dataKeyCiphertext)
             ).groupId();
 
             // Create a common ICMP rule so there's at least one IP and rule in the system to copy
@@ -68,14 +71,15 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         String gameName = request.getGameName();
         validateRequestedGameName(gameName);
 
-        String dataKeyString = crypto.generateDataKey();
-        Key dataKey = crypto.decryptDataKey(dataKeyString);
+        Pair<Key,String> generated = crypto.generateDataKey();
+        Key dataKey = generated.fst();
+        String dataKeyCiphertext = generated.snd();
         String newFullName = makeSgName(gameName);
         String newId;
         try {
             newId = ec2Client.createSecurityGroup(r ->
                     r.groupName(newFullName)
-                    .description(dataKeyString)
+                    .description(dataKeyCiphertext)
                     .vpcId(VPCID)
             ).groupId();
         } catch (AwsServiceException e) {
