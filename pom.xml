@@ -24,6 +24,9 @@
                 <version>3.0.0-M4</version>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
+                    <systemPropertyVariables>
+                        <serverbot2.mock>true</serverbot2.mock>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
@@ -76,6 +79,8 @@
         <module>network-security-service</module>
         <module>workflow-service</module>
         <module>workflow-service-model</module>
+        <module>service-mocks</module>
+        <module>test-utilities</module>
     </modules>
 
     <dependencyManagement>

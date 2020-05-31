@@ -31,6 +31,14 @@ public class GameMetadataBean {
         this.taskCompletionToken = taskCompletionToken;
     }
 
+    public GameMetadataBean(GameMetadataBean other) {
+        // When copying a bean we do want to copy the name, which is deliberately left out of the update operation.
+        setIfNotNull(other::getGameName, this::setGameName);
+        if (other != null) {
+            updateFromOtherBean(other);
+        }
+    }
+
     // Method included here so I'll remember to add field changes if anything in the bean changes.
     // I'll probably forget if it need to be done separately in GameMetadataServiceHandler.
     public void updateFromApiUpdateRequest(UpdateGameRequest request) {
@@ -40,6 +48,14 @@ public class GameMetadataBean {
         setIfNotNull(request::getInstanceId, this::setInstanceId);
         setIfNotNull(request::getInstanceQueueName, this::setInstanceQueueName);
         setIfNotNull(request::getTaskCompletionToken, this::setTaskCompletionToken);
+    }
+
+    public void updateFromOtherBean(GameMetadataBean other) {
+        setIfNotNull(other::getFullName, this::setFullName);
+        setIfNotNull(other::getGameReadyState, this::setGameReadyState);
+        setIfNotNull(other::getInstanceId, this::setInstanceId);
+        setIfNotNull(other::getInstanceQueueName, this::setInstanceQueueName);
+        setIfNotNull(other::getTaskCompletionToken, this::setTaskCompletionToken);
     }
 
     private <T> void setIfNotNull(Supplier<T> getter, Consumer<T> setter) {
@@ -101,7 +117,7 @@ public class GameMetadataBean {
     }
 
     public GameMetadata toModel() {
-        return new GameMetadata(gameName, fullName, gameReadyState, instanceQueueName, instanceQueueName, taskCompletionToken);
+        return new GameMetadata(gameName, fullName, gameReadyState, instanceId, instanceQueueName, taskCompletionToken);
     }
 
 }

@@ -12,19 +12,23 @@
         <module name="shared-configuration" />
         <module name="command-lambda-model" />
         <module name="shared-util" />
+        <module name="test-utilities" />
         <module name="workflow-service" />
         <module name="app-daemon-model" />
         <module name="network-security-service-model" />
-        <module name="discord-relay" />
+        <module name="resource-reaper" />
         <module name="workflow-service-model" />
         <module name="game-metadata-service" />
         <module name="network-security-service" />
         <module name="application-infrastructure" />
         <module name="app-daemon" />
         <module name="game-metadata-service-model" />
-        <module name="resource-reaper" />
+        <module name="discord-relay" />
         <module name="ip-lambda" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="service-mocks" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
