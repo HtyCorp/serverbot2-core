@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.gamemetadata;
+package io.mamish.serverbot2.gamemetadata.metastore;
 
 import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
 
@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public class LocalSessionMetadataStore implements IMetadataStore {
 
-    Map<String,GameMetadataBean> localStore = new HashMap<>();
+    Map<String, GameMetadataBean> localStore = new HashMap<>();
 
     @Override
     public GameMetadataBean get(String key) {

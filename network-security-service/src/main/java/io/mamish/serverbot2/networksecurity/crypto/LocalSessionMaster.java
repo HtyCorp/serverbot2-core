@@ -16,7 +16,7 @@ public class LocalSessionMaster implements ICryptoMaster {
 
     private final LocalAes localAes = new LocalAes();
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Key sessionMasterKey = new SecretKeySpec(generateAes128Bytes(), "AES");
+    private final Key sessionMasterKey = new SecretKeySpec(randomAes128Bytes(), "AES");
 
     @Override
     public String encrypt(SdkBytes plaintext) {
@@ -30,13 +30,13 @@ public class LocalSessionMaster implements ICryptoMaster {
 
     @Override
     public Pair<SdkBytes, String> generateDataKeyPlaintextAndCiphertext() {
-        SdkBytes plaintext = SdkBytes.fromByteArray(generateAes128Bytes());
+        SdkBytes plaintext = SdkBytes.fromByteArray(randomAes128Bytes());
         String ciphertext = localAes.encryptWithDataKey(plaintext, sessionMasterKey);
         return new Pair<>(plaintext, ciphertext);
     }
 
-    private byte[] generateAes128Bytes() {
-        byte[] randomBytes = new byte[16]; // AES-128
+    private byte[] randomAes128Bytes() {
+        byte[] randomBytes = new byte[16];
         secureRandom.nextBytes(randomBytes);
         return randomBytes;
     }

@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.gamemetadata;
+package io.mamish.serverbot2.gamemetadata.metastore;
 
 import io.mamish.serverbot2.gamemetadata.model.GameMetadata;
 import io.mamish.serverbot2.gamemetadata.model.GameReadyState;

@@ -2,6 +2,7 @@ package io.mamish.serverbot2.gamemetadata;
 
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.gamemetadata.metastore.*;
 import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 

@@ -44,7 +44,7 @@ public class Crypto {
         if (CommonConfig.ENABLE_MOCK.notNull()) {
             return new LocalSessionMaster();
         } else {
-            return new KmsMaster();
+            return new KmsPersistentMaster();
         }
     }
 

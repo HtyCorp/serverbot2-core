@@ -4,8 +4,7 @@ import java.util.List;
 
 public class ManagedSecurityGroup {
 
-    private String gameName;
-    private String fullName;
+    private String name;
     private String groupId;
     private String encryptedDataKey;
     private List<PortPermission> allowedPorts;
@@ -13,22 +12,23 @@ public class ManagedSecurityGroup {
 
     public ManagedSecurityGroup() { }
 
-    public ManagedSecurityGroup(String gameName, String fullName, String groupId, String encryptedDataKey,
+    public ManagedSecurityGroup(String name, String groupId, String encryptedDataKey) {
+        this.name = name;
+        this.groupId = groupId;
+        this.encryptedDataKey = encryptedDataKey;
+    }
+
+    public ManagedSecurityGroup(String name, String groupId, String encryptedDataKey,
                                 List<PortPermission> allowedPorts, List<DiscordUserIp> allowedUsers) {
-        this.gameName = gameName;
-        this.fullName = fullName;
+        this.name = name;
         this.groupId = groupId;
         this.encryptedDataKey = encryptedDataKey;
         this.allowedPorts = allowedPorts;
         this.allowedUsers = allowedUsers;
     }
 
-    public String getGameName() {
-        return gameName;
-    }
-
-    public String getFullName() {
-        return fullName;
+    public String getName() {
+        return name;
     }
 
     public String getGroupId() {

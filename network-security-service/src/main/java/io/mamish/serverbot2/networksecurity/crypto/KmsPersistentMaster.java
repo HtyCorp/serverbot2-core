@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.kms.model.GenerateDataKeyResponse;
 import java.util.Base64;
 import java.util.Map;
 
-public class KmsMaster implements ICryptoMaster {
+public class KmsPersistentMaster implements ICryptoMaster {
 
     private static final Map<String,String> STANDARD_ENCRYPTION_CONTEXT = Map.of(
             "service", "NetworkSecurityService"

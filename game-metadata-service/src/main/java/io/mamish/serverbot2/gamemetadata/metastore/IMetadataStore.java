@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.gamemetadata;
+package io.mamish.serverbot2.gamemetadata.metastore;
 
 import java.util.Optional;
 import java.util.stream.Stream;

@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.gamemetadata;
+package io.mamish.serverbot2.gamemetadata.metastore;
 
 public class StoreConditionException extends RuntimeException {
 
