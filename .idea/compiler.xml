@@ -19,6 +19,7 @@
         <module name="workflow-service-model" />
         <module name="game-metadata-service" />
         <module name="network-security-service" />
+        <module name="test-utilities" />
         <module name="application-infrastructure" />
         <module name="app-daemon" />
         <module name="game-metadata-service-model" />
@@ -26,5 +27,8 @@
         <module name="ip-lambda" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="service-mocks" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>

@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.gamemetadata;
+package io.mamish.serverbot2.gamemetadata.metastore;
 
 import io.mamish.serverbot2.gamemetadata.model.GameMetadata;
 import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
@@ -22,6 +22,10 @@ public class GameMetadataBean {
 
     public GameMetadataBean() { }
 
+    public GameMetadataBean(String gameName) {
+        this.gameName = gameName;
+    }
+
     public GameMetadataBean(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueName, String taskCompletionToken) {
         this.gameName = gameName;
         this.fullName = fullName;
@@ -29,6 +33,14 @@ public class GameMetadataBean {
         this.instanceId = instanceId;
         this.instanceQueueName = instanceQueueName;
         this.taskCompletionToken = taskCompletionToken;
+    }
+
+    public GameMetadataBean(GameMetadataBean other) {
+        if (other != null) {
+            // When copying a bean we do want to copy the name, which is otherwise left out of the update operation.
+            this.gameName = other.gameName;
+            updateFromOtherBean(other);
+        }
     }
 
     // Method included here so I'll remember to add field changes if anything in the bean changes.
@@ -40,6 +52,14 @@ public class GameMetadataBean {
         setIfNotNull(request::getInstanceId, this::setInstanceId);
         setIfNotNull(request::getInstanceQueueName, this::setInstanceQueueName);
         setIfNotNull(request::getTaskCompletionToken, this::setTaskCompletionToken);
+    }
+
+    public void updateFromOtherBean(GameMetadataBean other) {
+        setIfNotNull(other::getFullName, this::setFullName);
+        setIfNotNull(other::getGameReadyState, this::setGameReadyState);
+        setIfNotNull(other::getInstanceId, this::setInstanceId);
+        setIfNotNull(other::getInstanceQueueName, this::setInstanceQueueName);
+        setIfNotNull(other::getTaskCompletionToken, this::setTaskCompletionToken);
     }
 
     private <T> void setIfNotNull(Supplier<T> getter, Consumer<T> setter) {
@@ -101,7 +121,7 @@ public class GameMetadataBean {
     }
 
     public GameMetadata toModel() {
-        return new GameMetadata(gameName, fullName, gameReadyState, instanceQueueName, instanceQueueName, taskCompletionToken);
+        return new GameMetadata(gameName, fullName, gameReadyState, instanceId, instanceQueueName, taskCompletionToken);
     }
 
 }

@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.networksecurity.model;
 
+import java.util.Objects;
+
 public class PortPermission {
 
     private PortProtocol protocol;
@@ -24,5 +26,20 @@ public class PortPermission {
 
     public int getPortRangeTo() {
         return portRangeTo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PortPermission that = (PortPermission) o;
+        return portRangeFrom == that.portRangeFrom &&
+                portRangeTo == that.portRangeTo &&
+                protocol == that.protocol;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(protocol, portRangeFrom, portRangeTo);
     }
 }

@@ -12,6 +12,7 @@ public class ServerExceptionParser {
 
     private static List<Class<? extends ApiServerException>> exceptionClassList = List.of(
             FrameworkInternalException.class,
+            NoSuchResourceException.class,
             RequestHandlingException.class,
             RequestHandlingRuntimeException.class,
             RequestValidationException.class,

@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <awscdk.version>1.41.0</awscdk.version>
+        <awscdk.version>1.42.0</awscdk.version>
     </properties>
 
     <build>
@@ -23,7 +23,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M4</version>
                 <configuration>
+                    <!-- Disable forking to allow IDE debugger without any tricks -->
+                    <forkCount>0</forkCount>
+                    <reuseForks>false</reuseForks>
                     <trimStackTrace>false</trimStackTrace>
+                    <systemPropertyVariables>
+                        <serverbot2.mock>true</serverbot2.mock>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
@@ -76,6 +82,7 @@
         <module>network-security-service</module>
         <module>workflow-service</module>
         <module>workflow-service-model</module>
+        <module>test-utilities</module>
     </modules>
 
     <dependencyManagement>

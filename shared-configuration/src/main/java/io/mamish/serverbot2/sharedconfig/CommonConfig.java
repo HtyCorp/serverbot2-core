@@ -31,9 +31,11 @@ public class CommonConfig {
     public static final List<String> RESERVED_APP_NAMES = List.of(
             // Reserved group name for state tracking in network security service.
             // App names and SG name suffixes are mapped 1-to-1 so this must be a reserved app name.
-            NetSecConfig.REFERENCE_SG_SUFFIX
+            NetSecConfig.REFERENCE_SG_NAME,
+            // Subdomain reserved for ipauth: a game with the same name would overwrite its DNS record
+            NetSecConfig.AUTH_SUBDOMAIN
     );
 
-    public static final String POLICY_NAME_INVOKE_ANY_LAMBDA = "InvokeAnyLambda";
+    public static SystemProperty ENABLE_MOCK = new SystemProperty("serverbot2.mock");
 
 }
