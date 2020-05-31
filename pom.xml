@@ -79,7 +79,6 @@
         <module>network-security-service</module>
         <module>workflow-service</module>
         <module>workflow-service-model</module>
-        <module>service-mocks</module>
         <module>test-utilities</module>
     </modules>
 
