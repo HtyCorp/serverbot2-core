@@ -66,7 +66,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         try {
             store.putIfMissing(newItem);
         } catch (StoreConditionException e) {
-            throw new RequestHandlingException("Game '" + name + "' already exists");
+            throw new RequestValidationException("Game '" + name + "' already exists");
         }
 
         return new CreateGameResponse(newItem.toModel());
@@ -83,7 +83,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
             throw new RequestValidationException("No game '" + name + "' present in table");
         }
 
-        GameMetadataBean updateItem = new GameMetadataBean();
+        GameMetadataBean updateItem = new GameMetadataBean(name);
         updateItem.setGameReadyState(GameReadyState.BUSY);
 
         try {
@@ -132,7 +132,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
             // "item in stopped state" and "item doesn't exist" error cases.
             GameMetadataBean existing = store.get(name);
             if (existing == null) {
-                throw new RequestHandlingException("No game '" + name + "' present in table");
+                throw new RequestValidationException("No game '" + name + "' present in table");
             }
 
             GameMetadataBean deletedItem = store.deleteIfStopped(name, false);
@@ -146,6 +146,11 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
     }
 
     private void validateGameName(String name) throws RequestValidationException {
+        if (name == null) {
+            // This is set as a required parameter in UpdateGameRequest so should be caught in request parser.
+            // Including here anyway since it caused a test failure at one point.
+            throw new RequestValidationException("Missing required parameter game name");
+        }
         if (!GAME_NAME_REGEX.matcher(name).matches()) {
             throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + GAME_NAME_REGEX.pattern() + ")");
         }

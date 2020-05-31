@@ -22,6 +22,10 @@ public class GameMetadataBean {
 
     public GameMetadataBean() { }
 
+    public GameMetadataBean(String gameName) {
+        this.gameName = gameName;
+    }
+
     public GameMetadataBean(String gameName, String fullName, GameReadyState gameReadyState, String instanceId, String instanceQueueName, String taskCompletionToken) {
         this.gameName = gameName;
         this.fullName = fullName;
@@ -32,9 +36,9 @@ public class GameMetadataBean {
     }
 
     public GameMetadataBean(GameMetadataBean other) {
-        // When copying a bean we do want to copy the name, which is deliberately left out of the update operation.
-        setIfNotNull(other::getGameName, this::setGameName);
         if (other != null) {
+            // When copying a bean we do want to copy the name, which is otherwise left out of the update operation.
+            this.gameName = other.gameName;
             updateFromOtherBean(other);
         }
     }

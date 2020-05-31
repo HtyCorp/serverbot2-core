@@ -16,7 +16,7 @@ public class LocalSessionMetadataStore implements IMetadataStore {
     public GameMetadataBean get(String key) {
         // Return a copy of the stored item (i.e. don't expose it directly).
         GameMetadataBean storedItem = localStore.get(key);
-        return new GameMetadataBean(storedItem);
+        return (storedItem == null) ? null : new GameMetadataBean(storedItem);
     }
 
     @Override
