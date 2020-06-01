@@ -76,16 +76,25 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         String name = request.getGameName();
         validateRequestedGameName(name, false);
 
+        List<PortPermission> addPorts = request.getAddPorts();
+        List<PortPermission> removePorts = request.getRemovePorts();
+
         ManagedSecurityGroup group = groupManager.describeGroup(name);
 
-        boolean icmpChanges = Stream.concat(request.getAddPorts().stream(), request.getRemovePorts().stream())
-                .anyMatch(p -> p.getProtocol().equals(PortProtocol.ICMP));
+        boolean icmpChanges = Stream.concat(
+                (addPorts == null) ? Stream.empty() : addPorts.stream(),
+                (removePorts == null) ? Stream.empty() : removePorts.stream()
+        ).anyMatch(p -> p.getProtocol().equals(PortProtocol.ICMP));
         if (icmpChanges) {
             throw new RequestValidationException("Cannot modify ICMP rules");
         }
 
-        groupManager.modifyPortsInGroup(group, request.getAddPorts(), true);
-        groupManager.modifyPortsInGroup(group, request.getRemovePorts(), false);
+        if (addPorts != null) {
+            groupManager.modifyPortsInGroup(group, addPorts, true);
+        }
+        if (removePorts != null) {
+            groupManager.modifyPortsInGroup(group, removePorts, false);
+        }
 
         ManagedSecurityGroup modifiedGroup = groupManager.describeGroup(name);
         return new ModifyPortsResponse(modifiedGroup);
