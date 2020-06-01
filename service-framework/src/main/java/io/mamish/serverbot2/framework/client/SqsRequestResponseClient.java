@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -15,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SqsRequestResponseClient {
@@ -30,6 +32,9 @@ public class SqsRequestResponseClient {
     // Lazily initialize this: don't want to create temp SQS queue if it won't be used.
     private volatile String rxTempQueueUrl;
 
+    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
+    private final Gson gson = new Gson();
+
     public SqsRequestResponseClient() {
         // empty: queue initialization is delayed until required
     }
@@ -40,6 +45,8 @@ public class SqsRequestResponseClient {
 
             rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
                     .tags(makeReaperHeartbeatTags())).queueUrl();
+
+            System.out.println("Queue was null, now set to: " + rxTempQueueUrl);
 
             Thread receiverThread = new Thread(this::runReceiveLoop);
             receiverThread.setDaemon(true);
@@ -61,6 +68,7 @@ public class SqsRequestResponseClient {
     public String sendAndReceive(String queueUrl, String messageBody, int timeoutSeconds, String requestId) {
 
         if (rxTempQueueUrl == null) {
+            System.out.println("Queue is null");
             initialiseResources();
         }
 
@@ -73,6 +81,11 @@ public class SqsRequestResponseClient {
         Map<String, MessageAttributeValue> sqsAttrMap = Map.of(
                 ApiConfig.JSON_REQUEST_QUEUE_KEY, stringAttribute(rxTempQueueUrl),
                 ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId));
+
+        System.out.println("Queue value is " + rxTempQueueUrl);
+        System.out.println("Dumping attr map: ");
+        System.out.println(gson.toJson(sqsAttrMap));
+
         realSqsClient.sendMessage(r -> r.messageBody(messageBody)
                 .messageAttributes(sqsAttrMap)
                 .queueUrl(queueUrl));

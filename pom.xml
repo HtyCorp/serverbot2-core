@@ -45,7 +45,7 @@
                                 <goal>single</goal>
                             </goals>
                             <configuration>
-                                <finalName>${project.artifactId}</finalName>
+                                <finalName>${project.artifactId}-assembly</finalName>
                                 <appendAssemblyId>false</appendAssemblyId>
                                 <archive>
                                     <manifest>
@@ -107,6 +107,7 @@
                 <artifactId>aws-xray-recorder-sdk-bom</artifactId>
                 <version>2.5.0</version>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-core -->
             <dependency>
@@ -147,6 +148,13 @@
 
     <!-- Top-level dependencies for tests and logging only -->
     <dependencies>
+
+        <!-- Temporarily breaking this rule while dependencies and package size are still low-priority -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

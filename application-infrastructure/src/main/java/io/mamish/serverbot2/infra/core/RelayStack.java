@@ -45,7 +45,7 @@ public class RelayStack extends Stack {
                 .queueName(DiscordConfig.SQS_QUEUE_NAME)
                 .build();
 
-        // Whole bunch of ECS (Fargate) resources
+        // ECS resources required for our Fargate service hosting the Discord relay
 
         Cluster cluster = Cluster.Builder.create(this, "DiscordRelayCluster")
                 .vpc(commonStack.getServiceVpc())
@@ -56,7 +56,8 @@ public class RelayStack extends Stack {
                 .managedPolicies(List.of(
                         Util.POLICY_SQS_FULL_ACCESS,
                         Util.POLICY_EC2_FULL_ACCESS,
-                        Util.POLICY_XRAY_DAEMON_WRITE_ACCESS
+                        Util.POLICY_XRAY_DAEMON_WRITE_ACCESS,
+                        Util.POLICY_XRAY_FULL_ACCESS
                 ))
                 .build();
 
@@ -66,23 +67,51 @@ public class RelayStack extends Stack {
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "DiscordRelayTask")
                 .compatibility(Compatibility.FARGATE)
                 .cpu("512")
-                .memoryMiB("1024")
+                .memoryMiB("1024") // Note this has specific allowed values in Fargate: not arbitrary
                 .taskRole(taskRole)
                 .build();
 
-        LogGroup ecsLogGroup = LogGroup.Builder.create(this, "DiscordRelayLogGroup")
+        // Main container in service: the Discord relay
+
+        LogGroup relayLogGroup = LogGroup.Builder.create(this, "DiscordRelayLogGroup")
                 .retention(RetentionDays.ONE_YEAR)
                 .build();
-        AwsLogDriverProps logDriverProps = AwsLogDriverProps.builder()
-                .logGroup(ecsLogGroup)
+        LogDriver relayLogsDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
+                .logGroup(relayLogGroup)
                 .streamPrefix("DiscordRelay")
-                .build();
+                .build());
 
         String dockerDirPath = System.getenv("CODEBUILD_SRC_DIR") + "/relay-docker";
-        ContainerDefinition containerDef = taskDefinition.addContainer("DiscordRelayContainer", ContainerDefinitionOptions.builder()
+        ContainerDefinition relayContainer = taskDefinition.addContainer("DiscordRelayContainer", ContainerDefinitionOptions.builder()
+                .essential(true)
                 .image(ContainerImage.fromAsset(dockerDirPath))
-                .logging(LogDriver.awsLogs(logDriverProps))
+                .memoryReservationMiB(512)
+                .logging(relayLogsDriver)
                 .build());
+
+        // Sidecar container: Xray daemon
+
+        LogGroup xrayLogGroup = LogGroup.Builder.create(this, "XrayDaemonLogGroup")
+                .retention(RetentionDays.ONE_YEAR)
+                .build();
+        LogDriver xrayLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
+                .logGroup(xrayLogGroup)
+                .streamPrefix("DiscordRelay")
+                .build());
+
+        ContainerDefinition xrayContainer = taskDefinition.addContainer("XrayDaemonContainer", ContainerDefinitionOptions.builder()
+                .image(ContainerImage.fromRegistry("amazon/aws-xray-daemon"))
+                .memoryReservationMiB(256)
+                .logging(xrayLogDriver)
+                .build());
+
+        xrayContainer.addPortMappings(PortMapping.builder()
+                .protocol(Protocol.UDP)
+                .containerPort(2000)
+                .hostPort(2000)
+                .build());
+
+        // Finally, create the service from our complete task definition with containers
 
         FargateService service = FargateService.Builder.create(this, "DiscordRelayService")
                 .cluster(cluster)

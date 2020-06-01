@@ -3,10 +3,7 @@ package io.mamish.serverbot2.infra.util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import software.amazon.awscdk.core.Arn;
-import software.amazon.awscdk.core.ArnComponents;
-import software.amazon.awscdk.core.Construct;
-import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
@@ -29,6 +26,7 @@ public class Util {
     public static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
     public static final IManagedPolicy POLICY_S3_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess");
     public static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
+    public static final IManagedPolicy POLICY_XRAY_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess");
     public static final IManagedPolicy POLICY_XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
 
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
@@ -75,7 +73,8 @@ public class Util {
                 .code(mavenJarAsset(moduleName))
                 .handler(handler)
                 .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY)
-                .tracing(Tracing.ACTIVE);
+                .tracing(Tracing.ACTIVE)
+                .timeout(Duration.seconds(15));
     }
 
     public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler, IRole role) {
@@ -84,7 +83,7 @@ public class Util {
 
     public static Code mavenJarAsset(String module) {
         String rootPath = System.getenv("CODEBUILD_SRC_DIR");
-        String jarPath = IDUtils.slash( rootPath, module, "target", (module+".jar"));
+        String jarPath = IDUtils.slash( rootPath, module, "target", (module+"-assembly.jar"));
         return Code.fromAsset(jarPath);
     }
 

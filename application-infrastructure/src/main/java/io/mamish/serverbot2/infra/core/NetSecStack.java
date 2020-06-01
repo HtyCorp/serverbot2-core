@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
@@ -24,7 +25,8 @@ public class NetSecStack extends Stack {
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
             Util.POLICY_EC2_FULL_ACCESS
         )).build();
-        userIdKey.grant(functionRole, "kms:GenerateDataKey", "kms:Decrypt");
+        Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
+        userIdKey.grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
         Function serviceFunction = Util.standardJavaFunction(this, "NetSecService", "network-security-service",
                 "io.mamish.serverbot2.networksecurity.LambdaHandler", functionRole)

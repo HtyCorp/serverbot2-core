@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.discordrelay;
 
+import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -24,7 +25,10 @@ import java.util.logging.Logger;
 public class DiscordRelay {
 
     public static void main(String[] args) {
+        System.out.println("Running relay v2020-01-06T22:15Z10...");
+        AWSXRay.beginSegment("RelayInit");
         new DiscordRelay();
+        AWSXRay.endSegment();
     }
 
     Logger logger = Logger.getLogger("DiscordRelay");
@@ -40,10 +44,22 @@ public class DiscordRelay {
         channelMap = new ChannelMap(discordApi);
         messageTable = new DynamoMessageTable();
         new DiscordServiceHandler(discordApi, channelMap, messageTable);
-        discordApi.addMessageCreateListener(this::onMessageCreate);
+        discordApi.addMessageCreateListener(this::traceMessageCreate);
     }
 
-    public void onMessageCreate(MessageCreateEvent messageCreateEvent) {
+    private void traceMessageCreate(MessageCreateEvent messageCreateEvent) {
+        try {
+            AWSXRay.beginSegment("ProcessUserMessage");
+            onMessageCreate(messageCreateEvent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            AWSXRay.getCurrentSegment().addException(e);
+        } finally {
+            AWSXRay.endSegment();
+        }
+    }
+
+    private void onMessageCreate(MessageCreateEvent messageCreateEvent) {
         Message receivedMessage = messageCreateEvent.getMessage();
         MessageAuthor author = messageCreateEvent.getMessageAuthor();
         Channel abstractChannel = messageCreateEvent.getChannel();
@@ -79,12 +95,17 @@ public class DiscordRelay {
             return;
         }
 
+        AWSXRay.beginSubsegment("CallCommandService");
+        AWSXRay.getCurrentSegment().putAnnotation("DiscordMessageId", receivedMessage.getIdAsString());
+
         ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                 words,
                 oAppChannel.get(),
                 author.getIdAsString(),
                 receivedMessage.getIdAsString());
         ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
+
+        AWSXRay.endSubsegment();
 
         if (commandResponse.getOptionalMessageContent() != null) {
             Message newMessage = channel.sendMessage(commandResponse.getOptionalMessageContent()).join();
