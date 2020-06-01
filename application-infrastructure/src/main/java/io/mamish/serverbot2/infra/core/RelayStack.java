@@ -56,6 +56,7 @@ public class RelayStack extends Stack {
                 .managedPolicies(List.of(
                         Util.POLICY_SQS_FULL_ACCESS,
                         Util.POLICY_EC2_FULL_ACCESS,
+                        Util.POLICY_DYNAMODB_FULL_ACCESS,
                         Util.POLICY_XRAY_DAEMON_WRITE_ACCESS,
                         Util.POLICY_XRAY_FULL_ACCESS
                 ))

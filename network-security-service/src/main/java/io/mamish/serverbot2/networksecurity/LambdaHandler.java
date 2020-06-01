@@ -105,6 +105,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         String token = crypto.encrypt(SdkBytes.fromUtf8String(request.getUserId()));
         String authUrl = "https://"
                 + NetSecConfig.AUTH_SUBDOMAIN
+                + "."
                 + CommonConfig.APEX_DOMAIN_NAME
                 + NetSecConfig.AUTH_PATH
                 + "?token="

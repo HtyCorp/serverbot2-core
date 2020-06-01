@@ -12,7 +12,7 @@ if [ ! -d relay-docker ]
 then
     mkdir relay-docker
 fi
-cp discord-relay/target/discord-relay.jar relay-docker/discord-relay.jar
+cp discord-relay/target/discord-relay-assembly.jar relay-docker/discord-relay.jar
 cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Dockerfile
 
 cd application-infrastructure

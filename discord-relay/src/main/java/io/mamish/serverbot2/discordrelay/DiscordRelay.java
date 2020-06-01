@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.discordrelay;
 
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -26,9 +27,8 @@ public class DiscordRelay {
 
     public static void main(String[] args) {
         System.out.println("Running relay v2020-01-06T22:15Z10...");
-        AWSXRay.beginSegment("RelayInit");
+        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         new DiscordRelay();
-        AWSXRay.endSegment();
     }
 
     Logger logger = Logger.getLogger("DiscordRelay");
@@ -95,18 +95,17 @@ public class DiscordRelay {
             return;
         }
 
-        AWSXRay.beginSubsegment("CallCommandService");
+        AWSXRay.beginSubsegment("SubmitUserCommand");
         AWSXRay.getCurrentSegment().putAnnotation("DiscordMessageId", receivedMessage.getIdAsString());
-
         ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                 words,
                 oAppChannel.get(),
                 author.getIdAsString(),
                 receivedMessage.getIdAsString());
         ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
-
         AWSXRay.endSubsegment();
 
+        AWSXRay.beginSubsegment("RespondToUser");
         if (commandResponse.getOptionalMessageContent() != null) {
             Message newMessage = channel.sendMessage(commandResponse.getOptionalMessageContent()).join();
             String newMessageExtId = commandResponse.getOptionalMessageExternalId();
@@ -114,6 +113,7 @@ public class DiscordRelay {
                 messageTable.put(new DynamoMessageItem(newMessageExtId, channel.getIdAsString(), newMessage.getIdAsString()));
             }
         }
+        AWSXRay.endSubsegment();
 
     }
 

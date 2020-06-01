@@ -166,7 +166,7 @@ public class SqsRequestResponseClient {
     }
 
     private static MessageAttributeValue stringAttribute(String s) {
-        return MessageAttributeValue.builder().stringValue(s).build();
+        return MessageAttributeValue.builder().stringValue(s).dataType("String").build();
     }
 
 }
