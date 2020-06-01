@@ -41,7 +41,7 @@ public final class ApiClient {
 
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.fst());
+            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.a());
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
                     .functionName(functionName));
             return response.payload().asUtf8String();
@@ -52,7 +52,7 @@ public final class ApiClient {
         final int outputCapacity = 262144; // 256KB
         final Charset UTF8 = StandardCharsets.UTF_8;
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            InputStream inputStream = new ByteArrayInputStream(payloadAndId.fst().getBytes(UTF8));
+            InputStream inputStream = new ByteArrayInputStream(payloadAndId.a().getBytes(UTF8));
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(outputCapacity);
             try {
                 localFunction.handleRequest(inputStream, outputStream, null);
@@ -67,9 +67,9 @@ public final class ApiClient {
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
                 queueUrl,
-                payloadAndId.fst(),
+                payloadAndId.a(),
                 ApiConfig.CLIENT_DEFAULT_TIMEOUT,
-                payloadAndId.snd())
+                payloadAndId.b())
         );
     }
 

@@ -70,7 +70,7 @@
         <module>discord-relay-model</module>
         <module>command-lambda</module>
         <module>command-lambda-model</module>
-        <module>ip-lambda</module>
+        <module>ip-authorizer</module>
         <module>shared-configuration</module>
         <module>shared-util</module>
         <module>application-infrastructure</module>
@@ -100,6 +100,13 @@
                 <version>2.13.23</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-xray-recorder-sdk-bom -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-xray-recorder-sdk-bom</artifactId>
+                <version>2.5.0</version>
+                <type>pom</type>
             </dependency>
             <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-core -->
             <dependency>

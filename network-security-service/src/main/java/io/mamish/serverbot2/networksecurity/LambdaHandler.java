@@ -14,11 +14,11 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.model.KmsException;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements INetworkSecurity {
-
-    private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
+    
     private final Crypto crypto = new Crypto();
     private final IGroupManager groupManager = chooseGroupManager();
 
@@ -46,7 +46,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
     public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroupRequest request) {
 
         String name = request.getGameName();
-        validateRequestedGameName(name);
+        validateRequestedGameName(name, false);
         try {
             groupManager.describeGroup(name);
             throw new RequestValidationException("A group with this name already exists");
@@ -64,7 +64,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
     @Override
     public DescribeSecurityGroupResponse describeSecurityGroup(DescribeSecurityGroupRequest request) {
         String gameName = request.getGameName();
-        validateRequestedGameName(gameName);
+        validateRequestedGameName(gameName, true);
 
         ManagedSecurityGroup simplifiedGroup = getGroupOrThrow(gameName);
         return new DescribeSecurityGroupResponse(simplifiedGroup);
@@ -74,7 +74,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
     @Override
     public ModifyPortsResponse modifyPorts(ModifyPortsRequest request) {
         String name = request.getGameName();
-        validateRequestedGameName(name);
+        validateRequestedGameName(name, false);
 
         ManagedSecurityGroup group = groupManager.describeGroup(name);
 
@@ -140,7 +140,7 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
     @Override
     public DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroupRequest request) {
         String name = request.getGameName();
-        validateRequestedGameName(name);
+        validateRequestedGameName(name, false);
 
         ManagedSecurityGroup group = groupManager.describeGroup(name);
         groupManager.deleteGroup(name);
@@ -152,9 +152,13 @@ public class LambdaHandler extends LambdaApiServer<INetworkSecurity> implements 
         return groupManager.describeGroup(name);
     }
 
-    private void validateRequestedGameName(String name) {
+    private void validateRequestedGameName(String name, boolean allowReserved) {
+        Pattern NAME_REGEX = CommonConfig.APP_NAME_REGEX;
+        if (!NAME_REGEX.matcher(name).matches()) {
+            throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + NAME_REGEX.pattern() + ")");
+        }
         boolean inReservedNames = CommonConfig.RESERVED_APP_NAMES.contains(name);
-        if (inReservedNames) {
+        if (!allowReserved && inReservedNames) {
             throw new RequestValidationException("Requested name '" + name + "' is reserved");
         }
     }

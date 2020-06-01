@@ -131,7 +131,7 @@ public class DeploymentStack extends Stack {
 
         // Stage 3: worker services depending on passive services
         addStackDeployStage(pipeline, synthAppInfra, "DeployWorkerServices",
-                app.ipStack,
+                app.ipAuthorizerStack,
                 app.workflowsStack);
 
         // Stage 4: command service depending on all other services

@@ -18,9 +18,9 @@ import software.amazon.awscdk.services.route53.targets.ApiGateway;
 
 import java.util.List;
 
-public class IpStack extends Stack {
+public class IpAuthorizerStack extends Stack {
 
-    public IpStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
+    public IpAuthorizerStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
 
         // Define function and associated role

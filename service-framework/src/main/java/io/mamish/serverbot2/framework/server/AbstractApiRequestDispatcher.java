@@ -61,8 +61,8 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
 
         Pair<String, ParsedInputType> nameAndRemainingInput = parseNameKey(rawInput);
 
-        String targetName = nameAndRemainingInput.fst();
-        ParsedInputType parsedInput = nameAndRemainingInput.snd();
+        String targetName = nameAndRemainingInput.a();
+        ParsedInputType parsedInput = nameAndRemainingInput.b();
         ApiActionDefinition definition = apiDefinitionSet.getFromName(targetName);
 
         // If this dispatcher doesn't have any such request definition but is chained to another dispatch,

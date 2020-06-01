@@ -65,11 +65,11 @@ public class ApiActionDefinition {
         this.orderedFields = Arrays.stream(requestType.getDeclaredFields())
                 .filter(f -> f.getAnnotation(ApiArgumentInfo.class) != null)
                 .map(f -> new Pair<>(f,f.getAnnotation(ApiArgumentInfo.class)))
-                .sorted(Comparator.comparing(p -> p.snd().order()))
+                .sorted(Comparator.comparing(p -> p.b().order()))
                 .collect(Collectors.toUnmodifiableList());
-        orderedFields.forEach(f -> f.fst().setAccessible(true));
-        this.orderedFieldsFieldView = orderedFields.stream().map(Pair::fst).collect(Collectors.toUnmodifiableList());
-        this.orderedFieldsInfoView = orderedFields.stream().map(Pair::snd).collect(Collectors.toUnmodifiableList());
+        orderedFields.forEach(f -> f.a().setAccessible(true));
+        this.orderedFieldsFieldView = orderedFields.stream().map(Pair::a).collect(Collectors.toUnmodifiableList());
+        this.orderedFieldsInfoView = orderedFields.stream().map(Pair::b).collect(Collectors.toUnmodifiableList());
 
         StringBuilder sbUsage = new StringBuilder();
         sbUsage.append(CommonConfig.COMMAND_SIGIL_CHARACTER).append(getName());
@@ -85,7 +85,7 @@ public class ApiActionDefinition {
 
         this.usageString = sbUsage.toString();
         this.argumentDescriptionStrings = orderedFields.stream()
-                .map(m -> m.fst().getName() + ": " + m.snd().description())
+                .map(m -> m.a().getName() + ": " + m.b().description())
                 .collect(Collectors.toList());
 
     }

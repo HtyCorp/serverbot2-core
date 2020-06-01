@@ -24,7 +24,7 @@
         <module name="app-daemon" />
         <module name="game-metadata-service-model" />
         <module name="resource-reaper" />
-        <module name="ip-lambda" />
+        <module name="ip-authorizer" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

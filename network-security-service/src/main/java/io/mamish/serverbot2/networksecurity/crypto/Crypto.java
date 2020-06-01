@@ -22,8 +22,8 @@ public class Crypto {
 
     public Pair<Key,String> generateDataKey() {
         Pair<SdkBytes,String> generated = masterProvider.generateDataKeyPlaintextAndCiphertext();
-        Key dataKey = new SecretKeySpec(generated.fst().asByteArray(), "AES");
-        String dataKeyCiphertext = generated.snd();
+        Key dataKey = new SecretKeySpec(generated.a().asByteArray(), "AES");
+        String dataKeyCiphertext = generated.b();
         return new Pair<>(dataKey, dataKeyCiphertext);
     }
 

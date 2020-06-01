@@ -33,7 +33,7 @@ public class Ec2GroupManager implements IGroupManager {
 
     @Override
     public void createGroup(String name) {
-        String dataKeyCiphertext = crypto.generateDataKey().snd();
+        String dataKeyCiphertext = crypto.generateDataKey().b();
         ec2Client.createSecurityGroup(r ->
                 r.vpcId(VPCID)
                 .groupName(prependSgPrefix(NetSecConfig.REFERENCE_SG_NAME))

@@ -11,6 +11,7 @@ import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.lambda.Tracing;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
 import java.util.ArrayList;
@@ -28,11 +29,13 @@ public class Util {
     public static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
     public static final IManagedPolicy POLICY_S3_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess");
     public static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
+    public static final IManagedPolicy POLICY_XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
 
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
         List<IManagedPolicy> combinedPolicies = new ArrayList<>();
         combinedPolicies.add(POLICY_BASIC_LAMBDA_EXECUTION);
+        combinedPolicies.add(POLICY_XRAY_DAEMON_WRITE_ACCESS);
         combinedPolicies.addAll(managedPolicies);
 
         return Role.Builder.create(parent, id)
@@ -71,7 +74,8 @@ public class Util {
                 .runtime(Runtime.JAVA_11)
                 .code(mavenJarAsset(moduleName))
                 .handler(handler)
-                .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY);
+                .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY)
+                .tracing(Tracing.ACTIVE);
     }
 
     public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler, IRole role) {

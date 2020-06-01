@@ -55,7 +55,8 @@ public class RelayStack extends Stack {
                 .assumedBy(new ServicePrincipal("ecs-tasks.amazonaws.com"))
                 .managedPolicies(List.of(
                         Util.POLICY_SQS_FULL_ACCESS,
-                        Util.POLICY_EC2_FULL_ACCESS
+                        Util.POLICY_EC2_FULL_ACCESS,
+                        Util.POLICY_XRAY_DAEMON_WRITE_ACCESS
                 ))
                 .build();
 
