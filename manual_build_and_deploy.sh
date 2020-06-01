@@ -8,7 +8,7 @@ npm install -g aws-cdk
 
 mvn clean install -Dmaven.test.skip=true
 
-if [[ ! -d relay-docker ]]
+if [ ! -d relay-docker ]
 then
     mkdir relay-docker
 fi
@@ -28,13 +28,13 @@ wait
 echo "Running phase 2 deployment..."
 $DEPLOY AppInstanceResources &
 $DEPLOY GameMetadataService &
-$DEPLOY NetSecService &
+$DEPLOY NetworkSecurityService &
 $DEPLOY ResourceReaper &
 wait
 
 # Phase 3: intermediate services depending on passive services
 echo "Running phase 3 deployment..."
-$DEPLOY IpAuthService &
+$DEPLOY IpAuthorizerApi &
 $DEPLOY WorkflowService &
 wait 
 

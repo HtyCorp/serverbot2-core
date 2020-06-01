@@ -32,7 +32,7 @@ public class IpAuthorizerStack extends Stack {
 
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
-        Function proxyFunction = Util.standardJavaFunction(this, "IpProxyFunction", "ip-lambda",
+        Function proxyFunction = Util.standardJavaFunction(this, "IpProxyFunction", "ip-authorizer",
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler", functionRole)
                 .build();
 
