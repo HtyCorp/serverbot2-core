@@ -5,17 +5,18 @@ import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
 import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.server.*;
 import io.mamish.serverbot2.sharedutil.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
     private final ModelType handlerInstance;
     private final ApiDefinitionSet<?> apiDefinitionSet;
 
-    private final Logger logger = Logger.getLogger("AbstractApiHandler");
+    private final Logger logger = LogManager.getLogger(AbstractApiRequestDispatcher.class);
 
     private AbstractApiRequestDispatcher<?, OutputType, RawInputType, ?> nextChainDispatcher;
 
@@ -48,11 +49,11 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         try {
             return internalHandleRequest(rawInput);
         } catch (ApiServerException e) {
-            logger.log(Level.WARNING, "ApiException in API request dispatcher", e);
+            logger.error("ApiException in API request dispatcher", e);
             return serializeErrorObject(e);
         } catch (Exception e) {
             String message = "Unknown exception in API request dispatcher: " + e.getMessage();
-            logger.log(Level.SEVERE, message, e);
+            logger.error(message, e);
             return serializeErrorObject(new FrameworkInternalException(message));
         }
     }

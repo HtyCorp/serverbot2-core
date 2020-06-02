@@ -10,6 +10,8 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -21,7 +23,6 @@ import org.javacord.api.event.message.MessageCreateEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 public class DiscordRelay {
 
@@ -31,7 +32,7 @@ public class DiscordRelay {
         new DiscordRelay();
     }
 
-    Logger logger = Logger.getLogger("DiscordRelay");
+    Logger logger = LogManager.getLogger(DiscordRelay.class);
 
     private final ChannelMap channelMap;
     private final ICommandService commandServiceClient;

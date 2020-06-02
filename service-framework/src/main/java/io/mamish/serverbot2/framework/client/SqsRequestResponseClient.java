@@ -6,6 +6,8 @@ import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
@@ -17,7 +19,6 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SqsRequestResponseClient {
@@ -33,7 +34,7 @@ public class SqsRequestResponseClient {
     // Lazily initialize this: don't want to create temp SQS queue if it won't be used.
     private volatile String rxTempQueueUrl;
 
-    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
+    Logger logger = LogManager.getLogger(SqsRequestResponseClient.class);
     private final Gson gson = new Gson();
 
     public SqsRequestResponseClient() {
@@ -47,7 +48,7 @@ public class SqsRequestResponseClient {
             rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
                     .tags(makeReaperHeartbeatTags())).queueUrl();
 
-            System.out.println("Queue was null, now set to: " + rxTempQueueUrl);
+            logger.debug("Queue was null, now set to: " + rxTempQueueUrl);
 
             Thread receiverThread = new Thread(this::runReceiveLoop);
             receiverThread.setDaemon(true);
@@ -69,7 +70,7 @@ public class SqsRequestResponseClient {
     public String sendAndReceive(String queueUrl, String messageBody, int timeoutSeconds, String requestId) {
 
         if (rxTempQueueUrl == null) {
-            System.out.println("Queue is null");
+            logger.debug("Queue is null");
             initialiseResources();
         }
 
@@ -83,9 +84,9 @@ public class SqsRequestResponseClient {
                 ApiConfig.JSON_REQUEST_QUEUE_KEY, stringAttribute(rxTempQueueUrl),
                 ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId));
 
-        logger.fine("Queue value is " + rxTempQueueUrl);
-        logger.fine("Dumping attr map: ");
-        logger.fine(gson.toJson(sqsAttrMap));
+        logger.debug("Queue value is " + rxTempQueueUrl);
+        logger.debug("Dumping attr map: ");
+        logger.debug(gson.toJson(sqsAttrMap));
 
         realSqsClient.sendMessage(r -> r.messageBody(messageBody)
                 .messageAttributes(sqsAttrMap)

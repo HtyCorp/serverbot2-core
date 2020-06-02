@@ -19,7 +19,7 @@ public class SqsTests {
 
         SqsClient sqs = SqsClient.create();
         String queueName = "TempTestQueue-" + IDUtils.randomUUIDJoined();
-        sqs.createQueue(r -> r.queueName(queueName));
+        String queueUrl = sqs.createQueue(r -> r.queueName(queueName)).queueUrl();
 
         SqsApiServer<IDummyService> service = new SqsApiServer<IDummyService>(queueName) {
             @Override
@@ -36,6 +36,8 @@ public class SqsTests {
         IDummyService client = ApiClient.sqs(IDummyService.class, queueName);
 
         client.dummy(new DummyRequest());
+
+        sqs.deleteQueue(r -> r.queueUrl(queueUrl));
 
         System.out.println("Done!");
 

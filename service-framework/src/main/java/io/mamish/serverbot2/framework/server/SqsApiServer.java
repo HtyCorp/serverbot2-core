@@ -5,6 +5,8 @@ import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
@@ -13,8 +15,6 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class SqsApiServer<ModelType> {
 
@@ -28,7 +28,7 @@ public abstract class SqsApiServer<ModelType> {
     protected abstract Class<ModelType> getModelClass();
     protected abstract ModelType getHandlerInstance();
 
-    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
+    private final Logger logger = LogManager.getLogger(SqsApiServer.class);
     private final Gson gson = new Gson();
 
     public SqsApiServer(String receiveQueueName) {
@@ -62,8 +62,7 @@ public abstract class SqsApiServer<ModelType> {
             );
 
             while(true) {
-                logger.setLevel(Level.ALL);
-                logger.fine("Polling messages");
+                logger.debug("Polling messages");
                 ReceiveMessageResponse response = sqsClient.receiveMessage(r ->
                         r.queueUrl(receiveQueueUrl)
                         .messageAttributeNames(receiveAttributeNames)
@@ -71,7 +70,7 @@ public abstract class SqsApiServer<ModelType> {
                         .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
                 );
                 if (!response.hasMessages()) {
-                    logger.fine("No messages received");
+                    logger.debug("No messages received");
                 } else {
                     response.messages().forEach(m -> {
                         AWSXRay.beginSegment(serviceInterfaceName+"Server");
@@ -79,7 +78,7 @@ public abstract class SqsApiServer<ModelType> {
                         try {
 
                             if (!m.hasAttributes()) {
-                                logger.warning("Message does not have any message attributes.");
+                                logger.debug("Message does not have any message attributes.");
                                 return;
                             }
 
@@ -89,16 +88,16 @@ public abstract class SqsApiServer<ModelType> {
                                 replyQueueUrl = m.messageAttributes().get(ApiConfig.JSON_REQUEST_QUEUE_KEY).stringValue();
                                 requestId = m.messageAttributes().get(ApiConfig.JSON_REQUEST_ID_KEY).stringValue();
                             } catch (NullPointerException e) {
-                                logger.warning("Message is missing required attributes. Attribute map: "
+                                logger.warn("Message is missing required attributes. Attribute map: "
                                         + gson.toJson(m.messageAttributes()));
                                 return;
                             }
 
 
-                            logger.fine("Dumping message:");
-                            logger.fine(gson.toJson(m));
-                            logger.fine("Dumping message attrs:");
-                            logger.fine(gson.toJson(m.messageAttributes()));
+                            logger.debug("Dumping message:");
+                            logger.debug(gson.toJson(m));
+                            logger.debug("Dumping message attrs:");
+                            logger.debug(gson.toJson(m.messageAttributes()));
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(m.receiptHandle()));
 
                             // FIXME: NPE occurs here. No idea why since CWL confirms the attributes are included in send.
@@ -119,7 +118,7 @@ public abstract class SqsApiServer<ModelType> {
                                         .messageBody(responseString));
                             } catch (Exception e) {
                                 // Reply queue send might fail outside the control of this service, so don't make it fatal.
-                                logger.log(Level.WARNING, "Unable to send SQS response message", e);
+                                logger.warn("Unable to send SQS response message", e);
                                 AWSXRay.getCurrentSubsegment().addException(e);
                             } finally {
                                 AWSXRay.endSubsegment();
@@ -133,7 +132,7 @@ public abstract class SqsApiServer<ModelType> {
             }
         } catch (SdkException e) {
             // Can't (or shouldn't) recover from operations failures on our own queue. Let the thread die instead.
-            logger.log(Level.SEVERE, "Fatal error in SQS receive loop", e);
+            logger.warn("Fatal error in SQS receive loop", e);
         }
     }
 
