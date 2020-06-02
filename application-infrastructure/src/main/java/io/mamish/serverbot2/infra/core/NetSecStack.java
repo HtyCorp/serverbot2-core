@@ -14,19 +14,15 @@ import java.util.List;
 
 public class NetSecStack extends Stack {
 
-    public NetSecStack(Construct parent, String id, StackProps props) {
+    public NetSecStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
-
-        Key userIdKey = Key.Builder.create(this, "UserIdKey")
-                .trustAccountIdentities(true)
-                .alias(NetSecConfig.KMS_ALIAS)
-                .build();
 
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
             Util.POLICY_EC2_FULL_ACCESS
         )).build();
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
-        userIdKey.grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
+
+        commonStack.getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
         Function serviceFunction = Util.standardJavaFunction(this, "NetSecService", "network-security-service",
                 "io.mamish.serverbot2.networksecurity.LambdaHandler", functionRole)

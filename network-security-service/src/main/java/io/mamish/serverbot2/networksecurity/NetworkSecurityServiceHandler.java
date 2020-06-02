@@ -13,6 +13,8 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.model.KmsException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -99,7 +101,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
                 + CommonConfig.APEX_DOMAIN_NAME
                 + NetSecConfig.AUTH_PATH
                 + "?token="
-                + token;
+                + URLEncoder.encode(token, StandardCharsets.UTF_8);
         return new GenerateIpAuthUrlResponse(authUrl);
     }
 

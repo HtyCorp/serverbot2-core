@@ -41,7 +41,7 @@ public class ServerbotFullApp {
         commandStack = new CommandStack(cdkApp, "CommandService", coreStackProps);
         workflowsStack = new WorkflowsStack(cdkApp, "WorkflowService", coreStackProps);
         gameMetadataStack = new GameMetadataStack(cdkApp, "GameMetadataService", coreStackProps);
-        netSecStack = new NetSecStack(cdkApp, "NetworkSecurityService", coreStackProps);
+        netSecStack = new NetSecStack(cdkApp, "NetworkSecurityService", coreStackProps, commonStack);
         reaperStack = new ReaperStack(cdkApp, "ResourceReaper", coreStackProps);
 
         // Disabled for now since appdelivery doesn't support stacks with assets
