@@ -7,9 +7,7 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
-import software.amazon.awscdk.services.apigateway.DomainNameOptions;
-import software.amazon.awscdk.services.apigateway.EndpointType;
-import software.amazon.awscdk.services.apigateway.LambdaRestApi;
+import software.amazon.awscdk.services.apigateway.*;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.route53.ARecord;
@@ -38,8 +36,12 @@ public class IpAuthorizerStack extends Stack {
 
         // Domain REST API backed by function
 
+        EndpointConfiguration regionalEndpoint = EndpointConfiguration.builder()
+                .types(List.of(EndpointType.REGIONAL))
+                .build();
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "IpRestApi")
                 .handler(proxyFunction)
+                .endpointConfiguration(regionalEndpoint)
                 .build();
 
         // DNS stuff: Create APIGW custom domain for this API

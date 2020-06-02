@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -13,10 +14,12 @@ public class RootCommandHandler implements ICommandService {
     private final WelcomeCommandHandler welcomeCommandHandler;
 
     public RootCommandHandler() {
-        SfnRunner sfnRunner = new SfnRunner();
-        adminCommandHandler = new AdminCommandHandler(sfnRunner);
-        serversCommandHandler = new ServersCommandHandler(sfnRunner);
-        welcomeCommandHandler = new WelcomeCommandHandler();
+
+        // Subsegments added since this init takes a long time and we need to track it
+        SfnRunner sfnRunner = AWSXRay.createSubsegment("BuildSfnRunner", SfnRunner::new);
+        adminCommandHandler = AWSXRay.createSubsegment("BuildAdminHandler", () -> new AdminCommandHandler(sfnRunner));
+        serversCommandHandler = AWSXRay.createSubsegment("BuildServersHandler", () -> new ServersCommandHandler(sfnRunner));
+        welcomeCommandHandler = AWSXRay.createSubsegment("BuildWelcomeHandler", WelcomeCommandHandler::new);
 
         // Chaining: admin -> debug (pending) -> servers -> welcome
         // Commands from lower in chain can be used implicitly from a higher-level channel.

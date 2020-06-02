@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -16,7 +17,15 @@ public class LambdaHandler extends LambdaApiServer<ICommandService> {
 
     @Override
     protected ICommandService createHandlerInstance() {
-        return new RootCommandHandler();
+        try {
+            AWSXRay.beginSubsegment("BuildRootHandler");
+            return new RootCommandHandler();
+        } catch (RuntimeException e) {
+            AWSXRay.getCurrentSubsegment().addException(e);
+            throw e;
+        } finally {
+            AWSXRay.endSubsegment();
+        }
     }
 
 }

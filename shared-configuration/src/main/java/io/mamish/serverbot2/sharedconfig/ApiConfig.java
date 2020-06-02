@@ -10,7 +10,7 @@ public class ApiConfig {
     public static final String JSON_RESPONSE_CONTENT_KEY = "response";
     public static final String JSON_RESPONSE_ERROR_KEY = "error";
 
-    public static final int CLIENT_DEFAULT_TIMEOUT = 10;
+    public static final int CLIENT_DEFAULT_TIMEOUT = 15;
 
     public static final String TEMP_QUEUE_URL_PREFIX = "ApiClientTempQueue";
 

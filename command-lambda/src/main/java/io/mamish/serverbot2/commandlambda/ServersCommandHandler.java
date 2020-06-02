@@ -26,7 +26,6 @@ import java.util.List;
 
 public class ServersCommandHandler extends AbstractCommandHandler<IServersCommandHandler> implements IServersCommandHandler {
 
-    private final Gson gson = new Gson();
     private final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class,
             GameMetadataConfig.FUNCTION_NAME);
     private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class,
