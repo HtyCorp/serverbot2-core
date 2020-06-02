@@ -1,13 +1,16 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.amazonaws.xray.AWSXRay;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
+import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
 import io.mamish.serverbot2.framework.exception.ServerExceptionParser;
+import io.mamish.serverbot2.framework.exception.client.ApiClientException;
 import io.mamish.serverbot2.framework.exception.server.SerializationException;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
@@ -41,7 +44,7 @@ public final class ApiClient {
 
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.fst());
+            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.a());
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
                     .functionName(functionName));
             return response.payload().asUtf8String();
@@ -52,7 +55,7 @@ public final class ApiClient {
         final int outputCapacity = 262144; // 256KB
         final Charset UTF8 = StandardCharsets.UTF_8;
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            InputStream inputStream = new ByteArrayInputStream(payloadAndId.fst().getBytes(UTF8));
+            InputStream inputStream = new ByteArrayInputStream(payloadAndId.a().getBytes(UTF8));
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(outputCapacity);
             try {
                 localFunction.handleRequest(inputStream, outputStream, null);
@@ -67,9 +70,9 @@ public final class ApiClient {
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
                 queueUrl,
-                payloadAndId.fst(),
+                payloadAndId.a(),
                 ApiConfig.CLIENT_DEFAULT_TIMEOUT,
-                payloadAndId.snd())
+                payloadAndId.b())
         );
     }
 
@@ -86,31 +89,40 @@ public final class ApiClient {
                 ApiClient.class.getClassLoader(),
                 new Class<?>[]{modelInterfaceClass},
                 ((proxy, method, args) -> {
-                    Object request = args[0];
-                    ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(request.getClass());
-                    String requestId = IDUtils.randomUUID();
-                    String payload = annotatedJsonPayload(request, apiDefinition, requestId);
+                    try {
+                        AWSXRay.beginSubsegment(modelInterfaceClass.getSimpleName()+"Client");
 
-                    String responseString = senderReceiver.apply(new Pair<>(payload,requestId));
+                        Object request = args[0];
+                        ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(request.getClass());
+                        String requestId = IDUtils.randomUUID();
+                        String payload = annotatedJsonPayload(request, apiDefinition, requestId);
 
-                    JsonObject response = JsonParser.parseString(responseString).getAsJsonObject();
-                    JsonElement error = response.get(ApiConfig.JSON_RESPONSE_ERROR_KEY);
-                    JsonElement content = response.get(ApiConfig.JSON_RESPONSE_CONTENT_KEY);
+                        String responseString = senderReceiver.apply(new Pair<>(payload, requestId));
 
-                    // If error provided, generate the exception (basic details only) and throw.
-                    if (error != null && !error.isJsonNull()) {
-                        ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
-                        throw ServerExceptionParser.fromName(
-                                info.getExceptionTypeName(),
-                                info.getExceptionMessage());
-                    }
-                    // Otherwise, parse the content and return as expected response type.
-                    else {
-                        if (apiDefinition.hasResponseType()) {
-                            return gson.fromJson(content, apiDefinition.getResponseDataType());
-                        } else {
-                            return null;
+                        JsonObject response = JsonParser.parseString(responseString).getAsJsonObject();
+                        JsonElement error = response.get(ApiConfig.JSON_RESPONSE_ERROR_KEY);
+                        JsonElement content = response.get(ApiConfig.JSON_RESPONSE_CONTENT_KEY);
+
+                        // If error provided, generate the exception (basic details only) and throw.
+                        if (error != null && !error.isJsonNull()) {
+                            ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
+                            throw ServerExceptionParser.fromName(
+                                    info.getExceptionTypeName(),
+                                    info.getExceptionMessage());
                         }
+                        // Otherwise, parse the content and return as expected response type.
+                        Object responseObject = null;
+                        if (apiDefinition.hasResponseType()) {
+                            responseObject = gson.fromJson(content, apiDefinition.getResponseDataType());
+                        }
+                        return responseObject;
+                    } catch (ApiException e) {
+                        throw e;
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                        throw new ApiClientException("Unexpected error while making client request", e);
+                    } finally {
+                        AWSXRay.endSubsegment();
                     }
                 })
         );

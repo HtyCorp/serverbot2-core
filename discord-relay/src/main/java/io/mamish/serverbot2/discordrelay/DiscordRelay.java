@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.discordrelay;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -8,6 +10,8 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -19,15 +23,16 @@ import org.javacord.api.event.message.MessageCreateEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 public class DiscordRelay {
 
     public static void main(String[] args) {
+        System.out.println("Running relay v2020-01-06T22:15Z10...");
+        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         new DiscordRelay();
     }
 
-    Logger logger = Logger.getLogger("DiscordRelay");
+    Logger logger = LogManager.getLogger(DiscordRelay.class);
 
     private final ChannelMap channelMap;
     private final ICommandService commandServiceClient;
@@ -40,10 +45,22 @@ public class DiscordRelay {
         channelMap = new ChannelMap(discordApi);
         messageTable = new DynamoMessageTable();
         new DiscordServiceHandler(discordApi, channelMap, messageTable);
-        discordApi.addMessageCreateListener(this::onMessageCreate);
+        discordApi.addMessageCreateListener(this::traceMessageCreate);
     }
 
-    public void onMessageCreate(MessageCreateEvent messageCreateEvent) {
+    private void traceMessageCreate(MessageCreateEvent messageCreateEvent) {
+        try {
+            AWSXRay.beginSegment("ProcessUserMessage");
+            onMessageCreate(messageCreateEvent);
+        } catch (Exception e) {
+            e.printStackTrace();
+            AWSXRay.getCurrentSegment().addException(e);
+        } finally {
+            AWSXRay.endSegment();
+        }
+    }
+
+    private void onMessageCreate(MessageCreateEvent messageCreateEvent) {
         Message receivedMessage = messageCreateEvent.getMessage();
         MessageAuthor author = messageCreateEvent.getMessageAuthor();
         Channel abstractChannel = messageCreateEvent.getChannel();
@@ -79,13 +96,17 @@ public class DiscordRelay {
             return;
         }
 
+        AWSXRay.beginSubsegment("SubmitUserCommand");
+        AWSXRay.getCurrentSegment().putAnnotation("DiscordMessageId", receivedMessage.getIdAsString());
         ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                 words,
                 oAppChannel.get(),
                 author.getIdAsString(),
                 receivedMessage.getIdAsString());
         ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
+        AWSXRay.endSubsegment();
 
+        AWSXRay.beginSubsegment("RespondToUser");
         if (commandResponse.getOptionalMessageContent() != null) {
             Message newMessage = channel.sendMessage(commandResponse.getOptionalMessageContent()).join();
             String newMessageExtId = commandResponse.getOptionalMessageExternalId();
@@ -93,6 +114,7 @@ public class DiscordRelay {
                 messageTable.put(new DynamoMessageItem(newMessageExtId, channel.getIdAsString(), newMessage.getIdAsString()));
             }
         }
+        AWSXRay.endSubsegment();
 
     }
 

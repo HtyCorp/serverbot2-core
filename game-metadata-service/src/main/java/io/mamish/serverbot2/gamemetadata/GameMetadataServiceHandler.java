@@ -5,6 +5,8 @@ import io.mamish.serverbot2.framework.exception.server.RequestValidationExceptio
 import io.mamish.serverbot2.gamemetadata.metastore.*;
 import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,11 +15,11 @@ import java.util.stream.Collectors;
 
 public class GameMetadataServiceHandler implements IGameMetadataService {
 
-    private static final Pattern GAME_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]*");
-
     private static final String ERR_MSG_GAME_LOCKED = "Game in STOPPED state. Must call LockGame to modify it";
 
     private final IMetadataStore store = chooseDataStore();
+
+    private final Logger logger = LogManager.getLogger(GameMetadataServiceHandler.class);
 
     @Override
     public ListGamesResponse listGames(ListGamesRequest request) {
@@ -148,12 +150,13 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
     private void validateGameName(String name) throws RequestValidationException {
         if (name == null) {
-            // This is set as a required parameter in UpdateGameRequest so should be caught in request parser.
+            // This is set as a required parameter in basically all actions so it should be caught earlier.
             // Including here anyway since it caused a test failure at one point.
             throw new RequestValidationException("Missing required parameter game name");
         }
-        if (!GAME_NAME_REGEX.matcher(name).matches()) {
-            throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + GAME_NAME_REGEX.pattern() + ")");
+        Pattern NAME_REGEX = CommonConfig.APP_NAME_REGEX;
+        if (!NAME_REGEX.matcher(name).matches()) {
+            throw new RequestValidationException("Name '" + name + "' is not a valid name (allowed regex: " + NAME_REGEX.pattern() + ")");
         }
     }
 

@@ -5,17 +5,17 @@ import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
 import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.server.*;
 import io.mamish.serverbot2.sharedutil.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
     private final ModelType handlerInstance;
     private final ApiDefinitionSet<?> apiDefinitionSet;
 
-    private final Logger logger = Logger.getLogger("AbstractApiHandler");
+    private final Logger logger = LogManager.getLogger(AbstractApiRequestDispatcher.class);
 
     private AbstractApiRequestDispatcher<?, OutputType, RawInputType, ?> nextChainDispatcher;
 
@@ -48,11 +48,11 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         try {
             return internalHandleRequest(rawInput);
         } catch (ApiServerException e) {
-            logger.log(Level.WARNING, "ApiException in API request dispatcher", e);
+            logger.error("ApiException in API request dispatcher", e);
             return serializeErrorObject(e);
         } catch (Exception e) {
             String message = "Unknown exception in API request dispatcher: " + e.getMessage();
-            logger.log(Level.SEVERE, message, e);
+            logger.error(message, e);
             return serializeErrorObject(new FrameworkInternalException(message));
         }
     }
@@ -60,25 +60,36 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     private OutputType internalHandleRequest(RawInputType rawInput) throws ApiException {
 
         Pair<String, ParsedInputType> nameAndRemainingInput = parseNameKey(rawInput);
+        logger.debug("Parsed name key as: " + nameAndRemainingInput.a());
 
-        String targetName = nameAndRemainingInput.fst();
-        ParsedInputType parsedInput = nameAndRemainingInput.snd();
+        String targetName = nameAndRemainingInput.a();
+        ParsedInputType parsedInput = nameAndRemainingInput.b();
         ApiActionDefinition definition = apiDefinitionSet.getFromName(targetName);
 
         // If this dispatcher doesn't have any such request definition but is chained to another dispatch,
         // invoke that dispatcher to see if it can get a result.
         if (definition == null) {
             if (nextChainDispatcher != null) {
+                logger.info("Unknown target name but have a chained dispatcher; passing on to next dispatcher");
                 return nextChainDispatcher.internalHandleRequest(rawInput);
             } else {
+                logger.warn("Unknown target name and no chained dispatcher; cannot dispatch method");
                 throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
             }
         }
 
+        logger.debug("Got a definition set");
+
         Object requestObject = parseRequestObject(definition, parsedInput);
+
+        logger.debug("Definition is: " + definition.toString());
+        logger.debug("Target method is: " + definition.getTargetMethod());
+        logger.debug("Handler instance is: " + handlerInstance);
+        logger.debug("Request object is: " + requestObject);
 
         Object invokeResult;
         try {
+            logger.debug("Invoking method...");
             invokeResult = definition.getTargetMethod().invoke(handlerInstance, requestObject);
         } catch (IllegalAccessException e) {
             // Shouldn't ever happen since methods are from interface and therefore always public

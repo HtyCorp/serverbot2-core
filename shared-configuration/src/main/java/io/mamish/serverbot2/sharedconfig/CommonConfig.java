@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.sharedconfig;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Common configuration values across the project.
@@ -26,8 +27,9 @@ public class CommonConfig {
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
-    public static final int STANDARD_LAMBDA_MEMORY = 2048;
+    public static final int STANDARD_LAMBDA_MEMORY = 3008;
 
+    public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]{1,63}");
     public static final List<String> RESERVED_APP_NAMES = List.of(
             // Reserved group name for state tracking in network security service.
             // App names and SG name suffixes are mapped 1-to-1 so this must be a reserved app name.

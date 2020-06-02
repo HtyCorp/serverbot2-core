@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 // but clients in this framework send an unquoted JSON object.
 public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler {
 
-    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(getHandlerInstance(),getModelClass());
+    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(createHandlerInstance(),getModelClass());
 
     /**
      * <p>
@@ -27,18 +27,18 @@ public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler
 
     /**
      * <p>
-     * Must return an instance of <code>ModelType</code> to handle API requests for the given service model. This is
-     * typically the same class, for example:
+     * Create a new instance of <code>ModelType</code> to handle API requests for the given service model.
      * <p>
-     * <code>public class MyHandler extends LambdaApiServer{@literal <MyModel>}
-     * implements MyModel { ... protected MyModel getHandlerInstance() { return this; }</code>.
+     * Warning: this is called during the super constructor in LambdaApiServer, which runs <b>before</b> any instance
+     * field initialization in the subclass. You cannot refer to any instance fields since they will be null at this
+     * point.
      * <p>
      * This class will attempt to parse the payload of Lambda invocations as requests in the given service, and dispatch
      * them to the provided handler.
      *
      * @return An instance of <code>ModelType</code> to handle API requests
      */
-    protected abstract ModelType getHandlerInstance();
+    protected abstract ModelType createHandlerInstance();
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {

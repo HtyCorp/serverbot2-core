@@ -132,8 +132,8 @@ public class WorkflowsStack extends Stack {
         return Map.of(
                 "requesterDiscordId", Data.stringAt("$.requesterDiscordId"),
                 "gameName", Data.stringAt("$.gameName"),
-                "randomId1", Data.stringAt("$.randomId1"),
-                "randomId2", Data.stringAt("$.randomId2"),
+                "initialMessageUuid", Data.stringAt("$.initialMessageUuid"),
+                "laterMessageUuid", Data.stringAt("$.laterMessageUuid"),
                 "taskName", task.toString()
         );
     }

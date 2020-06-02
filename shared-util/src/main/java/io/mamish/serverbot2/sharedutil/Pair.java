@@ -10,11 +10,11 @@ public class Pair<A,B> {
         this.b = b;
     }
 
-    public A fst() {
+    public A a() {
         return a;
     }
 
-    public B snd() {
+    public B b() {
         return b;
     }
 }

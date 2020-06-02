@@ -7,9 +7,7 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
-import software.amazon.awscdk.services.apigateway.DomainNameOptions;
-import software.amazon.awscdk.services.apigateway.EndpointType;
-import software.amazon.awscdk.services.apigateway.LambdaRestApi;
+import software.amazon.awscdk.services.apigateway.*;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.route53.ARecord;
@@ -18,9 +16,9 @@ import software.amazon.awscdk.services.route53.targets.ApiGateway;
 
 import java.util.List;
 
-public class IpStack extends Stack {
+public class IpAuthorizerStack extends Stack {
 
-    public IpStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
+    public IpAuthorizerStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
         super(parent, id, props);
 
         // Define function and associated role
@@ -32,14 +30,18 @@ public class IpStack extends Stack {
 
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
-        Function proxyFunction = Util.standardJavaFunction(this, "IpProxyFunction", "ip-lambda",
+        Function proxyFunction = Util.standardJavaFunction(this, "IpProxyFunction", "ip-authorizer",
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler", functionRole)
                 .build();
 
         // Domain REST API backed by function
 
+        EndpointConfiguration regionalEndpoint = EndpointConfiguration.builder()
+                .types(List.of(EndpointType.REGIONAL))
+                .build();
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "IpRestApi")
                 .handler(proxyFunction)
+                .endpointConfiguration(regionalEndpoint)
                 .build();
 
         // DNS stuff: Create APIGW custom domain for this API

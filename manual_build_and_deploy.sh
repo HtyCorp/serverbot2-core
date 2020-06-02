@@ -8,11 +8,11 @@ npm install -g aws-cdk
 
 mvn clean install -Dmaven.test.skip=true
 
-if [[ ! -d relay-docker ]]
+if [ ! -d relay-docker ]
 then
     mkdir relay-docker
 fi
-cp discord-relay/target/discord-relay.jar relay-docker/discord-relay.jar
+cp discord-relay/target/discord-relay-1.0-SNAPSHOT-jar-with-dependencies.jar relay-docker/discord-relay.jar
 cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Dockerfile
 
 cd application-infrastructure
@@ -28,13 +28,13 @@ wait
 echo "Running phase 2 deployment..."
 $DEPLOY AppInstanceResources &
 $DEPLOY GameMetadataService &
-$DEPLOY NetSecService &
+$DEPLOY NetworkSecurityService &
 $DEPLOY ResourceReaper &
 wait
 
 # Phase 3: intermediate services depending on passive services
 echo "Running phase 3 deployment..."
-$DEPLOY IpAuthService &
+$DEPLOY IpAuthorizerApi &
 $DEPLOY WorkflowService &
 wait 
 

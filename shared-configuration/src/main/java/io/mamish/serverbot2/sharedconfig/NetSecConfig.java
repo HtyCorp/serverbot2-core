@@ -5,7 +5,7 @@ public class NetSecConfig {
     public static final String FUNCTION_NAME = "NetworkSecurityService";
 
     public static final String SG_NAME_PREFIX = "NetSecSG";
-    public static final String REFERENCE_SG_NAME = "ReferenceManagedGroup";
+    public static final String REFERENCE_SG_NAME = "referencerulegroup";
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 

@@ -12,7 +12,10 @@
     <artifactId>shared-util</artifactId>
 
     <dependencies>
-        <!-- Currently none required: would be nice to keep it this way. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

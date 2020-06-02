@@ -8,7 +8,7 @@ public enum PortProtocol {
         return protocol.name().toLowerCase();
     }
 
-    public static PortProtocol fromLowerCaseName(String apiName) {
+    public static PortProtocol fromLowerCaseName(String apiName) throws IllegalArgumentException {
         return PortProtocol.valueOf(apiName.toUpperCase());
     }
 

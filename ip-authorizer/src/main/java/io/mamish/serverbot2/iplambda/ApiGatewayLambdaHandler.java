@@ -4,24 +4,34 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.networksecurity.model.AuthorizeIpRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
 public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+    private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
+    private final Gson gson = new Gson();
+
     private final INetworkSecurity networkSecurityClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+
+        logger.info("Dumping request object:\n" + gson.toJson(request));
+        logger.info("Dumping context:\n" + gson.toJson(context));
+
         String sourceIp = request.getRequestContext().getIdentity().getSourceIp();
 
         String path = request.getPath();
-        if (!path.equals("/")) {
+        if (!path.equals(NetSecConfig.AUTH_PATH)) {
             return generateError("Sorry, this request is invalid [bad path '" + path + "']", 400);
         }
 
@@ -46,8 +56,8 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             AuthorizeIpRequest authRequest = new AuthorizeIpRequest(sourceIp, encryptedUserIdToken, null);
             networkSecurityClient.authorizeIp(authRequest);
         } catch (ApiServerException e) {
-            e.printStackTrace();
-            return generateError("Sorry, this request is invalid [bad token]", 400);
+            logger.error("AuthorizeIp call failed", e);
+            return generateError("Sorry, an error occurred. Check that you've used the exact URL sent in Discord.", 400);
         }
 
         return generateSuccess("Thank you. Your IP address (" + sourceIp + ") has been whitelisted to connect to servers.");

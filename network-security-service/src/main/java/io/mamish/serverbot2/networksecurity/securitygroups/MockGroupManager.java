@@ -17,10 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class MockGroupManager implements IGroupManager {
 
-    private Map<String,ManagedSecurityGroup> store = new HashMap<>();
+    private final Map<String,ManagedSecurityGroup> store = new HashMap<>();
     private final Crypto crypto;
 
     public MockGroupManager(Crypto crypto) {
@@ -30,21 +31,22 @@ public class MockGroupManager implements IGroupManager {
     @Override
     public void createGroup(String name) {
         ManagedSecurityGroup newGroup = new ManagedSecurityGroup(name, IDUtils.randomUUIDJoined(),
-                crypto.generateDataKey().snd());
+                crypto.generateDataKey().b());
         store.put(newGroup.getName(), newGroup);
     }
 
     @Override
     public void initialiseBaseGroup() {
-        updateGroup(NetSecConfig.REFERENCE_SG_NAME, group -> {
+        updateGroupInStore(NetSecConfig.REFERENCE_SG_NAME, group -> {
 
-            Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
+            if (group.getAllowedPorts() != null) {
+                throw new IllegalStateException("Ports already initialised somehow");
+            }
 
-            List<PortPermission> newPorts = new ArrayList<>(group.getAllowedPorts());
-            newPorts.add(new PortPermission(PortProtocol.ICMP, -1, -1));
-
-            String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String("REFERENCE_DO_NOT_DELETE"), dataKey);
-            List<DiscordUserIp> newUsers = List.of(new DiscordUserIp(encryptedUserId, "0.0.0.0"));
+            List<PortPermission> newPorts = List.of(
+                    new PortPermission(PortProtocol.ICMP, -1, -1));
+            List<DiscordUserIp> newUsers = List.of(
+                    new DiscordUserIp("REFERENCE_DO_NOT_DELETE", "0.0.0.0"));
 
             return new Pair<>(newPorts, newUsers);
 
@@ -53,41 +55,37 @@ public class MockGroupManager implements IGroupManager {
 
     @Override
     public void copyBaseRuleIntoGroup(String name) {
-        ManagedSecurityGroup ref = findGroup(NetSecConfig.REFERENCE_SG_NAME);
+        ManagedSecurityGroup ref = withDecryptedUsers(getEncryptedGroup(NetSecConfig.REFERENCE_SG_NAME));
         // Similar to Ec2GroupManager, lift the one and only port permission from ref, copying its source addresses
-        updateGroup(name, _g -> {
-            return new Pair<>(ref.getAllowedPorts(), ref.getAllowedUsers());
-        });
+        updateGroupInStore(name, group -> new Pair<>(ref.getAllowedPorts(), ref.getAllowedUsers()));
     }
 
     @Override
     public ManagedSecurityGroup describeGroup(String name) {
-        return findGroup(name);
+        return withDecryptedUsers(getEncryptedGroup(name));
     }
 
     @Override
     public List<ManagedSecurityGroup> listGroups() {
-        return new ArrayList<>(store.values());
+        return store.values().stream().map(this::withDecryptedUsers).collect(Collectors.toList());
     }
 
     @Override
     public void deleteGroup(String name) {
-        findGroup(name); // to throw exception if missing
+        getEncryptedGroup(name); // to throw exception if missing
         store.remove(name);
     }
 
     @Override
     public void modifyUserInGroup(ManagedSecurityGroup inputGroup, String userAddress, String userId, boolean addNotRemove) {
-        updateGroup(inputGroup, group -> {
+        updateGroupInStore(inputGroup, group -> {
             List<DiscordUserIp> newUsers = new ArrayList<>(group.getAllowedUsers());
-            Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
 
             if (addNotRemove) {
-                String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userId), dataKey);
-                DiscordUserIp newUser = new DiscordUserIp(encryptedUserId, userAddress);
+                DiscordUserIp newUser = new DiscordUserIp(userId, userAddress);
                 newUsers.add(newUser);
             } else {
-                newUsers.removeIf(u -> crypto.decryptLocal(u.getDiscordId(), dataKey).asUtf8String().equals(userId));
+                newUsers.removeIf(u -> u.getDiscordId().equals(userId));
             }
 
             return new Pair<>(null, newUsers);
@@ -96,7 +94,7 @@ public class MockGroupManager implements IGroupManager {
 
     @Override
     public void modifyPortsInGroup(ManagedSecurityGroup inputGroup, List<PortPermission> ports, boolean addNotRemove) {
-        updateGroup(inputGroup, group -> {
+        updateGroupInStore(inputGroup, group -> {
             List<PortPermission> newPorts = new ArrayList<>(group.getAllowedPorts());
             if (addNotRemove) {
                 newPorts.addAll(ports);
@@ -107,7 +105,7 @@ public class MockGroupManager implements IGroupManager {
         });
     }
 
-    private ManagedSecurityGroup findGroup(String name) {
+    private ManagedSecurityGroup getEncryptedGroup(String name) {
         ManagedSecurityGroup group = store.get(name);
         if (group == null) {
             throw new NoSuchResourceException("No such group added to local store");
@@ -115,23 +113,50 @@ public class MockGroupManager implements IGroupManager {
         return group;
     }
 
-    private void updateGroup(String name, Function<ManagedSecurityGroup, Pair<List<PortPermission>,List<DiscordUserIp>>> updater) {
-        ManagedSecurityGroup group = findGroup(name);
-        updateGroup(group, updater);
+    private ManagedSecurityGroup withDecryptedUsers(ManagedSecurityGroup group) {
+        if (group.getAllowedUsers() == null) {
+            return group;
+        }
+        return withPortsAndUsers(group, null, group.getAllowedUsers().stream().map(u -> {
+            Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
+            String decryptedId = crypto.decryptLocal(u.getDiscordId(), dataKey).asUtf8String();
+            return new DiscordUserIp(decryptedId, u.getIpAddress());
+        }).collect(Collectors.toList()));
     }
 
-    private void updateGroup(ManagedSecurityGroup group, Function<ManagedSecurityGroup, Pair<List<PortPermission>,List<DiscordUserIp>>> updater) {
-        Pair<List<PortPermission>,List<DiscordUserIp>> newData = updater.apply(group);
-        List<PortPermission> ports = newData.fst();
-        List<DiscordUserIp> users = newData.snd();
-        ManagedSecurityGroup updated = new ManagedSecurityGroup(
+    private ManagedSecurityGroup withEncryptedUsers(ManagedSecurityGroup group) {
+        if (group.getAllowedUsers() == null) {
+            return group;
+        }
+        return withPortsAndUsers(group, null, group.getAllowedUsers().stream().map(u -> {
+            Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
+            String encryptedId = crypto.encryptLocal(SdkBytes.fromUtf8String(u.getDiscordId()), dataKey);
+            return new DiscordUserIp(encryptedId, u.getIpAddress());
+        }).collect(Collectors.toList()));
+    }
+
+    private ManagedSecurityGroup withPortsAndUsers(ManagedSecurityGroup group, List<PortPermission> ports, List<DiscordUserIp> users) {
+        return new ManagedSecurityGroup(
                 group.getName(),
                 group.getGroupId(),
                 group.getEncryptedDataKey(),
                 (ports != null) ? ports : group.getAllowedPorts(),
                 (users != null) ? users : group.getAllowedUsers()
         );
-        store.put(updated.getName(), updated);
+    }
+
+    private void updateGroupInStore(String name, Function<ManagedSecurityGroup, Pair<List<PortPermission>,List<DiscordUserIp>>> updater) {
+        ManagedSecurityGroup group = withDecryptedUsers(getEncryptedGroup(name));
+        updateGroupInStore(group, updater);
+    }
+
+    private void updateGroupInStore(ManagedSecurityGroup group, Function<ManagedSecurityGroup, Pair<List<PortPermission>,List<DiscordUserIp>>> updater) {
+        Pair<List<PortPermission>,List<DiscordUserIp>> newData = updater.apply(group);
+        List<PortPermission> ports = newData.a();
+        List<DiscordUserIp> users = newData.b();
+        ManagedSecurityGroup updated = withPortsAndUsers(group, ports, users);
+        ManagedSecurityGroup encrypted = withEncryptedUsers(updated);
+        store.put(encrypted.getName(), encrypted);
     }
 
 }

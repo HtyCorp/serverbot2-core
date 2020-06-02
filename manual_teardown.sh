@@ -1,6 +1,20 @@
 #!/bin/sh
+
+set -e
+
 cd ~/environment/serverbot2/serverbot2-core
 cd application-infrastructure
 echo "Destroying all stacks except CommonResources..."
-cdk destroy AppInstanceResources CommandService DiscordRelay GameMetadataService NetSecService ResourceReaper WorkflowService IpAuthService
-echo "Done!"
+
+DESTROY="cdk destroy --force" # Disables confirmation prompt
+$DESTROY AppInstanceResources &
+$DESTROY CommandService &
+$DESTROY DiscordRelay &
+$DESTROY GameMetadataService &
+$DESTROY NetworkSecurityService &
+$DESTROY ResourceReaper &
+$DESTROY WorkflowService &
+$DESTROY IpAuthorizerApi &
+wait
+
+echo "All non-common stacks destroyed"

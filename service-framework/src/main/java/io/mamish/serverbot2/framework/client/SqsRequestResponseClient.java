@@ -1,15 +1,19 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -30,6 +34,9 @@ public class SqsRequestResponseClient {
     // Lazily initialize this: don't want to create temp SQS queue if it won't be used.
     private volatile String rxTempQueueUrl;
 
+    Logger logger = LogManager.getLogger(SqsRequestResponseClient.class);
+    private final Gson gson = new Gson();
+
     public SqsRequestResponseClient() {
         // empty: queue initialization is delayed until required
     }
@@ -40,6 +47,8 @@ public class SqsRequestResponseClient {
 
             rxTempQueueUrl = realSqsClient.createQueue(r -> r.queueName(generateQueueName())
                     .tags(makeReaperHeartbeatTags())).queueUrl();
+
+            logger.debug("Queue was null, now set to: " + rxTempQueueUrl);
 
             Thread receiverThread = new Thread(this::runReceiveLoop);
             receiverThread.setDaemon(true);
@@ -61,6 +70,7 @@ public class SqsRequestResponseClient {
     public String sendAndReceive(String queueUrl, String messageBody, int timeoutSeconds, String requestId) {
 
         if (rxTempQueueUrl == null) {
+            logger.debug("Queue is null");
             initialiseResources();
         }
 
@@ -73,6 +83,11 @@ public class SqsRequestResponseClient {
         Map<String, MessageAttributeValue> sqsAttrMap = Map.of(
                 ApiConfig.JSON_REQUEST_QUEUE_KEY, stringAttribute(rxTempQueueUrl),
                 ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId));
+
+        logger.debug("Queue value is " + rxTempQueueUrl);
+        logger.debug("Dumping attr map: ");
+        logger.debug(gson.toJson(sqsAttrMap));
+
         realSqsClient.sendMessage(r -> r.messageBody(messageBody)
                 .messageAttributes(sqsAttrMap)
                 .queueUrl(queueUrl));
@@ -115,8 +130,14 @@ public class SqsRequestResponseClient {
             }
 
             // Receive messages
+            List<String> messageAttributeNames = List.of(
+                    ApiConfig.JSON_REQUEST_ID_KEY
+            );
             List<Message> messages = realSqsClient.receiveMessage(r -> r.queueUrl(rxTempQueueUrl)
-                .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)).messages();
+                    .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
+                    .attributeNames(QueueAttributeName.ALL)
+                    .messageAttributeNames(messageAttributeNames)
+            ).messages();
 
             // For reach message, remove the queue for that request ID from the map and offer the message to it.
             messages.forEach(m -> {
@@ -134,7 +155,10 @@ public class SqsRequestResponseClient {
                     .id(m.messageId()) // We ignore return statuses anyway so this just has to be unique
                     .build()
             ).collect(Collectors.toList());
-            realSqsClient.deleteMessageBatch(r -> r.entries(deleteList));
+            realSqsClient.deleteMessageBatch(r -> r
+                    .entries(deleteList)
+                    .queueUrl(rxTempQueueUrl)
+            );
 
         }
     }
@@ -153,7 +177,7 @@ public class SqsRequestResponseClient {
     }
 
     private static MessageAttributeValue stringAttribute(String s) {
-        return MessageAttributeValue.builder().stringValue(s).build();
+        return MessageAttributeValue.builder().stringValue(s).dataType("String").build();
     }
 
 }

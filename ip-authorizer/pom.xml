@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>ip-lambda</artifactId>
+    <artifactId>ip-authorizer</artifactId>
 
     <properties>
         <module.assemblyJarMainClass>io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler</module.assemblyJarMainClass>

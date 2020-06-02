@@ -45,8 +45,8 @@
                                 <goal>single</goal>
                             </goals>
                             <configuration>
-                                <finalName>${project.artifactId}</finalName>
-                                <appendAssemblyId>false</appendAssemblyId>
+<!--                                <finalName>${project.artifactId}-assembly</finalName>-->
+<!--                                <appendAssemblyId>false</appendAssemblyId>-->
                                 <archive>
                                     <manifest>
                                         <mainClass>${module.assemblyJarMainClass}</mainClass>
@@ -70,7 +70,7 @@
         <module>discord-relay-model</module>
         <module>command-lambda</module>
         <module>command-lambda-model</module>
-        <module>ip-lambda</module>
+        <module>ip-authorizer</module>
         <module>shared-configuration</module>
         <module>shared-util</module>
         <module>application-infrastructure</module>
@@ -98,6 +98,14 @@
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
                 <version>2.13.23</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-xray-recorder-sdk-bom -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-xray-recorder-sdk-bom</artifactId>
+                <version>2.5.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -140,6 +148,13 @@
 
     <!-- Top-level dependencies for tests and logging only -->
     <dependencies>
+
+        <!-- Temporarily breaking this rule while dependencies and package size are still low-priority -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -155,19 +170,19 @@
             <scope>test</scope>
         </dependency>
 
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.logging.log4j</groupId>-->
-<!--            <artifactId>log4j-api</artifactId>-->
-<!--            <version>2.13.1</version>-->
-<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.13.3</version>
+        </dependency>
 
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.logging.log4j</groupId>-->
-<!--            <artifactId>log4j-core</artifactId>-->
-<!--            <version>2.13.1</version>-->
-<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.13.3</version>
+        </dependency>
 
 
     </dependencies>

@@ -34,7 +34,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     @Override
-    protected IDiscordService getHandlerInstance() {
+    protected IDiscordService createHandlerInstance() {
         return this;
     }
 

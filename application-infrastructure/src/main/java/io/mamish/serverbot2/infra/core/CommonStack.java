@@ -2,6 +2,7 @@ package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -10,6 +11,7 @@ import software.amazon.awscdk.services.certificatemanager.ValidationMethod;
 import software.amazon.awscdk.services.ec2.SubnetConfiguration;
 import software.amazon.awscdk.services.ec2.SubnetType;
 import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
@@ -22,6 +24,7 @@ public class CommonStack extends Stack {
     private final Vpc applicationVpc;
     private final IHostedZone apexHostedZone;
     private final DnsValidatedCertificate wildcardCertificate;
+    private final Key netSecKmsKey;
 
     public Vpc getServiceVpc() {
         return serviceVpc;
@@ -37,6 +40,10 @@ public class CommonStack extends Stack {
 
     public DnsValidatedCertificate getWildcardCertificate() {
         return wildcardCertificate;
+    }
+
+    public Key getNetSecKmsKey() {
+        return netSecKmsKey;
     }
 
     public CommonStack(Construct parent, String id, StackProps props) {
@@ -73,6 +80,11 @@ public class CommonStack extends Stack {
                 .validationMethod(ValidationMethod.DNS)
                 .domainName("*."+CommonConfig.APEX_DOMAIN_NAME)
                 .hostedZone(apexHostedZone)
+                .build();
+
+        netSecKmsKey = Key.Builder.create(this, "NetSecGeneralKey")
+                .trustAccountIdentities(true)
+                .alias(NetSecConfig.KMS_ALIAS)
                 .build();
 
     }

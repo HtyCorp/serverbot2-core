@@ -19,7 +19,7 @@ public class ServerbotFullApp {
     public final CommandStack commandStack;
     public final CommonStack commonStack;
     public final GameMetadataStack gameMetadataStack;
-    public final IpStack ipStack;
+    public final IpAuthorizerStack ipAuthorizerStack;
     public final NetSecStack netSecStack;
     public final ReaperStack reaperStack;
     public final RelayStack relayStack;
@@ -35,13 +35,13 @@ public class ServerbotFullApp {
         coreStackProps = StackProps.builder().env(env).build();
 
         commonStack = new CommonStack(cdkApp, "CommonResources", coreStackProps);
-        ipStack = new  IpStack(cdkApp, "IpAuthService", coreStackProps, commonStack);
+        ipAuthorizerStack = new IpAuthorizerStack(cdkApp, "IpAuthorizerApi", coreStackProps, commonStack);
         relayStack = new RelayStack(cdkApp, "DiscordRelay", coreStackProps, commonStack);
         appInstanceShareStack = new AppInstanceShareStack(cdkApp, "AppInstanceResources", coreStackProps);
         commandStack = new CommandStack(cdkApp, "CommandService", coreStackProps);
         workflowsStack = new WorkflowsStack(cdkApp, "WorkflowService", coreStackProps);
         gameMetadataStack = new GameMetadataStack(cdkApp, "GameMetadataService", coreStackProps);
-        netSecStack = new NetSecStack(cdkApp, "NetSecService", coreStackProps);
+        netSecStack = new NetSecStack(cdkApp, "NetworkSecurityService", coreStackProps, commonStack);
         reaperStack = new ReaperStack(cdkApp, "ResourceReaper", coreStackProps);
 
         // Disabled for now since appdelivery doesn't support stacks with assets
