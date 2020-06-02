@@ -1,16 +1,14 @@
 package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.AWSXRayRecorder;
-import com.amazonaws.xray.AWSXRayRecorderBuilder;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.List;
@@ -64,10 +62,12 @@ public abstract class SqsApiServer<ModelType> {
             );
 
             while(true) {
+                logger.setLevel(Level.ALL);
                 logger.fine("Polling messages");
                 ReceiveMessageResponse response = sqsClient.receiveMessage(r ->
                         r.queueUrl(receiveQueueUrl)
                         .messageAttributeNames(receiveAttributeNames)
+                        .attributeNames(QueueAttributeName.ALL)
                         .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
                 );
                 if (!response.hasMessages()) {
@@ -138,7 +138,7 @@ public abstract class SqsApiServer<ModelType> {
     }
 
     private static MessageAttributeValue stringAttribute(String s) {
-        return MessageAttributeValue.builder().stringValue(s).build();
+        return MessageAttributeValue.builder().stringValue(s).dataType("String").build();
     }
 
 }

@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -82,9 +83,9 @@ public class SqsRequestResponseClient {
                 ApiConfig.JSON_REQUEST_QUEUE_KEY, stringAttribute(rxTempQueueUrl),
                 ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId));
 
-        System.out.println("Queue value is " + rxTempQueueUrl);
-        System.out.println("Dumping attr map: ");
-        System.out.println(gson.toJson(sqsAttrMap));
+        logger.fine("Queue value is " + rxTempQueueUrl);
+        logger.fine("Dumping attr map: ");
+        logger.fine(gson.toJson(sqsAttrMap));
 
         realSqsClient.sendMessage(r -> r.messageBody(messageBody)
                 .messageAttributes(sqsAttrMap)
@@ -128,8 +129,14 @@ public class SqsRequestResponseClient {
             }
 
             // Receive messages
+            List<String> messageAttributeNames = List.of(
+                    ApiConfig.JSON_REQUEST_ID_KEY
+            );
             List<Message> messages = realSqsClient.receiveMessage(r -> r.queueUrl(rxTempQueueUrl)
-                .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)).messages();
+                    .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
+                    .attributeNames(QueueAttributeName.ALL)
+                    .messageAttributeNames(messageAttributeNames)
+            ).messages();
 
             // For reach message, remove the queue for that request ID from the map and offer the message to it.
             messages.forEach(m -> {
@@ -147,7 +154,10 @@ public class SqsRequestResponseClient {
                     .id(m.messageId()) // We ignore return statuses anyway so this just has to be unique
                     .build()
             ).collect(Collectors.toList());
-            realSqsClient.deleteMessageBatch(r -> r.entries(deleteList));
+            realSqsClient.deleteMessageBatch(r -> r
+                    .entries(deleteList)
+                    .queueUrl(rxTempQueueUrl)
+            );
 
         }
     }
