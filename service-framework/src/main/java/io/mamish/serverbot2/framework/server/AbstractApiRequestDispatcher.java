@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
 
 public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
@@ -61,6 +60,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     private OutputType internalHandleRequest(RawInputType rawInput) throws ApiException {
 
         Pair<String, ParsedInputType> nameAndRemainingInput = parseNameKey(rawInput);
+        logger.debug("Parsed name key as: " + nameAndRemainingInput.a());
 
         String targetName = nameAndRemainingInput.a();
         ParsedInputType parsedInput = nameAndRemainingInput.b();
@@ -70,16 +70,26 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         // invoke that dispatcher to see if it can get a result.
         if (definition == null) {
             if (nextChainDispatcher != null) {
+                logger.info("Unknown target name but have a chained dispatcher; passing on to next dispatcher");
                 return nextChainDispatcher.internalHandleRequest(rawInput);
             } else {
+                logger.warn("Unknown target name and no chained dispatcher; cannot dispatch method");
                 throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
             }
         }
 
+        logger.debug("Got a definition set");
+
         Object requestObject = parseRequestObject(definition, parsedInput);
+
+        logger.debug("Definition is: " + definition.toString());
+        logger.debug("Target method is: " + definition.getTargetMethod());
+        logger.debug("Handler instance is: " + handlerInstance);
+        logger.debug("Request object is: " + requestObject);
 
         Object invokeResult;
         try {
+            logger.debug("Invoking method...");
             invokeResult = definition.getTargetMethod().invoke(handlerInstance, requestObject);
         } catch (IllegalAccessException e) {
             // Shouldn't ever happen since methods are from interface and therefore always public
