@@ -21,7 +21,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         String sourceIp = request.getRequestContext().getIdentity().getSourceIp();
 
         String path = request.getPath();
-        if (!path.equals("/")) {
+        if (!path.equals(NetSecConfig.AUTH_PATH)) {
             return generateError("Sorry, this request is invalid [bad path '" + path + "']", 400);
         }
 
