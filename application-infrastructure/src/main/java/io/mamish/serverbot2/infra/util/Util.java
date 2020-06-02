@@ -81,9 +81,14 @@ public class Util {
         return standardJavaFunction(parent, id, moduleName, handler).role(role);
     }
 
-    public static Code mavenJarAsset(String module) {
+    public static Code mavenJarAsset(String moduleName) {
+        // Should make this refer to home or maybe current working directory if env not found
         String rootPath = System.getenv("CODEBUILD_SRC_DIR");
-        String jarPath = IDUtils.slash( rootPath, module, "target", (module+"-assembly.jar"));
+        final String projectVersion = System.getProperty("serverbot2.version");
+        final String assemblyDescriptor = "jar-with-dependencies";
+        String baseFileName = IDUtils.kebab(moduleName, projectVersion, assemblyDescriptor);
+        String fullFileName = baseFileName + ".jar";
+        String jarPath = IDUtils.slash( rootPath, moduleName, "target", fullFileName);
         return Code.fromAsset(jarPath);
     }
 

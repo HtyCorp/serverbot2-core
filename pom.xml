@@ -45,8 +45,8 @@
                                 <goal>single</goal>
                             </goals>
                             <configuration>
-                                <finalName>${project.artifactId}-assembly</finalName>
-                                <appendAssemblyId>false</appendAssemblyId>
+<!--                                <finalName>${project.artifactId}-assembly</finalName>-->
+<!--                                <appendAssemblyId>false</appendAssemblyId>-->
                                 <archive>
                                     <manifest>
                                         <mainClass>${module.assemblyJarMainClass}</mainClass>

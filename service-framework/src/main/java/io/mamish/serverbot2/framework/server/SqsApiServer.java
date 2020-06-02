@@ -25,12 +25,12 @@ public abstract class SqsApiServer<ModelType> {
     private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(getHandlerInstance(),getModelClass());
     private final SqsClient sqsClient = SqsClient.create();
     private final String serviceInterfaceName = getModelClass().getSimpleName();
-    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
     private final String receiveQueueName;
 
     protected abstract Class<ModelType> getModelClass();
     protected abstract ModelType getHandlerInstance();
 
+    private final Logger logger = Logger.getLogger(getClass().getSimpleName());
     private final Gson gson = new Gson();
 
     public SqsApiServer(String receiveQueueName) {
@@ -58,52 +58,76 @@ public abstract class SqsApiServer<ModelType> {
 
             final String receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(receiveQueueName)).queueUrl();
 
+            final List<String> receiveAttributeNames = List.of(
+                    ApiConfig.JSON_REQUEST_ID_KEY,
+                    ApiConfig.JSON_REQUEST_QUEUE_KEY
+            );
+
             while(true) {
-                System.out.println("Polling messages");
+                logger.fine("Polling messages");
                 ReceiveMessageResponse response = sqsClient.receiveMessage(r ->
                         r.queueUrl(receiveQueueUrl)
+                        .messageAttributeNames(receiveAttributeNames)
                         .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
                 );
                 if (!response.hasMessages()) {
-                    System.out.println("No messages received");
+                    logger.fine("No messages received");
                 } else {
                     response.messages().forEach(m -> {
                         AWSXRay.beginSegment(serviceInterfaceName+"Server");
                         // Deletion is synchronous to make exception handling simpler, though it could be made async.
-                        System.out.println("Dumping message:");
-                        System.out.println(gson.toJson(m));
-                        System.out.println("Dumping message attrs:");
-                        System.out.println(m.messageAttributes());
-                        sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(m.receiptHandle()));
-
-                        // FIXME: NPE occurs here. No idea why since CWL confirms the attributes are included in send.
-
-                        String replyQueueUrl = m.messageAttributes().get(ApiConfig.JSON_REQUEST_QUEUE_KEY).stringValue();
-                        String requestId = m.messageAttributes().get(ApiConfig.JSON_REQUEST_ID_KEY).stringValue();
-
-                        AWSXRay.beginSubsegment("MakeRequest");
-                        String responseString = jsonApiHandler.handleRequest(m.body());
-                        AWSXRay.endSubsegment();
-
-                        Map<String,MessageAttributeValue> sqsAttrMap = Map.of(
-                                ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId)
-                                // No point putting the queue URL attribute back in.
-                        );
-
-                        AWSXRay.beginSubsegment("SendReply");
                         try {
-                            sqsClient.sendMessage(r -> r.queueUrl(replyQueueUrl)
-                                    .messageAttributes(sqsAttrMap)
-                                    .messageBody(responseString));
-                        } catch (Exception e) {
-                            // Reply queue send might fail outside the control of this service, so don't make it fatal.
-                            logger.log(Level.WARNING, "Unable to send SQS response message", e);
-                            AWSXRay.getCurrentSubsegment().addException(e);
-                        } finally {
-                            AWSXRay.endSubsegment();
-                        }
 
-                        AWSXRay.endSegment();
+                            if (!m.hasAttributes()) {
+                                logger.warning("Message does not have any message attributes.");
+                                return;
+                            }
+
+                            String replyQueueUrl;
+                            String requestId;
+                            try {
+                                replyQueueUrl = m.messageAttributes().get(ApiConfig.JSON_REQUEST_QUEUE_KEY).stringValue();
+                                requestId = m.messageAttributes().get(ApiConfig.JSON_REQUEST_ID_KEY).stringValue();
+                            } catch (NullPointerException e) {
+                                logger.warning("Message is missing required attributes. Attribute map: "
+                                        + gson.toJson(m.messageAttributes()));
+                                return;
+                            }
+
+
+                            logger.fine("Dumping message:");
+                            logger.fine(gson.toJson(m));
+                            logger.fine("Dumping message attrs:");
+                            logger.fine(gson.toJson(m.messageAttributes()));
+                            sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(m.receiptHandle()));
+
+                            // FIXME: NPE occurs here. No idea why since CWL confirms the attributes are included in send.
+
+                            AWSXRay.beginSubsegment("DispatchRequest");
+                            String responseString = jsonApiHandler.handleRequest(m.body());
+                            AWSXRay.endSubsegment();
+
+                            Map<String,MessageAttributeValue> sqsAttrMap = Map.of(
+                                    ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId)
+                                    // No point putting the queue URL attribute back in.
+                            );
+
+                            AWSXRay.beginSubsegment("SendReply");
+                            try {
+                                sqsClient.sendMessage(r -> r.queueUrl(replyQueueUrl)
+                                        .messageAttributes(sqsAttrMap)
+                                        .messageBody(responseString));
+                            } catch (Exception e) {
+                                // Reply queue send might fail outside the control of this service, so don't make it fatal.
+                                logger.log(Level.WARNING, "Unable to send SQS response message", e);
+                                AWSXRay.getCurrentSubsegment().addException(e);
+                            } finally {
+                                AWSXRay.endSubsegment();
+                            }
+
+                        } finally {
+                            AWSXRay.endSegment();
+                        }
                     });
                 }
             }
