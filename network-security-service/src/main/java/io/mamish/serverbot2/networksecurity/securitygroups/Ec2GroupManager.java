@@ -1,6 +1,8 @@
 package io.mamish.serverbot2.networksecurity.securitygroups;
 
+import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
+import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.DiscordUserIp;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
@@ -9,6 +11,8 @@ import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.Filter;
@@ -17,7 +21,10 @@ import software.amazon.awssdk.services.ec2.model.IpRange;
 import software.amazon.awssdk.services.ec2.model.SecurityGroup;
 
 import java.security.Key;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,6 +33,9 @@ public class Ec2GroupManager implements IGroupManager {
     private final Ec2Client ec2Client = Ec2Client.create();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final Crypto crypto;
+
+    private final Logger logger = LogManager.getLogger(Ec2GroupManager.class);
+    private final Gson gson = new Gson();
 
     public Ec2GroupManager(Crypto crypto) {
         this.crypto = crypto;
@@ -116,6 +126,8 @@ public class Ec2GroupManager implements IGroupManager {
                     .build()
             ).collect(Collectors.toList());
 
+            logger.debug(() -> "Dumping new permissions for AuthorizeSecurityGroupIngress:\n" + gson.toJson(newPermissions));
+
             ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(newPermissions));
         } else {
             group.getAllowedUsers().stream().filter(user -> user.getDiscordId().equals(userId)).findFirst().ifPresent(user ->
@@ -167,13 +179,15 @@ public class Ec2GroupManager implements IGroupManager {
             ports = List.of();
             users = List.of();
         } else {
-            Stream<PortPermission> tcpPorts = permissions.stream()
-                    .filter(p -> p.ipProtocol().equals("tcp"))
-                    .map(p -> new PortPermission(PortProtocol.TCP, p.fromPort(), p.toPort()));
-            Stream<PortPermission> udpPorts = permissions.stream()
-                    .filter(p -> p.ipProtocol().equals("udp"))
-                    .map(p -> new PortPermission(PortProtocol.UDP, p.fromPort(), p.toPort()));
-            ports = Stream.concat(tcpPorts, udpPorts).collect(Collectors.toList());
+            ports = permissions.stream().map(p -> {
+                PortProtocol protocol;
+                try {
+                    protocol = PortProtocol.fromLowerCaseName(p.ipProtocol());
+                    return new PortPermission(protocol, p.fromPort(), p.toPort());
+                } catch (IllegalArgumentException e) {
+                    throw new RequestHandlingException("Unexpected protocol name '" + p.ipProtocol() + "' in EC2 permission", e);
+                }
+            }).collect(Collectors.toList());
 
             String dataKeyInDescription = realGroup.description();
             Key dataKey = crypto.decryptDataKey(dataKeyInDescription);

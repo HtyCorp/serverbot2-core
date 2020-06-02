@@ -1,17 +1,19 @@
 package io.mamish.serverbot2.framework.server;
 
+import com.amazonaws.services.xray.model.Trace;
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.Segment;
+import com.amazonaws.xray.entities.TraceHeader;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.*;
 
 import java.util.List;
 import java.util.Map;
@@ -97,12 +99,19 @@ public abstract class SqsApiServer<ModelType> {
                 if (!response.hasMessages()) {
                     logger.debug("No messages received");
                 } else {
-                    response.messages().forEach(m -> {
-                        AWSXRay.beginSegment(serviceInterfaceName+"Server");
-                        // Deletion is synchronous to make exception handling simpler, though it could be made async.
+                    response.messages().forEach(message -> {
+
+                        // Propagate Xray trace information if available in message attributes
+                        TraceHeader trace = extractTraceHeaderIfAvailable(message);
+                        if (trace != null) {
+                            AWSXRay.beginSegment(serviceInterfaceName+"Server", trace.getRootTraceId(), trace.getParentId());
+                        } else {
+                            AWSXRay.beginSegment(serviceInterfaceName+"Server");
+                        }
+
                         try {
 
-                            if (!m.hasAttributes()) {
+                            if (!message.hasAttributes()) {
                                 logger.debug("Message does not have any message attributes.");
                                 return;
                             }
@@ -110,25 +119,22 @@ public abstract class SqsApiServer<ModelType> {
                             String replyQueueUrl;
                             String requestId;
                             try {
-                                replyQueueUrl = m.messageAttributes().get(ApiConfig.JSON_REQUEST_QUEUE_KEY).stringValue();
-                                requestId = m.messageAttributes().get(ApiConfig.JSON_REQUEST_ID_KEY).stringValue();
+                                replyQueueUrl = message.messageAttributes().get(ApiConfig.JSON_REQUEST_QUEUE_KEY).stringValue();
+                                requestId = message.messageAttributes().get(ApiConfig.JSON_REQUEST_ID_KEY).stringValue();
                             } catch (NullPointerException e) {
                                 logger.warn("Message is missing required attributes. Attribute map: "
-                                        + gson.toJson(m.messageAttributes()));
+                                        + gson.toJson(message.messageAttributes()));
                                 return;
                             }
 
+                            logger.debug(LogUtils.dump("Dumping message:", message));
+                            logger.debug(LogUtils.dump("Dumping message attrs:", message.messageAttributes()));
+                            logger.debug(LogUtils.dump("Dumping message system attrs:", message.attributes()));
 
-                            logger.debug("Dumping message:");
-                            logger.debug(gson.toJson(m));
-                            logger.debug("Dumping message attrs:");
-                            logger.debug(gson.toJson(m.messageAttributes()));
-                            sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(m.receiptHandle()));
-
-                            // FIXME: NPE occurs here. No idea why since CWL confirms the attributes are included in send.
+                            sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
                             AWSXRay.beginSubsegment("DispatchRequest");
-                            String responseString = jsonApiHandler.handleRequest(m.body());
+                            String responseString = jsonApiHandler.handleRequest(message.body());
                             AWSXRay.endSubsegment();
 
                             Map<String,MessageAttributeValue> sqsAttrMap = Map.of(
@@ -159,6 +165,16 @@ public abstract class SqsApiServer<ModelType> {
             // Can't (or shouldn't) recover from operations failures on our own queue. Let the thread die instead.
             logger.warn("Fatal error in SQS receive loop", e);
         }
+    }
+
+    private TraceHeader extractTraceHeaderIfAvailable(Message message) {
+        if (message.hasAttributes()) {
+            String headerString = message.attributes().get(MessageSystemAttributeName.AWS_TRACE_HEADER);
+            if (headerString != null) {
+                return TraceHeader.fromString(headerString);
+            }
+        }
+        return null;
     }
 
     private static MessageAttributeValue stringAttribute(String s) {

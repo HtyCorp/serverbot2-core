@@ -18,11 +18,11 @@ public class LambdaHandlerTest {
     private static final PortPermission REF_PORT = new PortPermission(PortProtocol.ICMP, -1, -1);
     private static final DiscordUserIp REF_USER = new DiscordUserIp("REFERENCE_DO_NOT_DELETE", "0.0.0.0");
 
-    private LambdaHandler handler;
+    private NetworkSecurityServiceHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new LambdaHandler();
+        handler = new NetworkSecurityServiceHandler();
     }
 
     @Test

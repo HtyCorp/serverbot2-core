@@ -56,8 +56,8 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             AuthorizeIpRequest authRequest = new AuthorizeIpRequest(sourceIp, encryptedUserIdToken, null);
             networkSecurityClient.authorizeIp(authRequest);
         } catch (ApiServerException e) {
-            e.printStackTrace();
-            return generateError("Sorry, this request is invalid [bad token]", 400);
+            logger.error("AuthorizeIp call failed", e);
+            return generateError("Sorry, an error occurred. Check that you've used the exact URL sent in Discord.", 400);
         }
 
         return generateSuccess("Thank you. Your IP address (" + sourceIp + ") has been whitelisted to connect to servers.");
