@@ -28,7 +28,7 @@ public class SqsTests {
             }
 
             @Override
-            protected IDummyService getHandlerInstance() {
+            protected IDummyService createHandlerInstance() {
                 return implementation;
             }
         };

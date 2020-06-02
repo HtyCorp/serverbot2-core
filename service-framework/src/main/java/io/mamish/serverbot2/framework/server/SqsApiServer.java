@@ -20,16 +20,41 @@ public abstract class SqsApiServer<ModelType> {
 
     private static final String THREAD_NAME = "SqsApiRequestReceiverThread";
 
-    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(getHandlerInstance(),getModelClass());
+    private final ModelType handlerInstance = createHandlerInstance();
+    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(handlerInstance,getModelClass());
+
     private final SqsClient sqsClient = SqsClient.create();
     private final String serviceInterfaceName = getModelClass().getSimpleName();
     private final String receiveQueueName;
 
-    protected abstract Class<ModelType> getModelClass();
-    protected abstract ModelType getHandlerInstance();
-
     private final Logger logger = LogManager.getLogger(SqsApiServer.class);
     private final Gson gson = new Gson();
+
+    /**
+     * <p>
+     * Must return the class of generic parameter <code>ModelType</code>.
+     * <p>
+     * Due to type erasure, the class corresponding to a given generic parameter can't be retrieved dynamically at
+     * runtime, so it needs to be explicitly provided by the subclass.
+     *
+     * @return The class of generic parameter <code>ModelType</code>
+     */
+    protected abstract Class<ModelType> getModelClass();
+
+    /**
+     * <p>
+     * Create a new instance of <code>ModelType</code> to handle API requests for the given service model.
+     * <p>
+     * Warning: this is called during the super constructor in LambdaApiServer, which runs <b>before</b> any instance
+     * field initialization in the subclass. You cannot refer to any instance fields since they will be null at this
+     * point.
+     * <p>
+     * This class will attempt to parse the payload of Lambda invocations as requests in the given service, and dispatch
+     * them to the provided handler.
+     *
+     * @return An instance of <code>ModelType</code> to handle API requests
+     */
+    protected abstract ModelType createHandlerInstance();
 
     public SqsApiServer(String receiveQueueName) {
         // Don't run as daemon: this is intended as a forever-running server thread.

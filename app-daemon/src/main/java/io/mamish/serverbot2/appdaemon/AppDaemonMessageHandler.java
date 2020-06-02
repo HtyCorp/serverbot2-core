@@ -28,7 +28,7 @@ public class AppDaemonMessageHandler extends SqsApiServer<IAppDaemon> implements
     }
 
     @Override
-    protected IAppDaemon getHandlerInstance() {
+    protected IAppDaemon createHandlerInstance() {
         return this;
     }
 
