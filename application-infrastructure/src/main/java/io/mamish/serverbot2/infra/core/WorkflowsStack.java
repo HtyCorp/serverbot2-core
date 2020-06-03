@@ -1,11 +1,14 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.Machines;
 import io.mamish.serverbot2.workflow.model.Tasks;
 import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.IFunction;
 import software.amazon.awscdk.services.logs.LogGroup;
@@ -13,6 +16,7 @@ import software.amazon.awscdk.services.stepfunctions.*;
 import software.amazon.awscdk.services.stepfunctions.tasks.LambdaInvoke;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WorkflowsStack extends Stack {
@@ -20,8 +24,17 @@ public class WorkflowsStack extends Stack {
     public WorkflowsStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
 
+        Role taskRole = Util.standardLambdaRole(this, "WorkflowFunctionRole", List.of(
+                Util.POLICY_EC2_FULL_ACCESS,
+                Util.POLICY_SQS_FULL_ACCESS
+        )).build();
+
+        Util.addLambdaInvokePermissionToRole(this, taskRole,
+                GameMetadataConfig.FUNCTION_NAME,
+                NetSecConfig.FUNCTION_NAME);
+
         Function taskFunction = Util.standardJavaFunction(this, "WorkflowFunction",
-                "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler")
+                "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler", taskRole)
                 .build();
 
         final long TIMEOUT_READY = WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS;

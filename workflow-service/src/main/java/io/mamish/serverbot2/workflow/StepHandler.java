@@ -2,16 +2,18 @@ package io.mamish.serverbot2.workflow;
 
 import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
 import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
+import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
+import io.mamish.serverbot2.discordrelay.model.service.EditMode;
+import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.framework.client.ApiClient;
+import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.networksecurity.model.CreateSecurityGroupRequest;
 import io.mamish.serverbot2.networksecurity.model.DeleteSecurityGroupRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
-import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedconfig.*;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -31,16 +33,29 @@ public class StepHandler {
     private final Ec2Client ec2Client = Ec2Client.create();
     private final SqsClient sqsClient = SqsClient.create();
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
-    private final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+    private final IGameMetadataService gameMetadataService = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
+    private final INetworkSecurity networkSecurityService = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+    private final IDiscordService discordService = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
 
     void createGameMetadata(ExecutionState executionState) {
-        gameMetadataServiceClient.createGame(new CreateGameRequest(executionState.getGameName(),
+        String name = executionState.getGameName();
+
+        if (gameMetadataService.describeGame(new DescribeGameRequest(name)).isPresent()) {
+            appendMessage(executionState.getInitialMessageUuid(), "Error: game '" + name + "' already exists.");
+            throw new RequestValidationException("Game already exists in metadata service");
+        }
+
+        gameMetadataService.createGame(new CreateGameRequest(executionState.getGameName(),
                 "New game (use !setname after completing installation)"));
     }
 
     void lockGame(ExecutionState executionState) {
-        gameMetadataServiceClient.lockGame(new LockGameRequest(executionState.getGameName()));
+        try {
+            gameMetadataService.lockGame(new LockGameRequest(executionState.getGameName()));
+        } catch (RequestHandlingException e) {
+            appendMessage(executionState.getInitialMessageUuid(), "Error: Can only start a game if it is stopped");
+            throw e;
+        }
     }
 
     void createGameResources(ExecutionState executionState) {
@@ -55,7 +70,7 @@ public class StepHandler {
                 AppInstanceConfig.APP_NAME_INSTANCE_TAG_KEY, gameName
         );
 
-        ManagedSecurityGroup newSecurityGroup = networkSecurityServiceClient.createSecurityGroup(
+        ManagedSecurityGroup newSecurityGroup = networkSecurityService.createSecurityGroup(
                 new CreateSecurityGroupRequest(gameName)
         ).getCreatedGroup();
 
@@ -90,7 +105,7 @@ public class StepHandler {
         String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName);
         sqsClient.createQueue(r -> r.queueName(queueName));
 
-        gameMetadataServiceClient.updateGame(new UpdateGameRequest(gameName, null, null,
+        gameMetadataService.updateGame(new UpdateGameRequest(gameName, null, null,
                 newInstanceId, queueName, null));
 
     }
@@ -125,8 +140,8 @@ public class StepHandler {
         GameMetadata gameMetadata = getGameMetadata(name);
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
-        gameMetadataServiceClient.deleteGame(new DeleteGameRequest(name));
-        networkSecurityServiceClient.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
+        gameMetadataService.deleteGame(new DeleteGameRequest(name));
+        networkSecurityService.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {
@@ -140,7 +155,7 @@ public class StepHandler {
     }
 
     private GameMetadata getGameMetadata(String gameName) {
-        return gameMetadataServiceClient.describeGame(new DescribeGameRequest(gameName)).getGame();
+        return gameMetadataService.describeGame(new DescribeGameRequest(gameName)).getGame();
     }
 
     private String getQueueUrl(String queueName) {
@@ -148,7 +163,7 @@ public class StepHandler {
     }
 
     private void setCallbackTaskToken(String gameName, String taskToken) {
-        gameMetadataServiceClient.updateGame(new UpdateGameRequest(
+        gameMetadataService.updateGame(new UpdateGameRequest(
                 gameName,
                 null,
                 null,
@@ -156,6 +171,10 @@ public class StepHandler {
                 null,
                 taskToken
         ));
+    }
+
+    private void appendMessage(String messageExternalId, String newContent) {
+        discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND, false));
     }
 
 }
