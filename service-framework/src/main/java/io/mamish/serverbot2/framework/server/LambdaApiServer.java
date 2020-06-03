@@ -2,6 +2,8 @@ package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 // Uses stream handler: Lambda runtime with RequestHandler<String,T> expects a double-quote enclosed JSON string,
 // but clients in this framework send an unquoted JSON object.
 public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler {
+
+    private final Logger logger = LogManager.getLogger(LambdaApiServer.class);
 
     private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(createHandlerInstance(),getModelClass());
 
@@ -46,12 +50,10 @@ public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler
         // (which passes a null context at the moment).
 
         String inputString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-        System.out.println("Request payload:");
-        System.out.println(inputString);
+        logger.info("Request payload:\n" + inputString);
 
         String outputString = jsonApiHandler.handleRequest(inputString);
-        System.out.println("Response payload:");
-        System.out.println(outputString);
+        logger.info("Response payload:\n" + outputString);
 
         outputStream.write(outputString.getBytes(StandardCharsets.UTF_8));
     }

@@ -127,9 +127,9 @@ public abstract class SqsApiServer<ModelType> {
                                 return;
                             }
 
-                            logger.debug(LogUtils.dump("Dumping message:", message));
-                            logger.debug(LogUtils.dump("Dumping message attrs:", message.messageAttributes()));
-                            logger.debug(LogUtils.dump("Dumping message system attrs:", message.attributes()));
+                            LogUtils.debugDump(logger, "Dumping message:", message);
+                            LogUtils.debugDump(logger, "Dumping message attrs:", message.messageAttributes());
+                            LogUtils.debugDump(logger, "Dumping message system attrs:", message.attributes());
 
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 

@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.networksecurity.securitygroups;
 
-import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
@@ -11,9 +10,12 @@ import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.IpPermission;
@@ -21,21 +23,20 @@ import software.amazon.awssdk.services.ec2.model.IpRange;
 import software.amazon.awssdk.services.ec2.model.SecurityGroup;
 
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Ec2GroupManager implements IGroupManager {
 
-    private final Ec2Client ec2Client = Ec2Client.create();
+    private final Ec2Client ec2Client = Ec2Client.builder()
+            .httpClient(UrlConnectionHttpClient.create())
+            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+            .build();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final Crypto crypto;
 
     private final Logger logger = LogManager.getLogger(Ec2GroupManager.class);
-    private final Gson gson = new Gson();
 
     public Ec2GroupManager(Crypto crypto) {
         this.crypto = crypto;
@@ -113,31 +114,43 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     @Override
-    public void modifyUserInGroup(ManagedSecurityGroup group, String userAddress, String userId, boolean addNotRemove) {
-        if (addNotRemove) {
-            Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
-            String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userId), dataKey);
+    public void addUserToGroup(ManagedSecurityGroup group, String userIpAddress, String userId) {
+        Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
+        String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userId), dataKey);
 
-            List<IpPermission> newPermissions = group.getAllowedPorts().stream().map(port -> IpPermission.builder()
-                    .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
-                    .fromPort(port.getPortRangeFrom())
-                    .toPort(port.getPortRangeTo())
-                    .ipRanges(IpRange.builder().cidrIp(userAddress+"/32").description(encryptedUserId).build())
-                    .build()
-            ).collect(Collectors.toList());
+        List<IpPermission> newPermissions = mapIpToGroupPorts(group, userIpAddress, encryptedUserId);
+        LogUtils.debugDump(logger, "Dumping new permissions for AuthorizeSecurityGroupIngress:", newPermissions);
 
-            logger.debug(() -> "Dumping new permissions for AuthorizeSecurityGroupIngress:\n" + gson.toJson(newPermissions));
+        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(newPermissions));
+    }
 
-            ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(newPermissions));
-        } else {
-            group.getAllowedUsers().stream().filter(user -> user.getDiscordId().equals(userId)).findFirst().ifPresent(user ->
-                    group.getAllowedPorts().forEach(port ->
-                            ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId())
-                                    .cidrIp(user.getIpAddress())
-                                    .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
-                                    .fromPort(port.getPortRangeFrom())
-                                    .toPort(port.getPortRangeTo()))));
+    @Override
+    public void removeUserFromGroup(ManagedSecurityGroup group, String userId) {
+        Optional<DiscordUserIp> optExistingUser = group.getAllowedUsers().stream()
+                .filter(u -> u.getDiscordId().equals(userId))
+                .findFirst();
+
+        if (optExistingUser.isEmpty()) {
+            logger.info("Can't remove IP address: no user " + userId + " found in group " + group.getName());
+            return;
         }
+
+        String existingIp = optExistingUser.get().getIpAddress();
+        // Description not required when removing IP permissions
+        List<IpPermission> existingPermissions = mapIpToGroupPorts(group, existingIp, null);
+        LogUtils.debugDump(logger, "Dumping existing permissions for RevokeSecurityGroupIngress:", existingPermissions);
+
+        ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(existingPermissions));
+    }
+
+    private List<IpPermission> mapIpToGroupPorts(ManagedSecurityGroup group, String ipAddress, String description) {
+       return group.getAllowedPorts().stream().map(port -> IpPermission.builder()
+                .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
+                .fromPort(port.getPortRangeFrom())
+                .toPort(port.getPortRangeTo())
+                .ipRanges(IpRange.builder().cidrIp(ipAddress+"/32").description(description).build())
+                .build()
+        ).collect(Collectors.toList());
     }
 
     @Override

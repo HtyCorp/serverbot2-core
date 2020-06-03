@@ -77,17 +77,19 @@ public class MockGroupManager implements IGroupManager {
     }
 
     @Override
-    public void modifyUserInGroup(ManagedSecurityGroup inputGroup, String userAddress, String userId, boolean addNotRemove) {
+    public void addUserToGroup(ManagedSecurityGroup inputGroup, String userIpAddress, String userId) {
         updateGroupInStore(inputGroup, group -> {
             List<DiscordUserIp> newUsers = new ArrayList<>(group.getAllowedUsers());
+            newUsers.add(new DiscordUserIp(userId, userIpAddress));
+            return new Pair<>(null, newUsers);
+        });
+    }
 
-            if (addNotRemove) {
-                DiscordUserIp newUser = new DiscordUserIp(userId, userAddress);
-                newUsers.add(newUser);
-            } else {
-                newUsers.removeIf(u -> u.getDiscordId().equals(userId));
-            }
-
+    @Override
+    public void removeUserFromGroup(ManagedSecurityGroup inputGroup, String userId) {
+        updateGroupInStore(inputGroup, group -> {
+            List<DiscordUserIp> newUsers = new ArrayList<>(group.getAllowedUsers());
+            newUsers.removeIf(u -> u.getDiscordId().equals(userId));
             return new Pair<>(null, newUsers);
         });
     }

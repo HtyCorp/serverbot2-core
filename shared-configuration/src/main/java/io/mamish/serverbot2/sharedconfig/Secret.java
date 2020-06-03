@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.sharedconfig;
 
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 
 import java.util.function.Function;
@@ -9,7 +10,9 @@ import java.util.function.Function;
  */
 public class Secret extends ConfigValue {
 
-    private static final SecretsManagerClient secretsManager = SecretsManagerClient.create();
+    private static final SecretsManagerClient secretsManager = SecretsManagerClient.builder()
+            .httpClient(UrlConnectionHttpClient.create())
+            .build();
     private static final Function<String,String> fetcher = n -> secretsManager.getSecretValue(r -> r.secretId(n)).secretString();
 
     public Secret(String path, String name) {

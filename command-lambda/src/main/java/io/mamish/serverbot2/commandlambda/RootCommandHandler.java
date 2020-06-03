@@ -6,8 +6,12 @@ import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandReques
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RootCommandHandler implements ICommandService {
+
+    private final Logger logger = LogManager.getLogger(RootCommandHandler.class);
 
     private final AdminCommandHandler adminCommandHandler;
     private final ServersCommandHandler serversCommandHandler;
@@ -16,15 +20,20 @@ public class RootCommandHandler implements ICommandService {
     public RootCommandHandler() {
 
         // Subsegments added since this init takes a long time and we need to track it
-        SfnRunner sfnRunner = AWSXRay.createSubsegment("BuildSfnRunner", SfnRunner::new);
-        adminCommandHandler = AWSXRay.createSubsegment("BuildAdminHandler", () -> new AdminCommandHandler(sfnRunner));
-        serversCommandHandler = AWSXRay.createSubsegment("BuildServersHandler", () -> new ServersCommandHandler(sfnRunner));
-        welcomeCommandHandler = AWSXRay.createSubsegment("BuildWelcomeHandler", WelcomeCommandHandler::new);
+        logger.debug("Creating admin command handler...");
+        adminCommandHandler = new AdminCommandHandler();
+        logger.debug("Creating servers command handler...");
+        serversCommandHandler = new ServersCommandHandler();
+        logger.debug("Creating welcome command handler...");
+        welcomeCommandHandler = new WelcomeCommandHandler();
 
+        logger.debug("Chaining handlers...");
         // Chaining: admin -> debug (pending) -> servers -> welcome
         // Commands from lower in chain can be used implicitly from a higher-level channel.
         adminCommandHandler.setNextChainHandler(serversCommandHandler);
         serversCommandHandler.setNextChainHandler(welcomeCommandHandler);
+        logger.debug("RootCommandHandler init finished");
+
     }
 
     @Override

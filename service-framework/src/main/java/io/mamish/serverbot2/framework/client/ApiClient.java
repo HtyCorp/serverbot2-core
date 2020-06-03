@@ -17,6 +17,7 @@ import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
@@ -36,9 +37,8 @@ public final class ApiClient {
     private static final SqsRequestResponseClient sqsRequestResponse = new SqsRequestResponseClient();
     private static final LambdaClient lambdaClient = LambdaClient.builder()
             .overrideConfiguration(r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)))
+            .httpClient(UrlConnectionHttpClient.create())
             .build();
-
-
 
     private ApiClient() {}
 

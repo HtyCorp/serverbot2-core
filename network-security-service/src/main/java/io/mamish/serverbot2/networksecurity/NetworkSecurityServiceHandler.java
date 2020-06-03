@@ -10,6 +10,9 @@ import io.mamish.serverbot2.networksecurity.securitygroups.IGroupManager;
 import io.mamish.serverbot2.networksecurity.securitygroups.MockGroupManager;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.LogUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.model.KmsException;
 
@@ -20,6 +23,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class NetworkSecurityServiceHandler implements INetworkSecurity {
+
+    private final Logger logger = LogManager.getLogger(NetworkSecurityServiceHandler.class);
 
     private final Crypto crypto = new Crypto();
     private final IGroupManager groupManager = chooseGroupManager();
@@ -130,9 +135,11 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
         List<ManagedSecurityGroup> groups = groupManager.listGroups();
 
+        LogUtils.debugDump(logger, "All security groups from manager:", groups);
+
         groups.forEach(g -> {
-            groupManager.modifyUserInGroup(g, userAddress, userId, false);
-            groupManager.modifyUserInGroup(g, userAddress, userId, true);
+            groupManager.removeUserFromGroup(g, userId);
+            groupManager.addUserToGroup(g, userAddress, userId);
         });
 
         return new AuthorizeIpResponse();

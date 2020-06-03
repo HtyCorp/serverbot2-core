@@ -16,6 +16,8 @@ public interface IGroupManager {
 
     void deleteGroup(String name);
 
-    void modifyUserInGroup(ManagedSecurityGroup group, String userAddress, String userId, boolean addNotRemove);
+    void addUserToGroup(ManagedSecurityGroup group, String userIpAddress, String userId);
+    void removeUserFromGroup(ManagedSecurityGroup group, String userId);
+
     void modifyPortsInGroup(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove);
 }

@@ -2,7 +2,10 @@ package io.mamish.serverbot2.networksecurity.crypto;
 
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionFactory;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.DataKeySpec;
 import software.amazon.awssdk.services.kms.model.GenerateDataKeyResponse;
@@ -16,7 +19,10 @@ public class KmsPersistentMaster implements ICryptoMaster {
             "service", "NetworkSecurityService"
     );
 
-    private final KmsClient kmsClient = KmsClient.create();
+    private final KmsClient kmsClient = KmsClient.builder()
+            .httpClient(UrlConnectionHttpClient.create())
+            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+            .build();
     private final String KEYID = "alias/"+ NetSecConfig.KMS_ALIAS;
     private final Base64.Encoder b64Encoder = Base64.getEncoder();
     private final Base64.Decoder b64Decoder = Base64.getDecoder();

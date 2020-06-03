@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
+import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.networksecurity.model.AuthorizeIpRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -55,9 +56,12 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         try {
             AuthorizeIpRequest authRequest = new AuthorizeIpRequest(sourceIp, encryptedUserIdToken, null);
             networkSecurityClient.authorizeIp(authRequest);
+        } catch (RequestValidationException e) {
+            logger.error("AuthorizeIp validation failed", e);
+            return generateError("Invalid token. Check that you've used the exact URL sent in Discord.", 400);
         } catch (ApiServerException e) {
-            logger.error("AuthorizeIp call failed", e);
-            return generateError("Sorry, an error occurred. Check that you've used the exact URL sent in Discord.", 400);
+            logger.error("AuthorizeIp general error", e);
+            return generateError("Sorry, something went wrong.", 500);
         }
 
         return generateSuccess("Thank you. Your IP address (" + sourceIp + ") has been whitelisted to connect to servers.");

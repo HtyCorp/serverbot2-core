@@ -27,11 +27,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
     private final Pattern portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
 
-    private SfnRunner sfnRunner;
+    private final SfnRunner sfnRunner = new SfnRunner();
 
-    public AdminCommandHandler(SfnRunner sfnRunner) {
-        this.sfnRunner = sfnRunner;
-    }
+    public AdminCommandHandler() { }
 
     @Override
     protected Class<IAdminCommandHandler> getHandlerType() {

@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.google.gson.Gson;
 import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
 import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandGames;
 import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStart;
@@ -33,11 +32,9 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
     private final IDiscordService discordServiceClient = ApiClient.sqs(IDiscordService.class,
             DiscordConfig.SQS_QUEUE_NAME);
 
-    private final SfnRunner sfnRunner;
+    private final SfnRunner sfnRunner = new SfnRunner();
 
-    public ServersCommandHandler(SfnRunner sfnRunner) {
-        this.sfnRunner = sfnRunner;
-    }
+    public ServersCommandHandler() { }
 
     @Override
     protected Class<IServersCommandHandler> getHandlerType() {
@@ -136,11 +133,11 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
 
         String welcomeMessage = "Thanks for using serverbot2. To whitelist your IP to join servers, click the following link:\n\n";
         String urlParagraph = authUrl + "\n\n";
-        String reassurance = "Note: no signup or any other crap is needed. Clicking the link is enough to get and add your IP.\n";
+        String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it replaces your last IP.\n\n";
         String why = "(You're seeing this message because you sent an 'addip' message (ID "
                 + commandAddIp.getOriginalRequest().getMessageId() + ") in the serverbot2 '"
-                + commandAddIp.getOriginalRequest().getChannel().toLowerCase() + "' channel. Exposing these servers publicly"
-                + "is a security risk I'm responsible for, so I'm now blocking all non-whitelisted IPs.)";
+                + commandAddIp.getOriginalRequest().getChannel().toLowerCase() + "' channel. Exposing these servers publicly "
+                + "is a security risk I'm responsible for, so only whitelisted IPs are allowed from now on.)";
 
         String messageContent = welcomeMessage + urlParagraph + reassurance + why;
 
@@ -152,7 +149,7 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         ));
 
         return new ProcessUserCommandResponse(
-                "Thank you. Please check your private messages for your (personal) whitelist link."
+                "A whitelist link has been sent to your private messages."
         );
     }
 

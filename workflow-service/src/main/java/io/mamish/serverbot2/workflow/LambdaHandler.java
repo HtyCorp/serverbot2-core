@@ -1,19 +1,30 @@
 package io.mamish.serverbot2.workflow;
 
 import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
-public class LambdaHandler implements RequestHandler<String,Void> {
+public class LambdaHandler implements RequestStreamHandler {
+
+    private final Logger logger = LogManager.getLogger(LambdaHandler.class);
 
     private final Gson gson = new Gson();
     private final StepHandler stepHandler = new StepHandler();
 
     @Override
-    public Void handleRequest(String payload, Context context) {
+    public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
 
+        String payload = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        logger.info("Execution payload:\n" + payload);
         ExecutionState executionState = gson.fromJson(payload, ExecutionState.class);
 
         switch (executionState.getTaskName()) {
@@ -37,7 +48,8 @@ public class LambdaHandler implements RequestHandler<String,Void> {
                 stepHandler.deleteGameResources(executionState); break;
         }
 
-        return null;
+        String emptyOutput = "{}";
+        outputStream.write(emptyOutput.getBytes(StandardCharsets.UTF_8));
     }
 
 }
