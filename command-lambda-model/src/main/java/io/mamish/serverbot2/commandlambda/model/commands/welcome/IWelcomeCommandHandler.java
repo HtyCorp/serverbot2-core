@@ -6,7 +6,7 @@ import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRespon
 public interface IWelcomeCommandHandler {
 
     ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp);
-    ProcessUserCommandResponse onCommandJoin(CommandJoin command);
-    ProcessUserCommandResponse onCommandLeave(CommandLeave command);
+    ProcessUserCommandResponse onCommandJoin(CommandJoin commandJoin);
+    ProcessUserCommandResponse onCommandLeave(CommandLeave commandLeave);
 
 }

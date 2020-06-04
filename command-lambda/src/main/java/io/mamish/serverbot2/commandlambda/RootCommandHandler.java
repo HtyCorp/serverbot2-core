@@ -20,19 +20,19 @@ public class RootCommandHandler implements ICommandService {
     public RootCommandHandler() {
 
         // Subsegments added since this init takes a long time and we need to track it
-        logger.debug("Creating admin command handler...");
+        logger.trace("Creating admin command handler...");
         adminCommandHandler = new AdminCommandHandler();
-        logger.debug("Creating servers command handler...");
+        logger.trace("Creating servers command handler...");
         serversCommandHandler = new ServersCommandHandler();
-        logger.debug("Creating welcome command handler...");
+        logger.trace("Creating welcome command handler...");
         welcomeCommandHandler = new WelcomeCommandHandler();
 
-        logger.debug("Chaining handlers...");
+        logger.trace("Chaining handlers...");
         // Chaining: admin -> debug (pending) -> servers -> welcome
         // Commands from lower in chain can be used implicitly from a higher-level channel.
         adminCommandHandler.setNextChainHandler(serversCommandHandler);
         serversCommandHandler.setNextChainHandler(welcomeCommandHandler);
-        logger.debug("RootCommandHandler init finished");
+        logger.trace("RootCommandHandler init finished");
 
     }
 

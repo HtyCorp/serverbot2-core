@@ -20,21 +20,30 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 public class ServersCommandHandler extends AbstractCommandHandler<IServersCommandHandler> implements IServersCommandHandler {
 
-    private final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class,
-            GameMetadataConfig.FUNCTION_NAME);
-    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class,
-            NetSecConfig.FUNCTION_NAME);
-    private final IDiscordService discordServiceClient = ApiClient.sqs(IDiscordService.class,
-            DiscordConfig.SQS_QUEUE_NAME);
+    private final Logger logger = LogManager.getLogger(ServersCommandHandler.class);
+
+    private final IGameMetadataService gameMetadataServiceClient;
+    private final INetworkSecurity networkSecurityServiceClient;
+    private final IDiscordService discordServiceClient;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public ServersCommandHandler() { }
+    public ServersCommandHandler() {
+        logger.trace("Building GMS client");
+        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
+        logger.trace("Building NetSec client");
+        networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+        logger.trace("Building DiscordRelay client");
+        discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
+        logger.trace("Finished constructor");
+    }
 
     @Override
     protected Class<IServersCommandHandler> getHandlerType() {
@@ -124,7 +133,7 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
 
     @Override
     public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        String userId = commandAddIp.getOriginalRequest().getSenderId();
+        String userId = commandAddIp.getContext().getSenderId();
         String authUrl = networkSecurityServiceClient.generateIpAuthUrl(
                 new GenerateIpAuthUrlRequest(userId)
         ).getIpAuthUrl();
@@ -135,8 +144,8 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         String urlParagraph = authUrl + "\n\n";
         String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it replaces your last IP.\n\n";
         String why = "(You're seeing this message because you sent an 'addip' message (ID "
-                + commandAddIp.getOriginalRequest().getMessageId() + ") in the serverbot2 '"
-                + commandAddIp.getOriginalRequest().getChannel().toLowerCase() + "' channel. Exposing these servers publicly "
+                + commandAddIp.getContext().getMessageId() + ") in the serverbot2 '"
+                + commandAddIp.getContext().getChannel().toLowerCase() + "' channel. Exposing these servers publicly "
                 + "is a security risk I'm responsible for, so only whitelisted IPs are allowed from now on.)";
 
         String messageContent = welcomeMessage + urlParagraph + reassurance + why;
@@ -161,8 +170,8 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         return sfnRunner.startExecution(
                 machine,
                 gameName,
-                context.getOriginalRequest().getMessageId(),
-                context.getOriginalRequest().getSenderId());
+                context.getContext().getMessageId(),
+                context.getContext().getSenderId());
     }
 
     private RequestValidationException makeUnknownGameException(String gameName) {

@@ -11,4 +11,7 @@ public class CommandLeave extends AbstractCommandDto {
     @ApiArgumentInfo(order = 0, description = "The channel to leave (either 'servers' or 'debug')")
     private String channel;
 
+    public String getChannel() {
+        return channel;
+    }
 }

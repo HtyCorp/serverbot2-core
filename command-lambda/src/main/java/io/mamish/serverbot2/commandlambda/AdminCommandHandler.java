@@ -17,6 +17,8 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -24,12 +26,20 @@ import java.util.regex.Pattern;
 
 public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHandler> implements IAdminCommandHandler {
 
-    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-    private final Pattern portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
+    private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
+
+    private final INetworkSecurity networkSecurityServiceClient;
+    private final Pattern portRangePattern;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public AdminCommandHandler() { }
+    public AdminCommandHandler() {
+        logger.trace("Initialising NetSec client");
+        networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+        logger.trace("Initialising port regex");
+        portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
+        logger.trace("Finished constructor");
+    }
 
     @Override
     protected Class<IAdminCommandHandler> getHandlerType() {
@@ -50,8 +60,8 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         ExecutionState state = sfnRunner.startExecution(
                 Machines.CreateGame,
                 name,
-                commandNewGame.getOriginalRequest().getMessageId(),
-                commandNewGame.getOriginalRequest().getSenderId()
+                commandNewGame.getContext().getMessageId(),
+                commandNewGame.getContext().getSenderId()
         );
         return new ProcessUserCommandResponse(
                 "Creating new game '" + name + "'...",

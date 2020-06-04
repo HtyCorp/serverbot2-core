@@ -66,7 +66,7 @@ public class CommandDispatcher<ModelType> extends AbstractApiRequestDispatcher<M
                 throw new IllegalStateException("Illegal DTO type: not an subclass of AbstractCommandDto");
             }
             AbstractCommandDto requestDto = (AbstractCommandDto) baseRequestObject;
-            requestDto.setOriginalRequest(inputRequest);
+            requestDto.setContext(inputRequest);
 
             for (int i = 0; i < arguments.size() && i < definition.getOrderedFields().size(); i++) {
                 Field field = definition.getOrderedFieldsFieldView().get(i);

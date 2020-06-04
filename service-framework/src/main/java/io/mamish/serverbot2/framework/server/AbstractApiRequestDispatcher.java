@@ -21,7 +21,9 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
 
     public AbstractApiRequestDispatcher(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
         this.handlerInstance = handlerInstance;
+        logger.trace("Building definition set for " + handlerInterfaceClass.getSimpleName());
         this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass);
+        logger.trace("Finished construction");
     }
 
     public ApiDefinitionSet<?> getApiDefinitionSet() {

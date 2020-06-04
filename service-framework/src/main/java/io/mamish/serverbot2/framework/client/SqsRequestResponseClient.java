@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.amazonaws.util.RuntimeHttpUtils;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
@@ -8,6 +9,7 @@ import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
@@ -23,8 +25,9 @@ import java.util.stream.Collectors;
 
 public class SqsRequestResponseClient {
 
-    private final SqsAsyncClient realSqsAsyncClient = SqsAsyncClient.create();
-    private final SqsClient realSqsClient = SqsClient.create();
+    private final SqsClient realSqsClient = SqsClient.builder()
+            .httpClient(UrlConnectionHttpClient.create())
+            .build();
     private final Map<String, Queue<String>> requestIdToSync =
             Collections.synchronizedMap(new HashMap<>());
 
@@ -57,7 +60,7 @@ public class SqsRequestResponseClient {
             Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::updateQueueReaperHeartbeat,
                     REAPER_HEARTBEAT_INTERVAL, REAPER_HEARTBEAT_INTERVAL, TimeUnit.SECONDS);
             Runtime.getRuntime().addShutdownHook(new Thread(() ->
-                    realSqsAsyncClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
+                    realSqsClient.deleteQueue(r -> r.queueUrl(rxTempQueueUrl))));
 
         }
 
