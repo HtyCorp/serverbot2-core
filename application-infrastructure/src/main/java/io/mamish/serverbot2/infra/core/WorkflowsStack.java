@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
@@ -28,6 +29,8 @@ public class WorkflowsStack extends Stack {
                 Util.POLICY_EC2_FULL_ACCESS,
                 Util.POLICY_SQS_FULL_ACCESS
         )).build();
+
+        Util.addConfigPathReadPermissionToRole(this, taskRole, CommonConfig.PATH);
 
         Util.addLambdaInvokePermissionToRole(this, taskRole,
                 GameMetadataConfig.FUNCTION_NAME,
