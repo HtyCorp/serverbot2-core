@@ -43,7 +43,7 @@ EOF
 
 echo '[SB2INIT] Setting up app daemon fetch script...'
 cat > daemon/run_latest_daemon.sh << "EOF"
-BUCKET=$(aws ssm get-parameter --name '/common-config/deployed-artifacts-bucket' --output Parameter.Value)
+BUCKET=$(aws ssm get-parameter --name '/common-config/deployed-artifacts-bucket' --query Parameter.Value --output text)
 aws s3 cp s3://$BUCKET/app-daemon.jar /opt/serverbot2/daemon/app-daemon.jar
 java -jar /opt/serverbot2/daemon/app-daemon.jar
 EOF

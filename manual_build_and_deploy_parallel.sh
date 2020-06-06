@@ -22,6 +22,10 @@ DEPLOY="cdk deploy --require-approval=never"
 echo "Running fully parallel, single-stage deployment."
 echo "Only use this if updating already deployed services!"
 
+# Upload app daemon JAR artifact (since stack with deployment should already exist if the above message was obeyed...)
+BUCKET=$(aws ssm get-parameter --name '/app-instance-share/public/deployed-artifacts-bucket' --query Parameter.Value --output text)
+aws s3 cp app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar s3://$BUCKET/app-daemon.jar
+
 # Phase 1: common resources
 $DEPLOY CommonResources &
 

@@ -83,7 +83,7 @@ public class StepHandler {
 
         String newInstanceId;
         try {
-            InputStream userdataStream = getClass().getClassLoader().getResourceAsStream("NewInstanceUserdata.txt");
+            InputStream userdataStream = getClass().getClassLoader().getResourceAsStream("NewInstanceUserdata.sh");
             String userdataString = Base64.getEncoder().encodeToString(userdataStream.readAllBytes());
 
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
