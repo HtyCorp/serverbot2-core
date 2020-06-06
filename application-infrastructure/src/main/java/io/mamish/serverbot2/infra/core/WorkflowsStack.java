@@ -9,6 +9,7 @@ import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.Machines;
 import io.mamish.serverbot2.workflow.model.Tasks;
 import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.IFunction;
@@ -35,6 +36,12 @@ public class WorkflowsStack extends Stack {
         Util.addLambdaInvokePermissionToRole(this, taskRole,
                 GameMetadataConfig.FUNCTION_NAME,
                 NetSecConfig.FUNCTION_NAME);
+
+        taskRole.addToPolicy(PolicyStatement.Builder.create()
+                .actions(List.of("iam:PassRole"))
+                .resources(List.of("*"))
+                .conditions(Map.of("StringEquals", Map.of("iam:PassedToService", "ec2.amazonaws.com")))
+                .build());
 
         Function taskFunction = Util.standardJavaFunction(this, "WorkflowFunction",
                 "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler", taskRole)

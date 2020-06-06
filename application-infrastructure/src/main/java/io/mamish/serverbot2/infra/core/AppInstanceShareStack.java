@@ -33,8 +33,6 @@ public class AppInstanceShareStack extends Stack {
                 .roles(List.of(commonRole.getRoleName()))
                 .build();
 
-
-
     }
 
 }
