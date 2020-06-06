@@ -96,25 +96,17 @@ public class DeploymentStack extends Stack {
                 this);
 
         // S3 deploy stage for app daemon (deployed to S3 rather than by any CDK mechanism)
+        // TODO: Rework - migrated to AppInstanceShare stack/config
 
-        Bucket binaryArtifactBucket = Bucket.Builder.create(this, "BinaryArtifactBucket")
-                .removalPolicy(RemovalPolicy.DESTROY)
-                .build();
-
-        StringParameter bucketNameParamInstance = StringParameter.Builder.create(this, "BucketNameParam")
-                .parameterName(CommonConfig.S3_DEPLOYED_ARTIFACTS_BUCKET.getName())
-                .stringValue(binaryArtifactBucket.getBucketName())
-                .build();
-
-        S3DeployAction artifactDeployAction = S3DeployAction.Builder.create()
-                .input(s3JarFiles)
-                .actionName("DeployJarsToS3")
-                .bucket(binaryArtifactBucket)
-                .build();
-        pipeline.addStage(StageOptions.builder()
-                .stageName("S3Deployment")
-                .actions(List.of(artifactDeployAction))
-                .build());
+//        S3DeployAction artifactDeployAction = S3DeployAction.Builder.create()
+//                .input(s3JarFiles)
+//                .actionName("DeployJarsToS3")
+//                //.bucket(binaryArtifactBucket)
+//                .build();
+//        pipeline.addStage(StageOptions.builder()
+//                .stageName("S3Deployment")
+//                .actions(List.of(artifactDeployAction))
+//                .build());
 
         // CDK stack deployments
 

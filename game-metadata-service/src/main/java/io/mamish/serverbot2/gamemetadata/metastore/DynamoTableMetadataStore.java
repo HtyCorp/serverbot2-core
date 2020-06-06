@@ -74,7 +74,10 @@ public class DynamoTableMetadataStore implements IMetadataStore {
     }
 
     private Expression conditionIsInStoppedState(boolean inStoppedState) {
-        String operator = (inStoppedState) ? "=" : "!=";
+        // Refs:
+        // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html
+        // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html
+        String operator = (inStoppedState) ? "=" : "<>";
         return Expression.builder()
                 .expression("gameReadyState "+operator+" :stopped")
                 .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))

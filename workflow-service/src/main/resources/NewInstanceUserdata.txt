@@ -2,6 +2,9 @@
 
 set -e
 
+echo '[SB2INIT] Setting noninteractive mode for apt...'
+export DEBIAN_FRONTEND=noninteractive
+
 echo '[SB2INIT] Setting up Corretto and multiverse apt repositories...'
 wget -O- https://apt.corretto.aws/corretto.key | sudo apt-key add -
 add-apt-repository 'deb https://apt.corretto.aws stable main'
@@ -14,10 +17,10 @@ apt -y update
 echo '[SB2INIT] Running apt upgrade...'
 apt -y upgrade
 
-echo '[SB2INIT]  corretto11...'
+echo '[SB2INIT] Installing corretto11...'
 apt -y install java-11-amazon-corretto-jdk
 
-echo '[SB2INIT] Installing apt-provide AWS CLI version...'
+echo '[SB2INIT] Installing apt-provided AWS CLI version for bootstrap...'
 apt -y install awscli
 
 echo '[SB2INIT] Installing steamcmd...'
