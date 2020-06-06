@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class UbuntuAmiLocator {
     private List<UbuntuAmiInfo> parseReleaseData(String data) {
         JsonArray releaseArray = JsonParser.parseString(data).getAsJsonObject().get("aaData").getAsJsonArray();
 
-        return arrayToStream(releaseArray).map(row -> {
+        return arrayToStream(releaseArray).filter(JsonElement::isJsonArray).map(row -> {
             JsonArray nestedArray = row.getAsJsonArray();
             String[] fields = arrayToStream(nestedArray).map(JsonElement::getAsString).toArray(String[]::new);
             return new UbuntuAmiInfo(fields);
@@ -71,7 +72,6 @@ public class UbuntuAmiLocator {
     }
 
     private String fetchReleaseData() {
-        String rawData;
         try {
             return http.send(HttpRequest.newBuilder()
                     .GET()
@@ -85,11 +85,18 @@ public class UbuntuAmiLocator {
     }
 
     private static String getRegion() {
+
+        if (CommonConfig.ENABLE_MOCK.notNull()) {
+            return "ap-southeast-2";
+        }
+
         String region = System.getenv("AWS_REGION");
         if (region == null) {
             throw new IllegalStateException("Region environment variable missing: ensure this runs on Lambda");
         }
+
         return region;
+
     }
 
 }
