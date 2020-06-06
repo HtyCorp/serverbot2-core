@@ -95,7 +95,6 @@ public class StepHandler {
                             .iamInstanceProfile(r2 -> r2.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
                             .minCount(1)
                             .maxCount(1)
-                            .keyName(AppInstanceConfig.COMMON_KEYPAIR_NAME)
                             .userData(userdataString));
             newInstanceId = runInstancesResponse.instances().get(0).instanceId();
         } catch (IOException e) {

@@ -22,7 +22,8 @@ public class AppInstanceShareStack extends Stack {
                 .assumedBy(new ServicePrincipal("ec2.amazonaws.com"))
                 .managedPolicies(List.of(
                         Util.POLICY_SQS_FULL_ACCESS,
-                        Util.POLICY_S3_READ_ONLY_ACCESS
+                        Util.POLICY_S3_READ_ONLY_ACCESS,
+                        Util.POLICY_SSM_MANAGED_INSTANCE_CORE
                 )).build();
 
         Util.addConfigPathReadPermissionToRole(this, commonRole, CommonConfig.PATH);

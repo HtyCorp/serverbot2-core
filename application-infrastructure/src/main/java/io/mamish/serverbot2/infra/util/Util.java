@@ -28,6 +28,7 @@ public class Util {
     public static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
     public static final IManagedPolicy POLICY_XRAY_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess");
     public static final IManagedPolicy POLICY_XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
+    public static final IManagedPolicy POLICY_SSM_MANAGED_INSTANCE_CORE = ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore");
 
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
