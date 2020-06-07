@@ -11,23 +11,25 @@ add-apt-repository 'deb https://apt.corretto.aws stable main'
 add-apt-repository multiverse
 dpkg --add-architecture i386
 
-echo '[SB2INIT] Running apt update...'
-apt -y update
+echo '[SB2INIT] Running  update...'
+apt-get -y update
 
-echo '[SB2INIT] Running apt upgrade...'
-apt -y upgrade
+echo '[SB2INIT] Running  upgrade...'
+apt-get -y upgrade
 
 echo '[SB2INIT] Installing corretto11...'
-apt -y install java-11-amazon-corretto-jdk
+apt-get -y install java-11-amazon-corretto-jdk
 
-echo '[SB2INIT] Installing apt-provided AWS CLI version for bootstrap...'
-apt -y install awscli
+echo '[SB2INIT] Installing and configuring apt-provided AWS CLI version...'
+apt-get -y install awscli jq
+AWS_REGION=$(curl -s 'http://169.254.169.254/latest/dynamic/instance-identity/document' | jq -r .region)
+sudo -Hu ubuntu aws configure set region $AWS_REGION
 
 echo '[SB2INIT] Installing steamcmd...'
 # steamcmd requires an EULA agreement - must preset for noninteractive
 echo steam steam/license note '' | debconf-set-selections
 echo steam steam/question select 'I AGREE' | debconf-set-selections
-apt -y install lib32gcc1 steamcmd
+apt-get -y install lib32gcc1 steamcmd
 
 echo '[SB2INIT] Setting up working directory...'
 mkdir /opt/serverbot2
@@ -48,7 +50,8 @@ echo '[SB2INIT] Setting up app daemon fetch script...'
 cat > daemon/run_latest_daemon.sh << "EOF"
 #!/bin/sh
 echo "[INFO] Locating artifact bucket with daemon executable..."
-BUCKET=$(aws ssm get-parameter --name '/common-config/deployed-artifacts-bucket' --query Parameter.Value --output text
+PARAM_NAME='/app-instance-share/public/deployed-artifacts-bucket'
+BUCKET=$(aws ssm get-parameter --name "$PARAM_NAME"  --query Parameter.Value --output text)
 echo "[INFO] Artifact bucket is '$BUCKET'"
 aws s3 cp s3://$BUCKET/app-daemon.jar /opt/serverbot2/daemon/app-daemon.jar
 echo "[INFO] Running daemon executable..."
@@ -74,6 +77,6 @@ WantedBy=multi-user.target
 EOF
 
 echo '[SB2INIT] Starting app daemon service...'
-systemctl start serverbot2.service
+systemctl start serverbot2
 
 echo '[SB2INIT] Init finished!'
