@@ -1,6 +1,9 @@
 package io.mamish.serverbot2.appdaemon;
 
 import com.google.gson.Gson;
+import io.mamish.serverbot2.sharedutil.LogUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,6 +20,8 @@ public class InstanceMetadata {
     private String instanceType;
     private String privateIp;
     private String region;
+
+    private static final Logger logger = LogManager.getLogger(InstanceMetadata.class);
 
     private static final Gson gson = new Gson();
     private static final URI identityMetadataUri =
@@ -35,11 +40,13 @@ public class InstanceMetadata {
     private static synchronized void setInstance() {
         if (instance == null) {
             try {
+                logger.debug("Getting new instance metadata");
                 String data = http.send(HttpRequest.newBuilder()
                                 .GET()
                                 .uri(identityMetadataUri).build(),
                         HttpResponse.BodyHandlers.ofString()
                 ).body();
+                LogUtils.debugDump(logger, "Returned instance metadata is:", data);
                 instance = gson.fromJson(data, InstanceMetadata.class);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);

@@ -3,39 +3,22 @@ package io.mamish.serverbot2.appdaemon;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.appdaemon.model.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
-import io.mamish.serverbot2.framework.server.SqsApiServer;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class AppDaemonMessageHandler extends SqsApiServer<IAppDaemon> implements IAppDaemon {
+public class MessageHandler implements IAppDaemon {
 
     private final Gson gson = new Gson();
-    private final Logger logger = Logger.getLogger("AppDaemonMessageHandler");
-    private final GameMetadataFetcher metadataFetcher;
+    private final Logger logger = LogManager.getLogger(MessageHandler.class);
 
     private Process runningAppProcess;
-
-    @Override
-    protected Class<IAppDaemon> getModelClass() {
-        return IAppDaemon.class;
-    }
-
-    @Override
-    protected IAppDaemon createHandlerInstance() {
-        return this;
-    }
-
-    public AppDaemonMessageHandler(GameMetadataFetcher metadataFetcher) {
-        super(metadataFetcher.initial().getInstanceQueueName());
-        this.metadataFetcher = metadataFetcher;
-    }
 
     @Override
     public StartAppResponse startApp(StartAppRequest request) {
@@ -43,7 +26,7 @@ public class AppDaemonMessageHandler extends SqsApiServer<IAppDaemon> implements
             runProcess();
             return new StartAppResponse();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "IOException in startApp", e);
+            logger.error("IOException in startApp", e);
             throw new RequestHandlingException("IO error during game launch: " + e.getMessage(), e);
         }
     }
@@ -61,9 +44,9 @@ public class AppDaemonMessageHandler extends SqsApiServer<IAppDaemon> implements
             boolean success = runningAppProcess.waitFor(AppInstanceConfig.APP_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!success) {
                 runningAppProcess.destroyForcibly();
-                logger.log(Level.WARNING, "stopApp: forced a shutdown after waiting");
+                logger.warn("stopApp: forced a shutdown after waiting");
             } else {
-                logger.log(Level.INFO, "stopApp: clean shutdown");
+                logger.info("stopApp: clean shutdown");
             }
         } catch (InterruptedException e) {
             runningAppProcess.destroyForcibly();
@@ -87,9 +70,9 @@ public class AppDaemonMessageHandler extends SqsApiServer<IAppDaemon> implements
                 .command(config.getLaunchCmd())
                 .start();
 
-        new CloudWatchLogsUploader(runningAppProcess.getInputStream(), metadataFetcher.initial().getGameName(),
+        new CloudWatchLogsUploader(runningAppProcess.getInputStream(), GameMetadataFetcher.cached().getGameName(),
                 sessionStart, "stdout");
-        new CloudWatchLogsUploader(runningAppProcess.getErrorStream(), metadataFetcher.initial().getGameName(),
+        new CloudWatchLogsUploader(runningAppProcess.getErrorStream(), GameMetadataFetcher.cached().getGameName(),
                 sessionStart, "stderr");
 
     }

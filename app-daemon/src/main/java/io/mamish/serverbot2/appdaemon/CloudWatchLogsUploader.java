@@ -26,7 +26,7 @@ public class CloudWatchLogsUploader {
     // Cannot exceed CloudWatch Logs API limit of 10000
     private static final int MAX_BUFFERED_MESSAGES = 9000;
     private static final int FLUSH_THRESHOLD_MIN_CAPACITY = 4500;
-    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 10;
+    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 5;
 
     private final BufferedReader stdoutReader;
     private final BlockingQueue<InputLogEvent> outgoingEntryQueue = new ArrayBlockingQueue<>(MAX_BUFFERED_MESSAGES);

@@ -2,6 +2,8 @@ package io.mamish.serverbot2.discordrelay;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
@@ -10,6 +12,7 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
@@ -111,7 +114,10 @@ public class DiscordRelay {
             Message newMessage = channel.sendMessage(commandResponse.getOptionalMessageContent()).join();
             String newMessageExtId = commandResponse.getOptionalMessageExternalId();
             if (newMessageExtId != null) {
-                messageTable.put(new DynamoMessageItem(newMessageExtId, channel.getIdAsString(), newMessage.getIdAsString()));
+                DynamoMessageItem newItem = new DynamoMessageItem(newMessageExtId, channel.getIdAsString(), newMessage.getIdAsString());
+                logger.debug("Content is " + commandResponse.getOptionalMessageContent());
+                LogUtils.debugDump(logger, "New item is: ", newItem);
+                messageTable.put(newItem);
             }
         }
         AWSXRay.endSubsegment();
