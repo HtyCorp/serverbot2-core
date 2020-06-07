@@ -34,7 +34,9 @@ wait
 
 # Interim: upload app daemon JAR artifact since AppInstanceResources stack deployed it
 BUCKET=$(aws ssm get-parameter --name '/app-instance-share/public/deployed-artifacts-bucket' --query Parameter.Value --output text)
-aws s3 cp app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar s3://$BUCKET/app-daemon.jar
+aws s3 cp \
+    ~/environment/serverbot2/serverbot2-core/app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar \
+    s3://$BUCKET/app-daemon.jar
 
 # Phase 3: intermediate services depending on passive services
 echo "Running phase 3 deployment..."

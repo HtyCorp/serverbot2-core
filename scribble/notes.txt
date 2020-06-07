@@ -1,9 +1,3 @@
-Step functions definition:
- * Find way to integrate API models into state CDK constructs: guarantee SFn is generating expected JSON
-
-Discord relay:
- * Static SQS queue?
-
 CodeBuild:
  * Use local build step bash scripts in buildpsec, instead of running commands directly?
  * Need to rethink accounts used in build to make testing better.
@@ -48,3 +42,7 @@ Lambda service units:
 
 Dependency analysis:
  * Concept: use Maven dependency report to determine which modules depend on other models (for permissions and deploy order)
+ 
+Instance bootstrap:
+ * Should replace Ubuntu image locator with EC2 API, equivalent:
+aws ec2 describe-images --owners 099720109477 --filters Name=name,Values='ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-*'

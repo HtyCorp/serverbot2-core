@@ -24,6 +24,9 @@ echo '[SB2INIT] Installing apt-provided AWS CLI version for bootstrap...'
 apt -y install awscli
 
 echo '[SB2INIT] Installing steamcmd...'
+# steamcmd requires an EULA agreement - must preset for noninteractive
+echo steam steam/license note '' | debconf-set-selections
+echo steam steam/question select 'I AGREE' | debconf-set-selections
 apt -y install lib32gcc1 steamcmd
 
 echo '[SB2INIT] Setting up working directory...'
@@ -43,8 +46,12 @@ EOF
 
 echo '[SB2INIT] Setting up app daemon fetch script...'
 cat > daemon/run_latest_daemon.sh << "EOF"
-BUCKET=$(aws ssm get-parameter --name '/common-config/deployed-artifacts-bucket' --query Parameter.Value --output text)
+#!/bin/sh
+echo "[INFO] Locating artifact bucket with daemon executable..."
+BUCKET=$(aws ssm get-parameter --name '/common-config/deployed-artifacts-bucket' --query Parameter.Value --output text
+echo "[INFO] Artifact bucket is '$BUCKET'"
 aws s3 cp s3://$BUCKET/app-daemon.jar /opt/serverbot2/daemon/app-daemon.jar
+echo "[INFO] Running daemon executable..."
 java -jar /opt/serverbot2/daemon/app-daemon.jar
 EOF
 chmod 774 daemon/run_latest_daemon.sh
@@ -56,12 +63,12 @@ echo '[SB2INIT] Setting up app daemon service unit...'
 cat >/etc/systemd/system/serverbot2.service << "EOF"
 [Unit]
 Description=Run serverbot2 app daemon
-Requires=Network.target
-After=Network.target
+Requires=network.target
+After=network.target
 [Service]
 Type=simple
 User=ubuntu
-ExecStart=/opt/serverbot2/daemon/run_daemon.sh
+ExecStart=/opt/serverbot2/daemon/run_latest_daemon.sh
 [Install]
 WantedBy=multi-user.target
 EOF
