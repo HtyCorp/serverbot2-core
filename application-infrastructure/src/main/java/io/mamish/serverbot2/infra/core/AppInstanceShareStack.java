@@ -29,7 +29,8 @@ public class AppInstanceShareStack extends Stack {
                 .managedPolicies(List.of(
                         Util.POLICY_SQS_FULL_ACCESS,
                         Util.POLICY_S3_READ_ONLY_ACCESS,
-                        Util.POLICY_SSM_MANAGED_INSTANCE_CORE
+                        Util.POLICY_SSM_MANAGED_INSTANCE_CORE,
+                        Util.POLICY_STEP_FUNCTIONS_FULL_ACCESS
                 )).build();
 
         Util.addConfigPathReadPermissionToRole(this, commonRole, AppInstanceConfig.PATH_ALL);

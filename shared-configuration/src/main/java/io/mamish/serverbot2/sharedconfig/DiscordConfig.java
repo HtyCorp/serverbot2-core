@@ -29,10 +29,8 @@ public class DiscordConfig {
     // I'm normally avoiding fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
     // Deletion/replacement of these should be manual and very careful anyway.
     public static final String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
-    public static final String MESSAGE_TABLE_PKEY = "externalId";
+    public static final String MESSAGE_TABLE_PKEY = "externalMessageId";
 
     public static final String SQS_QUEUE_NAME = "DiscordRelayRequestsQueue";
-//    public static final ConfigValue SQS_QUEUE_URL_RESOLVED = new ConfigValue(SQS_QUEUE_NAME,
-//            n -> SqsClient.create().getQueueUrl(r -> r.queueName(n)).queueUrl());
 
 }

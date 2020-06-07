@@ -60,7 +60,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         GameMetadataBean newItem = new GameMetadataBean(
                 name,
                 request.getFullName(),
-                GameReadyState.BUSY,
+                GameReadyState.STARTING,
                 null,
                 null,
                 null
@@ -87,7 +87,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         }
 
         GameMetadataBean updateItem = new GameMetadataBean(name);
-        updateItem.setGameReadyState(GameReadyState.BUSY);
+        updateItem.setGameReadyState(GameReadyState.STARTING);
 
         try {
             store.updateIfStopped(updateItem, true);

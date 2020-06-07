@@ -33,9 +33,9 @@ public class GameMetadataServiceHandlerTest {
     public void testValidCreateAndUpdate() {
 
         GameMetadata submitted1 = new GameMetadata("game1", "New game (game1)!",
-                GameReadyState.BUSY, null, null, null);
+                GameReadyState.STARTING, null, null, null);
         GameMetadata submitted2 = new GameMetadata("game2", "New game (game2)!",
-                GameReadyState.BUSY, null, null, null);
+                GameReadyState.STARTING, null, null, null);
 
         // Create both games and check that the new metadata matches.
 
@@ -85,7 +85,7 @@ public class GameMetadataServiceHandlerTest {
 
         // Reference metadata and deletion request
         GameMetadata metadata = new GameMetadata("gametodelete", "The game I'm deleting",
-                GameReadyState.BUSY, null, null, null);
+                GameReadyState.STARTING, null, null, null);
         DeleteGameRequest deleteRequest = new DeleteGameRequest(metadata.getGameName());
 
         // Ensure this fails if we attempt to delete a non-existent game. Create afterwards to continue test.
