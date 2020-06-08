@@ -1,10 +1,8 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import io.mamish.serverbot2.infra.app.ServerbotFullApp;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DeploymentConfig;
 import software.amazon.awscdk.appdelivery.PipelineDeployStackAction;
-import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
@@ -17,12 +15,10 @@ import software.amazon.awscdk.services.codepipeline.Pipeline;
 import software.amazon.awscdk.services.codepipeline.StageOptions;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
-import software.amazon.awscdk.services.codepipeline.actions.S3DeployAction;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.s3.Bucket;
-import software.amazon.awscdk.services.ssm.StringParameter;
 
 import java.util.Arrays;
 import java.util.List;

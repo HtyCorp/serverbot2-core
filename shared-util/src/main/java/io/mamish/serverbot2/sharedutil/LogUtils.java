@@ -3,8 +3,6 @@ package io.mamish.serverbot2.sharedutil;
 import com.google.gson.Gson;
 import org.apache.logging.log4j.Logger;
 
-import java.util.function.Supplier;
-
 public class LogUtils {
 
     private static final Gson gson = new Gson();

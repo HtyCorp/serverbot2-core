@@ -14,10 +14,10 @@ public class GameMetadataFetcher {
 
     private static final IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class,
             GameMetadataConfig.FUNCTION_NAME);
-    private static final GameMetadata cachedMetadata = fetch();
+    private static final GameMetadata initialMetadata = fetch();
 
-    public static GameMetadata cached() {
-        return cachedMetadata;
+    public static GameMetadata initial() {
+        return initialMetadata;
     }
 
     public static GameMetadata fetch() {

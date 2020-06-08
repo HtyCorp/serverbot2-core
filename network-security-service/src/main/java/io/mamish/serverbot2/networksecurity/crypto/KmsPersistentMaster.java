@@ -4,7 +4,6 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionFactory;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.DataKeySpec;

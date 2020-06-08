@@ -2,8 +2,6 @@ package io.mamish.serverbot2.discordrelay;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
-import com.google.gson.Gson;
-import com.google.gson.JsonParser;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;

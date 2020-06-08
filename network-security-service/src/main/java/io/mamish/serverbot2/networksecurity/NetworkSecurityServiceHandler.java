@@ -2,7 +2,6 @@ package io.mamish.serverbot2.networksecurity;
 
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
-import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.*;
 import io.mamish.serverbot2.networksecurity.securitygroups.Ec2GroupManager;

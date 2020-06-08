@@ -1,7 +1,8 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
-import io.mamish.serverbot2.sharedconfig.*;
+import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
+import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;

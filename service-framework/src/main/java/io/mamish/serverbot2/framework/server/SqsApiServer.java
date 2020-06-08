@@ -1,8 +1,6 @@
 package io.mamish.serverbot2.framework.server;
 
-import com.amazonaws.services.xray.model.Trace;
 import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.entities.Segment;
 import com.amazonaws.xray.entities.TraceHeader;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;

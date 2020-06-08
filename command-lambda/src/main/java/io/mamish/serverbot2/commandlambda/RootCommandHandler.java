@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;

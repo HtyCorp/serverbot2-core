@@ -5,15 +5,12 @@ import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandGames;
 import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStart;
 import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStop;
 import io.mamish.serverbot2.commandlambda.model.commands.servers.IServersCommandHandler;
-import io.mamish.serverbot2.commandlambda.model.commands.welcome.CommandAddIp;
 import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
-import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.gamemetadata.model.*;
-import io.mamish.serverbot2.networksecurity.model.GenerateIpAuthUrlRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
@@ -129,37 +126,6 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         } else {
             throw makeUnknownGameException(name);
         }
-    }
-
-    @Override
-    public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        String userId = commandAddIp.getContext().getSenderId();
-        String authUrl = networkSecurityServiceClient.generateIpAuthUrl(
-                new GenerateIpAuthUrlRequest(userId)
-        ).getIpAuthUrl();
-
-        // Send a message to the user privately before returning the standard channel message.
-
-        String welcomeMessage = "Thanks for using serverbot2. To whitelist your IP to join servers, click the following link:\n\n";
-        String urlParagraph = authUrl + "\n\n";
-        String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it replaces your last IP.\n\n";
-        String why = "(You're seeing this message because you sent an 'addip' message (ID "
-                + commandAddIp.getContext().getMessageId() + ") in the serverbot2 '"
-                + commandAddIp.getContext().getChannel().toLowerCase() + "' channel. Exposing these servers publicly "
-                + "is a security risk I'm responsible for, so only whitelisted IPs are allowed from now on.)";
-
-        String messageContent = welcomeMessage + urlParagraph + reassurance + why;
-
-        discordServiceClient.newMessage(new NewMessageRequest(
-                messageContent,
-                null,
-                null,
-                 userId
-        ));
-
-        return new ProcessUserCommandResponse(
-                "A whitelist link has been sent to your private messages."
-        );
     }
 
     private String makeGameDescriptor(GameMetadata metadata) {

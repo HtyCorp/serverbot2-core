@@ -5,7 +5,7 @@ import io.mamish.serverbot2.framework.server.SqsApiServer;
 
 public class MessageServer extends SqsApiServer<IAppDaemon> {
     public MessageServer() {
-        super(GameMetadataFetcher.cached().getInstanceQueueName());
+        super(GameMetadataFetcher.initial().getInstanceQueueName());
     }
 
     @Override

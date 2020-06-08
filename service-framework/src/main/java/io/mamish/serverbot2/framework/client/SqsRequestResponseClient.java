@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.framework.client;
 
-import com.amazonaws.util.RuntimeHttpUtils;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.exception.client.ApiRequestTimeoutException;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
@@ -10,7 +9,6 @@ import io.mamish.serverbot2.sharedutil.IDUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;

@@ -6,6 +6,7 @@ import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
 import io.mamish.serverbot2.discordrelay.model.service.EditMode;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.framework.client.ApiClient;
+import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.gamemetadata.model.*;
@@ -16,19 +17,21 @@ import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.sharedconfig.*;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class StepHandler {
+
+    private final Logger logger = LogManager.getLogger(StepHandler.class);
 
     private final Ec2Client ec2Client = Ec2Client.create();
     private final SqsClient sqsClient = SqsClient.create();
@@ -84,6 +87,7 @@ public class StepHandler {
         String newInstanceId;
         try {
             InputStream userdataStream = getClass().getClassLoader().getResourceAsStream("NewInstanceUserdata.sh");
+            Objects.requireNonNull(userdataStream);
             String userdataString = Base64.getEncoder().encodeToString(userdataStream.readAllBytes());
 
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
@@ -116,12 +120,23 @@ public class StepHandler {
 
     void waitInstanceReady(ExecutionState executionState) {
         setCallbackTaskToken(executionState.getGameName(), executionState.getTaskToken());
+        appendMessage(executionState.getInitialMessageUuid(), "Waiting for server host startup...");
     }
 
     void startServer(ExecutionState executionState) {
         String appDaemonQueueName = getGameMetadata(executionState.getGameName()).getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
-        appDaemonClient.startApp(new StartAppRequest());
+        try {
+            appDaemonClient.startApp(new StartAppRequest());
+            logger.info("Successful StartApp call to app daemon");
+            appendMessage(executionState.getInitialMessageUuid(),
+                    "Started game server. For games with long load times (e.g. Minecraft), it might be a few "
+                     + "minutes before you can connect.\n If your IP isn't yet whitelisted to join, use !addip to "
+                     + "whitelist it.");
+        } catch (ApiServerException e) {
+            logger.error("StartApp call to app daemon failed", e);
+        }
+
     }
 
     void waitServerStop(ExecutionState executionState) {
@@ -129,9 +144,19 @@ public class StepHandler {
     }
 
     void stopInstance(ExecutionState executionState) {
-        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
-        ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
-        sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+        try {
+            GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+            ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+            sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+        } catch (SdkException e) {
+            logger.error("SDK exception while stopping instance", e);
+            appendMessage(executionState.getLaterMessageUuid(),
+                    "An unknown (platform) error occurred when trying to stop server host.");
+        } catch (ApiServerException e) {
+            logger.error("GMS API error when trying to stop server host.");
+            appendMessage(executionState.getLaterMessageUuid(),
+                    "An unknown (application) error occurred when trying to stop server host.");
+        }
     }
 
     void deleteGameResources(ExecutionState executionState) {

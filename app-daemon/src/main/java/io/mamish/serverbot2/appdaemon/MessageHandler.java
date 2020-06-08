@@ -70,9 +70,9 @@ public class MessageHandler implements IAppDaemon {
                 .command(config.getLaunchCmd())
                 .start();
 
-        new CloudWatchLogsUploader(runningAppProcess.getInputStream(), GameMetadataFetcher.cached().getGameName(),
+        new CloudWatchLogsUploader(runningAppProcess.getInputStream(), GameMetadataFetcher.initial().getGameName(),
                 sessionStart, "stdout");
-        new CloudWatchLogsUploader(runningAppProcess.getErrorStream(), GameMetadataFetcher.cached().getGameName(),
+        new CloudWatchLogsUploader(runningAppProcess.getErrorStream(), GameMetadataFetcher.initial().getGameName(),
                 sessionStart, "stderr");
 
     }
