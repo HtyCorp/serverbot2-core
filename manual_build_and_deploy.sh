@@ -17,7 +17,9 @@ cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Do
 
 cd application-infrastructure
 cdk synth
-DEPLOY="cdk deploy --require-approval=never"
+# deploy arguments: don't require manual security approval and don't deploy any dependency stacks
+# (avoids repeatedly running CommonResources through CFN with "no changes required" result
+DEPLOY="cdk deploy --require-approval=never --exclusively"
 
 # Phase 1: common resources
 echo "Running phase 1 deployment..."
