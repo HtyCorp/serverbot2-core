@@ -50,10 +50,10 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         try {
             return internalHandleRequest(rawInput);
         } catch (ApiServerException e) {
-            logger.error("ApiException in API request dispatcher", e);
+            logger.error("Standard exception type in API request dispatcher", e);
             return serializeErrorObject(e);
         } catch (Exception e) {
-            String message = "Unknown exception in API request dispatcher: " + e.getMessage();
+            String message = "Non-standard unexpected exception in API request dispatcher";
             logger.error(message, e);
             return serializeErrorObject(new FrameworkInternalException(message));
         }
@@ -72,22 +72,15 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         // invoke that dispatcher to see if it can get a result.
         if (definition == null) {
             if (nextChainDispatcher != null) {
-                logger.info("Unknown target name but have a chained dispatcher; passing on to next dispatcher");
+                logger.debug("Unknown target name but have a chained dispatcher; passing on to next dispatcher");
                 return nextChainDispatcher.internalHandleRequest(rawInput);
             } else {
-                logger.warn("Unknown target name and no chained dispatcher; cannot dispatch method");
+                logger.error("Unknown target name and no chained dispatcher; cannot dispatch method");
                 throw new UnknownRequestException("Unknown API target '" + targetName + "' in request.", targetName);
             }
         }
 
-        logger.debug("Got a definition set");
-
         Object requestObject = parseRequestObject(definition, parsedInput);
-
-        logger.debug("Definition is: " + definition.toString());
-        logger.debug("Target method is: " + definition.getTargetMethod());
-        logger.debug("Handler instance is: " + handlerInstance);
-        logger.debug("Request object is: " + requestObject);
 
         Object invokeResult;
         try {
@@ -97,9 +90,9 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
             // Shouldn't ever happen since methods are from interface and therefore always public
             throw new RuntimeException("Illegal handler method access", e);
         } catch (InvocationTargetException e) {
-            // If exception is a specifically thrown RequestHandlingException, unwrap it and throw directly.
-            if (e.getCause() instanceof RequestHandlingException) {
-                throw (RequestHandlingException) e.getCause();
+            // If exception is one our server exception types, unwrap it and throw directly.
+            if (e.getCause() instanceof ApiServerException) {
+                throw (ApiServerException) e.getCause();
             }
             // Otherwise, re-wrap in a RequestHandlingRuntimeException to mark it as an unexpected error.
             throw new RequestHandlingRuntimeException("Uncaught exception during request handling", e.getCause());

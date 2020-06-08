@@ -54,6 +54,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.CreateGameMetadata)
                 .sync(Tasks.CreateGameResources)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
+                .sync(Tasks.InstanceReadyNotify)
                 .callback(Tasks.WaitServerStop, TIMEOUT_STOP)
                 .sync(Tasks.StopInstance)
                 .endSuccess();
@@ -62,7 +63,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.LockGame)
                 .sync(Tasks.StartInstance)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
-                .sync(Tasks.StartServer)
+                .sync(Tasks.InstanceReadyStartServer)
                 .callback(Tasks.WaitServerStop, TIMEOUT_STOP)
                 .sync(Tasks.StopInstance)
                 .endSuccess();

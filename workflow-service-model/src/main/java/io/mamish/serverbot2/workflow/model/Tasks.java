@@ -7,7 +7,8 @@ public enum Tasks {
     CreateGameResources,
     StartInstance,
     WaitInstanceReady,
-    StartServer,
+    InstanceReadyNotify,
+    InstanceReadyStartServer,
     WaitServerStop,
     StopInstance,
     DeleteGameResources

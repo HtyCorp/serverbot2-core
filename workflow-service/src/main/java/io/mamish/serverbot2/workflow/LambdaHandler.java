@@ -38,8 +38,10 @@ public class LambdaHandler implements RequestStreamHandler {
                 stepHandler.startInstance(executionState); break;
             case WaitInstanceReady:
                 stepHandler.waitInstanceReady(executionState); break;
-            case StartServer:
-                stepHandler.startServer(executionState); break;
+            case InstanceReadyNotify:
+                stepHandler.instanceReadyNotify(executionState); break;
+            case InstanceReadyStartServer:
+                stepHandler.instanceReadyStartServer(executionState); break;
             case WaitServerStop:
                 stepHandler.waitServerStop(executionState); break;
             case StopInstance:

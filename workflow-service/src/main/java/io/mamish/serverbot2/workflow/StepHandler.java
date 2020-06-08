@@ -119,11 +119,17 @@ public class StepHandler {
     }
 
     void waitInstanceReady(ExecutionState executionState) {
-        setCallbackTaskToken(executionState.getGameName(), executionState.getTaskToken());
+        setGameStateOrTaskToken(executionState.getGameName(), null, executionState.getTaskToken());
         appendMessage(executionState.getInitialMessageUuid(), "Waiting for server host startup...");
     }
 
-    void startServer(ExecutionState executionState) {
+    void instanceReadyNotify(ExecutionState executionState) {
+        appendMessage(executionState.getInitialMessageUuid(),
+                "Server host is ready to install game server on. (Discord-based connection not yet"
+                        + "supported - get Hamish to do install via console)");
+    }
+
+    void instanceReadyStartServer(ExecutionState executionState) {
         String appDaemonQueueName = getGameMetadata(executionState.getGameName()).getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
         try {
@@ -140,7 +146,7 @@ public class StepHandler {
     }
 
     void waitServerStop(ExecutionState executionState) {
-        setCallbackTaskToken(executionState.getGameName(), executionState.getTaskToken());
+        setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.RUNNING, executionState.getTaskToken());
     }
 
     void stopInstance(ExecutionState executionState) {
@@ -186,11 +192,14 @@ public class StepHandler {
         return sqsClient.getQueueUrl(r -> r.queueName(queueName)).queueUrl();
     }
 
-    private void setCallbackTaskToken(String gameName, String taskToken) {
+    private void setGameStateOrTaskToken(String gameName, GameReadyState state, String taskToken) {
+        if (state == null && taskToken == null) {
+            throw new IllegalArgumentException("Need either state or task token to make GMS update");
+        }
         gameMetadataService.updateGame(new UpdateGameRequest(
                 gameName,
                 null,
-                null,
+                state,
                 null,
                 null,
                 taskToken
