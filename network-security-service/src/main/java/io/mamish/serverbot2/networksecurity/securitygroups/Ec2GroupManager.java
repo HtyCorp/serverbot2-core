@@ -181,7 +181,8 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     private ManagedSecurityGroup makeSimplifiedGroup(SecurityGroup realGroup) {
-        String name = realGroup.groupName().substring(NetSecConfig.SG_NAME_PREFIX.length());
+        // Group name is prefixed with this standard prefix and a joiner, so +1 for length
+        String name = realGroup.groupName().substring(NetSecConfig.SG_NAME_PREFIX.length()+1);
         String groupId = realGroup.groupId();
         String encryptedDataKey = realGroup.description();
         List<IpPermission> permissions = realGroup.ipPermissions();

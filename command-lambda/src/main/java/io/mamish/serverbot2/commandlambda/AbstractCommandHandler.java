@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.common.CommandHelp;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

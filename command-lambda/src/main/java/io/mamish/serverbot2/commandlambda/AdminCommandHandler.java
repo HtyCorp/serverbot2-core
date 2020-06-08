@@ -1,10 +1,10 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.admin.CommandClosePort;
-import io.mamish.serverbot2.commandlambda.model.commands.admin.CommandNewGame;
-import io.mamish.serverbot2.commandlambda.model.commands.admin.CommandOpenPort;
-import io.mamish.serverbot2.commandlambda.model.commands.admin.IAdminCommandHandler;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.admin.CommandClosePort;
+import io.mamish.serverbot2.commandlambda.commands.admin.CommandNewGame;
+import io.mamish.serverbot2.commandlambda.commands.admin.CommandOpenPort;
+import io.mamish.serverbot2.commandlambda.commands.admin.IAdminCommandHandler;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;

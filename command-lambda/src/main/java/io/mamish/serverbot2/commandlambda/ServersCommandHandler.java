@@ -1,11 +1,11 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
-import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandGames;
-import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStart;
-import io.mamish.serverbot2.commandlambda.model.commands.servers.CommandStop;
-import io.mamish.serverbot2.commandlambda.model.commands.servers.IServersCommandHandler;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
+import io.mamish.serverbot2.commandlambda.commands.servers.CommandGames;
+import io.mamish.serverbot2.commandlambda.commands.servers.CommandStart;
+import io.mamish.serverbot2.commandlambda.commands.servers.CommandStop;
+import io.mamish.serverbot2.commandlambda.commands.servers.IServersCommandHandler;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
@@ -65,11 +65,10 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         DescribeGameResponse response = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
         if (response.isPresent()) {
             GameMetadata game = response.getGame();
-            StringBuilder output = new StringBuilder();
-            output.append("Game ID: ").append(game.getGameName()).append(" (use this in other commands)\n");
-            output.append("Game description: ").append(game.getFullName()).append("\n");
-            output.append("Current status: ").append(game.getGameReadyState().toLowerCase());
-            return new ProcessUserCommandResponse(output.toString());
+            String output = "Game ID: " + game.getGameName() + " (use this in other commands)\n" +
+                    "Game description: " + game.getFullName() + "\n" +
+                    "Current status: " + game.getGameReadyState().toLowerCase();
+            return new ProcessUserCommandResponse(output);
         } else {
             throw makeUnknownGameException(name);
         }

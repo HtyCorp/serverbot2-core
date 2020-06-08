@@ -1,13 +1,16 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
-import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.model.ICommandService;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -20,8 +23,13 @@ public class LambdaHandlerTest {
     private static final String DUMMY_USER_ID = "12345678901234567";
     private static final String DUMMY_MESSAGE_ID = "23456789012345678";
 
-    private Logger logger = Logger.getLogger("LambdaHandlerTest");
-    private Gson gson = new Gson();
+    private final Logger logger = Logger.getLogger("LambdaHandlerTest");
+    private final Gson gson = new Gson();
+
+    @BeforeAll
+    static void disableXray() {
+        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+    }
 
     @Test
     public void testMissingCommand() {

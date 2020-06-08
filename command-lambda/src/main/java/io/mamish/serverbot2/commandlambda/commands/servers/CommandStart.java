@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.commandlambda.model.commands.servers;
+package io.mamish.serverbot2.commandlambda.commands.servers;
 
-import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
+import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
 import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
 import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 

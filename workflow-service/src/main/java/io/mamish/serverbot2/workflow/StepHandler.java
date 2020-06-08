@@ -154,6 +154,7 @@ public class StepHandler {
             GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
             ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
             sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+            setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
         } catch (SdkException e) {
             logger.error("SDK exception while stopping instance", e);
             appendMessage(executionState.getLaterMessageUuid(),

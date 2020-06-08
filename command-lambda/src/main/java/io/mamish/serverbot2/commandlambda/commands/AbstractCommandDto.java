@@ -1,6 +1,6 @@
-package io.mamish.serverbot2.commandlambda.model.commands;
+package io.mamish.serverbot2.commandlambda.commands;
 
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
 
 public abstract class AbstractCommandDto {
 

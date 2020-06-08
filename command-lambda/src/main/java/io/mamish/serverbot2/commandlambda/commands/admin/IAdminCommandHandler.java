@@ -1,7 +1,7 @@
-package io.mamish.serverbot2.commandlambda.model.commands.admin;
+package io.mamish.serverbot2.commandlambda.commands.admin;
 
-import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.common.CommandHelp;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 
 public interface IAdminCommandHandler {
 

@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.commands.AbstractCommandDto;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.exception.server.*;
 import io.mamish.serverbot2.framework.server.AbstractApiRequestDispatcher;

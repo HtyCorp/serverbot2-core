@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.commandlambda.model.service;
+package io.mamish.serverbot2.commandlambda.model;
 
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.common.ApiArgumentInfo;

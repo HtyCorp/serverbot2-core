@@ -1,7 +1,7 @@
-package io.mamish.serverbot2.commandlambda.model.commands.servers;
+package io.mamish.serverbot2.commandlambda.commands.servers;
 
-import io.mamish.serverbot2.commandlambda.model.commands.common.CommandHelp;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.commands.common.CommandHelp;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 
 public interface IServersCommandHandler {
     

@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.commandlambda.model.service;
+package io.mamish.serverbot2.commandlambda.model;
 
 import java.util.Objects;
 

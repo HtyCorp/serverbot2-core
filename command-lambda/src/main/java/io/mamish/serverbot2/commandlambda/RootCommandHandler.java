@@ -1,8 +1,8 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.model.service.ICommandService;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandRequest;
-import io.mamish.serverbot2.commandlambda.model.service.ProcessUserCommandResponse;
+import io.mamish.serverbot2.commandlambda.model.ICommandService;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
+import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
 import org.apache.logging.log4j.LogManager;
