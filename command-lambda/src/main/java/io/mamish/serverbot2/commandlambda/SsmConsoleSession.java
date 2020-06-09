@@ -44,10 +44,10 @@ public class SsmConsoleSession {
 
         String singleInstanceSessionPolicy = String.join("\n",
                 "{",
-                "    \"Version\": \"2012-10-17\"",
+                "    \"Version\": \"2012-10-17\",",
                 "    \"Statement\": [{",
-                "        \"Effect\": \"Allow\"",
-                "        \"Action\": \"ssm:StartSession\"",
+                "        \"Effect\": \"Allow\",",
+                "        \"Action\": \"ssm:StartSession\",",
                 "        \"Resource\": \"arn:aws:ec2:*:*:instance/" + instanceId + "\"",
                 "    }]",
                 "}"
