@@ -1,25 +1,32 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.commands.admin.CommandClosePort;
-import io.mamish.serverbot2.commandlambda.commands.admin.CommandNewGame;
-import io.mamish.serverbot2.commandlambda.commands.admin.CommandOpenPort;
-import io.mamish.serverbot2.commandlambda.commands.admin.IAdminCommandHandler;
+import io.mamish.serverbot2.commandlambda.commands.admin.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
+import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
+import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.gamemetadata.model.DescribeGameRequest;
+import io.mamish.serverbot2.gamemetadata.model.DescribeGameResponse;
+import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ModifyPortsRequest;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +36,8 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
 
     private final INetworkSecurity networkSecurityServiceClient;
+    private final IGameMetadataService gameMetadataServiceClient;
+    private final IDiscordService discordServiceClient;
     private final Pattern portRangePattern;
 
     private final SfnRunner sfnRunner = new SfnRunner();
@@ -36,6 +45,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     public AdminCommandHandler() {
         logger.trace("Initialising NetSec client");
         networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+        logger.trace("Initialising GameMetadata client");
+        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
+        logger.trace("Initialising port regex");
+        discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
         logger.trace("Initialising port regex");
         portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
         logger.trace("Finished constructor");
@@ -77,6 +90,57 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     @Override
     public ProcessUserCommandResponse onCommandClosePort(CommandClosePort commandClosePort) {
         return runPortModifyCommand(commandClosePort.getGameName(), commandClosePort.getPortRange(), false);
+    }
+
+    @Override
+    public ProcessUserCommandResponse onCommandTerminal(CommandTerminal commandTerminal) {
+        String gameName = commandTerminal.getGameName();
+
+        DescribeGameResponse response = gameMetadataServiceClient.describeGame(
+                new DescribeGameRequest(gameName)
+        );
+
+        String baseErrorString = "Can't connect to '" + gameName + "': ";
+
+        if (!response.isPresent()) {
+            return new ProcessUserCommandResponse(baseErrorString + "not a valid game");
+        }
+
+        if (response.getGame().getGameReadyState() != GameReadyState.RUNNING) {
+            return new ProcessUserCommandResponse(baseErrorString + "game isn't running yet");
+        }
+
+        SsmConsoleSession session = new SsmConsoleSession(response.getGame().getInstanceId(),
+                makeSessionName(commandTerminal.getContext().getSenderId(), gameName));
+
+        try {
+            String terminalUrl = session.getSessionUrl();
+            discordServiceClient.newMessage(new NewMessageRequest(
+                    "Use this login link to connect to a server terminal for game " + gameName + ":\n\n"
+                            + terminalUrl,
+                    null,
+                    null,
+                    commandTerminal.getContext().getSenderId()
+            ));
+            return new ProcessUserCommandResponse(
+                    "A login link has been sent to your private messages.");
+        } catch (InterruptedException | IOException e) {
+            logger.error("Error during terminal session URL generate", e);
+            return new ProcessUserCommandResponse(
+                    "Sorry, something went wrong while generating the terminal login link.");
+        }
+
+    }
+
+    private String makeSessionName(String userId, String gameName) {
+        // Ref: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html#reference_iam-limits-entity-length
+        final int MAX_LENGTH = 63;
+        String prefix = "DiscordSsm";
+        String sessionName = IDUtils.snake(prefix, userId, gameName);
+        if (sessionName.length() > MAX_LENGTH) {
+            sessionName = sessionName.substring(0, MAX_LENGTH);
+        }
+        return sessionName;
     }
 
     private ProcessUserCommandResponse runPortModifyCommand(String gameName, String portRange, boolean addNotRemove) {

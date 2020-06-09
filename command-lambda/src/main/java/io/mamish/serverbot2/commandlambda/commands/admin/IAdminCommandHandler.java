@@ -9,5 +9,6 @@ public interface IAdminCommandHandler {
     ProcessUserCommandResponse onCommandNewGame(CommandNewGame commandNewGame);
     ProcessUserCommandResponse onCommandOpenPort(CommandOpenPort commandOpenPort);
     ProcessUserCommandResponse onCommandClosePort(CommandClosePort commandClosePort);
+    ProcessUserCommandResponse onCommandTerminal(CommandTerminal commandTerminal);
 
 }

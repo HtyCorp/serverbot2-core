@@ -102,8 +102,9 @@ public class DiscordRelay {
         ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                 words,
                 oAppChannel.get(),
+                receivedMessage.getIdAsString(),
                 author.getIdAsString(),
-                receivedMessage.getIdAsString());
+                author.getDiscriminatedName());
         ProcessUserCommandResponse commandResponse = commandServiceClient.processUserCommand(commandRequest);
         AWSXRay.endSubsegment();
 

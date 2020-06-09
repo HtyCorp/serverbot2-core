@@ -4,7 +4,7 @@ import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
 import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
 import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
-@ApiRequestInfo(order = 3, name = "openport", numRequiredFields = 2, description = "Open a firewall port on a game server")
+@ApiRequestInfo(order = 2, name = "openport", numRequiredFields = 2, description = "Open a firewall port on a game server")
 public class CommandOpenPort extends AbstractCommandDto {
 
     @ApiArgumentInfo(order = 0, description = "Name of game to open firewall port for")

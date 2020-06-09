@@ -70,7 +70,10 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sfn</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sts</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

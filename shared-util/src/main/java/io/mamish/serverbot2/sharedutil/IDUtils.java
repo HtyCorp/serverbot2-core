@@ -17,6 +17,10 @@ public class IDUtils {
         return joinWith("-", segments);
     }
 
+    public static String snake(Object... segments) {
+        return joinWith("_", segments);
+    }
+
     public static String colon(Object... segments) {
         return joinWith(":", segments);
     }
