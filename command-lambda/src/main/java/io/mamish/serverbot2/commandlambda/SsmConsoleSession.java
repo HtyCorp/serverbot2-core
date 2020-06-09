@@ -54,11 +54,9 @@ public class SsmConsoleSession {
         );
 
         logger.debug("Dumping session policy JSON:\n" + singleInstanceSessionPolicy);
-
-        final int durationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_ROLE_DURATION_HOURS).getSeconds();
+        
         AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(r -> r.roleArn(SESSION_ROLE_ARN)
                 .roleSessionName(sessionName)
-                .durationSeconds(durationSeconds)
                 .policy(singleInstanceSessionPolicy));
         Credentials roleCredentials = assumeRoleResponse.credentials();
 
@@ -75,9 +73,10 @@ public class SsmConsoleSession {
         logger.debug("Dumping obfuscated session string:\n"
                 + sessionStringJson.replace(roleCredentials.secretAccessKey(), "***REDACTED***"));
 
+        final int sessionDurationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_ROLE_DURATION_HOURS).getSeconds();
         String getSigninTokenUrl = "https://signin.aws.amazon.com/federation"
                 + "?Action=getSigninToken"
-                + "&SessionDuration=" + durationSeconds
+                + "&SessionDuration=" + sessionDurationSeconds
                 + "&SessionType=json"
                 + "&Session=" + sessionStringEncoded;
 
