@@ -1,14 +1,18 @@
 package io.mamish.serverbot2.commandlambda;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.sts.StsClient;
-import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
 import software.amazon.awssdk.services.sts.model.Credentials;
+import software.amazon.awssdk.services.sts.model.GetFederationTokenResponse;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +25,6 @@ import java.time.Duration;
 
 public class SsmConsoleSession {
 
-    private static final String SESSION_ROLE_ARN = CommandLambdaConfig.TERMINAL_SESSION_ROLE_ARN.getValue();
     // Would be nice if we could reuse the STS client's URL HTTP client, but no good sources on whether it's possible
     private static final HttpClient httpClient = HttpClient.newBuilder().build();
     private static final StsClient stsClient = StsClient.builder()
@@ -40,45 +43,57 @@ public class SsmConsoleSession {
 
     String getSessionUrl() throws IOException, InterruptedException {
 
-        // TODO: Come up with a better standard way to write JSON objects - this sucks
+        // TODO: Come up with a better way to write JSON - SDKv2 doesn't appear to have policy builders
 
-        String singleInstanceSessionPolicy = String.join("\n",
-                "{",
-                "    \"Version\": \"2012-10-17\",",
-                "    \"Statement\": [{",
-                "        \"Effect\": \"Allow\",",
-                "        \"Action\": \"ssm:StartSession\",",
-                "        \"Resource\": \"arn:aws:ec2:*:*:instance/" + instanceId + "\"",
-                "    }]",
-                "}"
-        );
+        JsonObject policyObject = new JsonObject();
+        JsonArray statementArray = new JsonArray();
+        JsonObject policyStatement = new JsonObject();
+
+        policyObject.addProperty("Version", "2012-10-17");
+        policyObject.add("Statement", statementArray);
+        statementArray.add(policyStatement);
+        policyStatement.addProperty("Effect", "Allow");
+        policyStatement.addProperty("Action", "ssm:StartSession");
+        policyStatement.addProperty("Resource", "arn:aws:ec2:*:*:instance/" + instanceId);
+
+        String singleInstanceSessionPolicy = policyObject.toString();
 
         logger.debug("Dumping session policy JSON:\n" + singleInstanceSessionPolicy);
-        
-        AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(r -> r.roleArn(SESSION_ROLE_ARN)
-                .roleSessionName(sessionName)
-                .policy(singleInstanceSessionPolicy));
-        Credentials roleCredentials = assumeRoleResponse.credentials();
 
-        logger.debug("Got key ID " + roleCredentials.accessKeyId()
-                + " for role session " + assumeRoleResponse.assumedRoleUser().arn());
+        final int sessionDurationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_DURATION_HOURS).getSeconds();
+
+        // I would probably prefer a role here but console federation fails when the Lambda role is used to chain into
+        // any other target role for sessions. IAM user is required.
+        // Alternative: assume a target role with this IAM user. No major difference for our case.
+        AwsCredentialsProvider federationAccessKeyProvider = getFederationAccessKey();
+        GetFederationTokenResponse stsResponse = stsClient.getFederationToken(r -> r.name(sessionName)
+                .policy(singleInstanceSessionPolicy)
+                .durationSeconds(sessionDurationSeconds)
+                .overrideConfiguration(conf -> conf.credentialsProvider(federationAccessKeyProvider)));
+        Credentials credentials = stsResponse.credentials();
+
+        logger.debug("Got key ID " + credentials.accessKeyId()
+                + " for federated user ARN " + stsResponse.federatedUser().arn());
 
         JsonObject sessionObject = new JsonObject();
-        sessionObject.addProperty("sessionId", roleCredentials.accessKeyId());
-        sessionObject.addProperty("sessionKey", roleCredentials.secretAccessKey());
-        sessionObject.addProperty("sessionToken", roleCredentials.sessionToken());
+        sessionObject.addProperty("sessionId", credentials.accessKeyId());
+        sessionObject.addProperty("sessionKey", credentials.secretAccessKey());
+        sessionObject.addProperty("sessionToken", credentials.sessionToken());
         String sessionStringJson = sessionObject.toString();
         String sessionStringEncoded = URLEncoder.encode(sessionStringJson, StandardCharsets.UTF_8);
 
-        logger.debug("Dumping obfuscated session string:\n"
-                + sessionStringJson.replace(roleCredentials.secretAccessKey(), "***REDACTED***"));
+        logger.debug(() -> "Dumping obfuscated session string:\n"
+                + sessionStringJson.replace(credentials.secretAccessKey(), "***REDACTED***"));
 
-        final int sessionDurationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_ROLE_DURATION_HOURS).getSeconds();
         String getSigninTokenUrl = "https://signin.aws.amazon.com/federation"
                 + "?Action=getSigninToken"
                 + "&SessionDuration=" + sessionDurationSeconds
                 + "&SessionType=json"
                 + "&Session=" + sessionStringEncoded;
+
+        logger.debug(() -> "Dumping obfuscated URL:\n"
+                + getSigninTokenUrl.replace(URLEncoder.encode(credentials.secretAccessKey(), StandardCharsets.UTF_8),
+                "REDACTED"));
 
         HttpRequest getSigninToken = HttpRequest.newBuilder().GET().uri(URI.create(getSigninTokenUrl)).build();
         String tokenResponse = httpClient.send(getSigninToken, HttpResponse.BodyHandlers.ofString()).body();
@@ -101,6 +116,14 @@ public class SsmConsoleSession {
 
         return loginUrl;
 
+    }
+
+    private AwsCredentialsProvider getFederationAccessKey() {
+        String[] parts = CommandLambdaConfig.TERMINAL_FEDERATION_ACCESS_KEY.getValue().split(":");
+        String accessKeyId = parts[0];
+        String secretAccessKey = parts[1];
+        logger.debug("Got federation access key ID " + accessKeyId);
+        return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey));
     }
 
 }

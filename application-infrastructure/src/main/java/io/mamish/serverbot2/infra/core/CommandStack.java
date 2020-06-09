@@ -5,12 +5,10 @@ import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
-import software.amazon.awscdk.core.Duration;
+import software.amazon.awscdk.core.Fn;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
-import software.amazon.awscdk.services.iam.ManagedPolicy;
-import software.amazon.awscdk.services.iam.PolicyStatement;
-import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.lambda.Function;
 
 import java.util.List;
@@ -19,6 +17,35 @@ public class CommandStack extends Stack {
 
     public CommandStack(Construct parent, String id, StackProps props) {
         super(parent, id, props);
+
+        // Terminal access user (federation doesn't work when chaining from the function role)
+
+        User ssmSessionUser = User.Builder.create(this, "SsmSessionUser")
+                .userName("DiscordUser")
+                .build();
+
+        ssmSessionUser.addToPolicy(PolicyStatement.Builder.create()
+                .actions(List.of("sts:GetFederationToken"))
+                .resources(List.of("*"))
+                .build());
+        ssmSessionUser.addToPrincipalPolicy(PolicyStatement.Builder.create()
+                .actions(List.of("ssm:StartSession"))
+                .resources(List.of("*"))
+                .build());
+
+        CfnAccessKey accessKey = CfnAccessKey.Builder.create(this, "SsmSessionUserKey")
+                .userName(ssmSessionUser.getUserName())
+                .build();
+
+        // CDK uses 'tokens' as placeholders for the eventual CFN-generated values: those are the actual strings we're
+        // manipulating right now
+        String fullAccessKeyAsToken = Fn.join(":", List.of(
+                accessKey.getRef(),
+                accessKey.getAttrSecretAccessKey()));
+
+        Util.instantiateConfigSecret(this, "SsmSessionUserKeySecret",
+                CommandLambdaConfig.TERMINAL_FEDERATION_ACCESS_KEY,
+                fullAccessKeyAsToken);
 
         // Service function
 
@@ -36,21 +63,6 @@ public class CommandStack extends Stack {
         Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
                 "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole)
                 .functionName(CommandLambdaConfig.FUNCTION_NAME).build();
-
-        // Terminal access role
-
-        Role sessionRole = Role.Builder.create(this, "SsmSessionRole")
-                .assumedBy(functionRole)
-                .maxSessionDuration(Duration.hours(CommandLambdaConfig.TERMINAL_SESSION_ROLE_DURATION_HOURS))
-                .build();
-
-        sessionRole.addToPrincipalPolicy(PolicyStatement.Builder.create()
-                .actions(List.of("ssm:StartSession"))
-                .resources(List.of("*"))
-                .build());
-
-        Util.instantiateConfigSsmParameter(this, "SsmSessionRoleArnParam",
-                CommandLambdaConfig.TERMINAL_SESSION_ROLE_ARN, sessionRole.getRoleArn());
 
     }
 }

@@ -20,7 +20,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
-import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
 import org.apache.logging.log4j.LogManager;
@@ -135,8 +134,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private String makeSessionName(String userId, String gameName) {
         // Ref: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html#reference_iam-limits-entity-length
         final int MAX_LENGTH = 63;
-        String prefix = "DiscordSsm";
-        String sessionName = IDUtils.snake(prefix, userId, gameName);
+        String sessionName = userId;
+
+        // User (snowflake) IDs will never actually exceed this, but leaving in in case I change the name format.
         if (sessionName.length() > MAX_LENGTH) {
             sessionName = sessionName.substring(0, MAX_LENGTH);
         }

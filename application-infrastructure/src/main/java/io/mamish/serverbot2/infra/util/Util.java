@@ -2,6 +2,7 @@ package io.mamish.serverbot2.infra.util;
 
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;
+import io.mamish.serverbot2.sharedconfig.Secret;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.services.iam.*;
@@ -9,6 +10,7 @@ import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
 import software.amazon.awscdk.services.lambda.Tracing;
+import software.amazon.awscdk.services.secretsmanager.CfnSecret;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
 import java.util.ArrayList;
@@ -97,6 +99,13 @@ public class Util {
         return StringParameter.Builder.create(parent, id)
                 .parameterName(parameter.getName())
                 .stringValue(value)
+                .build();
+    }
+
+    public static CfnSecret instantiateConfigSecret(Construct parent, String id, Secret configSecret, String value) {
+        return CfnSecret.Builder.create(parent, id)
+                .name(configSecret.getName())
+                .secretString(value)
                 .build();
     }
 

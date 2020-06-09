@@ -7,13 +7,14 @@ public class CommandLambdaConfig {
 
     public static final String PATH = "command-lambda";
 
-    public static final String PATH_PUBLIC = PATH + "/public";
-
     // Justifying fixed name: Lambda functions have no CFN parameters that require replacement on change.
     // Basically impossible to ever get this stuck situation so no need to worry about using generated name.
     public static final String FUNCTION_NAME = "CommandService";
 
-    public static final Parameter TERMINAL_SESSION_ROLE_ARN = new Parameter(PATH_PUBLIC, "terminal-session-role-arn");
-    public static final int TERMINAL_SESSION_ROLE_DURATION_HOURS = 12;
+    public static final String PATH_PRIVATE = PATH + "/private";
+
+    public static final Secret TERMINAL_FEDERATION_ACCESS_KEY = new Secret(PATH_PRIVATE,
+            "terminal-federation-access-key");
+    public static final int TERMINAL_SESSION_DURATION_HOURS = 8;
 
 }
