@@ -93,10 +93,11 @@ public class Util {
         return Code.fromAsset(jarPath);
     }
 
-    public static StringParameter.Builder instantiateConfigSsmParameter(Construct parent, String id, Parameter parameter, String value) {
+    public static StringParameter instantiateConfigSsmParameter(Construct parent, String id, Parameter parameter, String value) {
         return StringParameter.Builder.create(parent, id)
                 .parameterName(parameter.getName())
-                .stringValue(value);
+                .stringValue(value)
+                .build();
     }
 
     public static String arn(Stack stack, String account, String region, String service, String resource) {

@@ -126,7 +126,7 @@ public class StepHandler {
     void instanceReadyNotify(ExecutionState executionState) {
         appendMessage(executionState.getInitialMessageUuid(),
                 "Server host is ready to install game server on. (Discord-based connection not yet"
-                        + "supported - get Hamish to do install via console)");
+                        + " supported - get Hamish to do install via console)");
     }
 
     void instanceReadyStartServer(ExecutionState executionState) {

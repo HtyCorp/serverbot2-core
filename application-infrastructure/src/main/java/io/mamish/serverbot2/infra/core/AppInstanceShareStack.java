@@ -22,8 +22,7 @@ public class AppInstanceShareStack extends Stack {
                 .build();
 
         Util.instantiateConfigSsmParameter(this, "ArtifactBucketNameParam",
-                AppInstanceConfig.ARTIFACT_BUCKET_NAME, deployedArtifactBucket.getBucketName())
-                .build();
+                AppInstanceConfig.ARTIFACT_BUCKET_NAME, deployedArtifactBucket.getBucketName());
 
         Role commonRole = Role.Builder.create(this, "AppInstanceCommonRole")
                 .assumedBy(new ServicePrincipal("ec2.amazonaws.com"))

@@ -3,8 +3,11 @@ package io.mamish.serverbot2.commandlambda;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
 import software.amazon.awssdk.services.sts.model.Credentials;
 
 import java.io.IOException;
@@ -24,6 +27,8 @@ public class SsmConsoleSession {
     private static final StsClient stsClient = StsClient.builder()
             .httpClient(UrlConnectionHttpClient.create())
             .build();
+
+    private final Logger logger = LogManager.getLogger(SsmConsoleSession.class);
 
     private final String instanceId;
     private final String sessionName;
@@ -48,24 +53,33 @@ public class SsmConsoleSession {
                 "}"
         );
 
+        logger.debug("Dumping session policy JSON:\n" + singleInstanceSessionPolicy);
+
         final int durationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_ROLE_DURATION_HOURS).getSeconds();
-        Credentials roleCredentials = stsClient.assumeRole(r -> r.roleArn(SESSION_ROLE_ARN)
+        AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(r -> r.roleArn(SESSION_ROLE_ARN)
                 .roleSessionName(sessionName)
                 .durationSeconds(durationSeconds)
-                .policy(singleInstanceSessionPolicy)
-        ).credentials();
+                .policy(singleInstanceSessionPolicy));
+        Credentials roleCredentials = assumeRoleResponse.credentials();
+
+        logger.debug("Got key ID " + roleCredentials.accessKeyId()
+                + " for role session " + assumeRoleResponse.assumedRoleUser().arn());
 
         JsonObject sessionObject = new JsonObject();
         sessionObject.addProperty("sessionId", roleCredentials.accessKeyId());
         sessionObject.addProperty("sessionKey", roleCredentials.secretAccessKey());
         sessionObject.addProperty("sessionToken", roleCredentials.sessionToken());
-        String sessionString = URLEncoder.encode(sessionObject.toString(), StandardCharsets.UTF_8);
+        String sessionStringJson = sessionObject.toString();
+        String sessionStringEncoded = URLEncoder.encode(sessionStringJson, StandardCharsets.UTF_8);
+
+        logger.debug("Dumping obfuscated session string:\n"
+                + sessionStringJson.replace(roleCredentials.secretAccessKey(), "***REDACTED***"));
 
         String getSigninTokenUrl = "https://signin.aws.amazon.com/federation"
                 + "?Action=getSigninToken"
                 + "&SessionDuration=" + durationSeconds
                 + "&SessionType=json"
-                + "&Session=" + sessionString;
+                + "&Session=" + sessionStringEncoded;
 
         HttpRequest getSigninToken = HttpRequest.newBuilder().GET().uri(URI.create(getSigninTokenUrl)).build();
         String tokenResponse = httpClient.send(getSigninToken, HttpResponse.BodyHandlers.ofString()).body();
@@ -77,11 +91,16 @@ public class SsmConsoleSession {
         String destination = String.format("https://%s.console.aws.amazon.com/systems-manager/session-manager/%s?region=%s",
                 region, instanceId, region);
 
-        return "https://signin.aws.amazon.com/federation"
+        String loginUrl = "https://signin.aws.amazon.com/federation"
                 + "?Action=login"
                 + "&Issuer=" + URLEncoder.encode(issuer, StandardCharsets.UTF_8)
                 + "&Destination=" + URLEncoder.encode(destination, StandardCharsets.UTF_8)
                 + "&SigninToken=" + signinToken;
+
+        logger.debug("Dumping obfuscated login URL:\n"
+                + loginUrl.replace(signinToken, signinToken.substring(0,32) + "***REDACTED***"));
+
+        return loginUrl;
 
     }
 

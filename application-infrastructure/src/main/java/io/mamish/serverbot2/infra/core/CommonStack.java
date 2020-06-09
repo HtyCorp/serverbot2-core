@@ -69,7 +69,7 @@ public class CommonStack extends Stack {
                 .build();
 
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
-                        CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId()).build();
+                        CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId());
 
         HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()
                 .domainName(CommonConfig.APEX_DOMAIN_NAME)
