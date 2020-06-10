@@ -6,6 +6,7 @@ import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse;
 import software.amazon.awssdk.services.ec2.model.Instance;
@@ -17,7 +18,9 @@ public class AppDnsRecordManager {
     private static final String HOSTED_ZONE_ID = CommonConfig.HOSTED_ZONE_ID.getValue();
 
     private final Ec2Client ec2Client = Ec2Client.create();
-    private final Route53Client route53Client = Route53Client.create();
+    private final Route53Client route53Client = Route53Client.builder()
+            .region(Region.AWS_GLOBAL)
+            .build();
 
     private final Logger logger = LogManager.getLogger(AppDnsRecordManager.class);
 
