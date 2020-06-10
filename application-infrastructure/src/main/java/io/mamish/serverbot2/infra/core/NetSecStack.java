@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -17,7 +18,7 @@ public class NetSecStack extends Stack {
         super(parent, id, props);
 
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
-            Util.POLICY_EC2_FULL_ACCESS
+            Policies.EC2_FULL_ACCESS
         )).build();
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
 

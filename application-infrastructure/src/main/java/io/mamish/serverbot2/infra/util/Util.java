@@ -21,23 +21,11 @@ import java.util.stream.Stream;
 
 public class Util {
 
-    public static final IManagedPolicy POLICY_BASIC_LAMBDA_EXECUTION = ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole");
-    public static final IManagedPolicy POLICY_STEP_FUNCTIONS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess");
-    public static final IManagedPolicy POLICY_SQS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess");
-    public static final IManagedPolicy POLICY_EC2_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess");
-    public static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
-    public static final IManagedPolicy POLICY_LOGS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess");
-    public static final IManagedPolicy POLICY_S3_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess");
-    public static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
-    public static final IManagedPolicy POLICY_XRAY_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess");
-    public static final IManagedPolicy POLICY_XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
-    public static final IManagedPolicy POLICY_SSM_MANAGED_INSTANCE_CORE = ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore");
-
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
         List<IManagedPolicy> combinedPolicies = new ArrayList<>();
-        combinedPolicies.add(POLICY_BASIC_LAMBDA_EXECUTION);
-        combinedPolicies.add(POLICY_XRAY_DAEMON_WRITE_ACCESS);
+        combinedPolicies.add(Policies.BASIC_LAMBDA_EXECUTION);
+        combinedPolicies.add(Policies.XRAY_DAEMON_WRITE_ACCESS);
         combinedPolicies.addAll(managedPolicies);
 
         return Role.Builder.create(parent, id)

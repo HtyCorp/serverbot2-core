@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
@@ -54,10 +55,10 @@ public class RelayStack extends Stack {
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")
                 .assumedBy(new ServicePrincipal("ecs-tasks.amazonaws.com"))
                 .managedPolicies(List.of(
-                        Util.POLICY_SQS_FULL_ACCESS,
-                        Util.POLICY_EC2_FULL_ACCESS,
-                        Util.POLICY_DYNAMODB_FULL_ACCESS,
-                        Util.POLICY_XRAY_FULL_ACCESS
+                        Policies.SQS_FULL_ACCESS,
+                        Policies.EC2_FULL_ACCESS,
+                        Policies.DYNAMODB_FULL_ACCESS,
+                        Policies.XRAY_FULL_ACCESS
                 ))
                 .build();
 

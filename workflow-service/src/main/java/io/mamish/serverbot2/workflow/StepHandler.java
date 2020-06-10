@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
-import software.amazon.awssdk.services.ec2.model.Tag;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.io.IOException;

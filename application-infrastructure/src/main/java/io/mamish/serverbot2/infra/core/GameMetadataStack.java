@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.core;
 
+import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import software.amazon.awscdk.core.Construct;
@@ -44,7 +45,7 @@ public class GameMetadataStack extends Stack {
         // Function and attached role
 
         Role functionRole = Util.standardLambdaRole(this, "ServiceRole", List.of(
-                Util.POLICY_DYNAMODB_FULL_ACCESS
+                Policies.DYNAMODB_FULL_ACCESS
         )).build();
 
         Function function = Util.standardJavaFunction(this, "ServiceFunction", "game-metadata-service",
