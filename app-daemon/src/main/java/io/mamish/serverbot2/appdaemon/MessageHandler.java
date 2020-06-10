@@ -3,6 +3,7 @@ package io.mamish.serverbot2.appdaemon;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.appdaemon.model.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +23,12 @@ public class MessageHandler implements IAppDaemon {
 
     @Override
     public StartAppResponse startApp(StartAppRequest request) {
+
+        if (runningAppProcess != null && runningAppProcess.isAlive()) {
+            logger.error("Received StartApp call with instance already running");
+            throw new RequestValidationException("Process already running");
+        }
+
         try {
             runProcess();
             return new StartAppResponse();
@@ -56,14 +63,21 @@ public class MessageHandler implements IAppDaemon {
     }
 
     private void runProcess() throws IOException {
+
+        logger.debug("runProcess: resolving file paths");
+
         Path rootPath = Path.of("/opt", "serverbot2");
         Path gameDir = rootPath.resolve("game");
         Path configDir = rootPath.resolve("config");
 
+        logger.debug("runProcess: parsing game config file");
+
         FileReader gameConfigFile = new FileReader(configDir.resolve("game.cfg").toFile());
         GameConfigFile config = gson.fromJson(gameConfigFile, GameConfigFile.class);
 
-        Instant sessionStart = Instant.now();
+        Instant sessionStartTime = Instant.now();
+
+        logger.debug("runProcess: launching process");
 
         runningAppProcess = new ProcessBuilder()
                 .directory(gameDir.toFile())
@@ -71,9 +85,9 @@ public class MessageHandler implements IAppDaemon {
                 .start();
 
         new CloudWatchLogsUploader(runningAppProcess.getInputStream(), GameMetadataFetcher.initial().getGameName(),
-                sessionStart, "stdout");
+                sessionStartTime, "stdout");
         new CloudWatchLogsUploader(runningAppProcess.getErrorStream(), GameMetadataFetcher.initial().getGameName(),
-                sessionStart, "stderr");
+                sessionStartTime, "stderr");
 
     }
 

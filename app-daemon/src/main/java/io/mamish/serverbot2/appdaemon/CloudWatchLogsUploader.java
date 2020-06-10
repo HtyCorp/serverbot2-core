@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.appdaemon;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
@@ -24,9 +26,9 @@ public class CloudWatchLogsUploader {
     private static final CloudWatchLogsClient logsClient = CloudWatchLogsClient.create();
 
     // Cannot exceed CloudWatch Logs API limit of 10000
-    private static final int MAX_BUFFERED_MESSAGES = 9000;
-    private static final int FLUSH_THRESHOLD_MIN_CAPACITY = 4500;
-    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 5;
+    private static final int MAX_BUFFERED_MESSAGES = 2048;
+    private static final int FLUSH_THRESHOLD_MIN_CAPACITY = 1024;
+    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 3;
 
     private final BufferedReader stdoutReader;
     private final BlockingQueue<InputLogEvent> outgoingEntryQueue = new ArrayBlockingQueue<>(MAX_BUFFERED_MESSAGES);
@@ -48,6 +50,7 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamReadLoop() {
+        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         try {
             String logLine;
             while ((logLine = stdoutReader.readLine()) != null) {
@@ -68,6 +71,7 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamUploadLoop() {
+        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         try {
             while (true) {
                 synchronized (this) {
