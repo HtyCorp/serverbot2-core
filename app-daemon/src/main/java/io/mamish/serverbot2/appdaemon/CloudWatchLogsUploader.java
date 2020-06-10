@@ -4,6 +4,9 @@ import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InputLogEvent;
 
@@ -40,11 +43,22 @@ public class CloudWatchLogsUploader {
     private String nextUploadToken;
     private Instant lastUploadTime = Instant.now();
 
+    private final Logger logger = LogManager.getLogger(CloudWatchLogsUploader.class);
+
     public CloudWatchLogsUploader(InputStream inputStream, String appName, Instant when, String outputType) {
         this.streamReader = new BufferedReader(new InputStreamReader(inputStream));
 
         this.logGroupName = IDUtils.slash(AppInstanceConfig.APP_LOGS_GROUP_PREFIX, appName);
         this.logStreamName = IDUtils.slash(timeFormatter.format(when), outputType);
+
+        logger.debug("Creating log group '" + logGroupName + "' with log stream '" + logStreamName + "'");
+
+        try {
+            logsClient.createLogGroup(r -> r.logGroupName(logGroupName));
+            logger.debug("Log group created for the first time");
+        } catch (SdkException e) {
+            logger.debug("Couldn't create log group. It probably already exists. SDK message: " + e.getMessage());
+        }
         logsClient.createLogStream(r -> r.logGroupName(logGroupName).logStreamName(logStreamName));
 
         new Thread(this::streamReadLoop).start();
