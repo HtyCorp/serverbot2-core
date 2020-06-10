@@ -22,7 +22,7 @@ import java.util.concurrent.BlockingQueue;
 public class CloudWatchLogsUploader {
 
     // Chosen because CloudWatch Logs group names don't allow ':' characters.
-    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'THH.mm.ss.SSSVV");
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSVV");
     private static final CloudWatchLogsClient logsClient = CloudWatchLogsClient.create();
 
     // Cannot exceed CloudWatch Logs API limit of 10000
