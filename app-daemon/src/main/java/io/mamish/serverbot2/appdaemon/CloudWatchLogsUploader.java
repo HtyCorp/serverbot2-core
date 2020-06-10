@@ -92,9 +92,9 @@ public class CloudWatchLogsUploader {
                 synchronized (this) {
                     wait(FLUSH_THRESHOLD_MAX_INTERVAL_MILLIS);
                 }
-                final int approxAvailable = outgoingEntryQueue.size() - outgoingEntryQueue.remainingCapacity();
-                List<InputLogEvent> eventsBatch = new ArrayList<>(approxAvailable);
-                outgoingEntryQueue.drainTo(eventsBatch, approxAvailable);
+                final int numMessages = outgoingEntryQueue.size();
+                List<InputLogEvent> eventsBatch = new ArrayList<>(numMessages);
+                outgoingEntryQueue.drainTo(eventsBatch, numMessages);
                 nextUploadToken = logsClient.putLogEvents(r ->
                         r.logGroupName(logGroupName)
                         .logStreamName(logStreamName)
