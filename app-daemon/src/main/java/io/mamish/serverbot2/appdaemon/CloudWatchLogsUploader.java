@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ import java.util.concurrent.BlockingQueue;
 public class CloudWatchLogsUploader {
 
     // Chosen because CloudWatch Logs group names don't allow ':' characters.
-    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSVV");
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSVV")
+            .withZone(ZoneId.systemDefault());
     private static final CloudWatchLogsClient logsClient = CloudWatchLogsClient.create();
 
     // Cannot exceed CloudWatch Logs API limit of 10000

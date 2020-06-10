@@ -9,6 +9,10 @@ public class IDUtils {
 
     private IDUtils() {}
 
+    public static String dot(Object... segments) {
+        return joinWith(".", segments);
+    }
+
     public static String slash(Object... segments) {
         return joinWith("/", segments);
     }

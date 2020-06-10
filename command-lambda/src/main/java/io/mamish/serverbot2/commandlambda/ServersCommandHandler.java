@@ -82,7 +82,7 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         } else {
             output.append("Available games (").append(games.size()).append("):\n");
             games.forEach(game -> {
-                output.append(game.getGameName()).append(" (").append(game.getFullName()).append(" )");
+                output.append(game.getGameName()).append(" (").append(game.getFullName()).append(")");
                 output.append(", currently ").append(game.getGameReadyState().toLowerCase()).append("\n");
             });
         }

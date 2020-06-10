@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
+import software.amazon.awssdk.services.ec2.model.Tag;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ public class StepHandler {
 
     private final Ec2Client ec2Client = Ec2Client.create();
     private final SqsClient sqsClient = SqsClient.create();
+    private final AppDnsRecordManager dnsRecordManager = new AppDnsRecordManager();
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
     private final IGameMetadataService gameMetadataService = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
     private final INetworkSecurity networkSecurityService = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
@@ -96,7 +98,7 @@ public class StepHandler {
                             .securityGroupIds(newSecurityGroup.getGroupId())
                             .instanceType(InstanceType.M5_LARGE)
                             .tagSpecifications(instanceAndVolumeTags(tagMap))
-                            .iamInstanceProfile(r2 -> r2.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
+                            .iamInstanceProfile(spec -> spec.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
                             .minCount(1)
                             .maxCount(1)
                             .userData(userdataString));
@@ -124,21 +126,26 @@ public class StepHandler {
     }
 
     void instanceReadyNotify(ExecutionState executionState) {
+        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        String location = dnsRecordManager.updateAppRecordAndGetLocationString(gameMetadata);
+
         appendMessage(executionState.getInitialMessageUuid(),
-                "Server host is ready to install game server on. (Discord-based connection not yet"
-                        + " supported - get Hamish to do install via console)");
+                "Server host is up at " + location + ".\nAutomated install is not yet available - use"
+                + " !terminal to install application software through SSH session.");
     }
 
     void instanceReadyStartServer(ExecutionState executionState) {
-        String appDaemonQueueName = getGameMetadata(executionState.getGameName()).getInstanceQueueName();
+        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        String location = dnsRecordManager.updateAppRecordAndGetLocationString(gameMetadata);
+        String appDaemonQueueName = gameMetadata.getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
         try {
             appDaemonClient.startApp(new StartAppRequest());
             logger.info("Successful StartApp call to app daemon");
             appendMessage(executionState.getInitialMessageUuid(),
-                    "Started game server. For games with long load times (e.g. Minecraft), it might be a few "
-                     + "minutes before you can connect.\n If your IP isn't yet whitelisted to join, use !addip to "
-                     + "whitelist it.");
+                    "Started game server at " + location +".\nFor games with long load times (e.g."
+                    + " Minecraft), it might be a few minutes before you can connect.\n If your IP address isn't yet"
+                    + " whitelisted to join, use !addip to whitelist it.");
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);
         }
@@ -152,6 +159,7 @@ public class StepHandler {
     void stopInstance(ExecutionState executionState) {
         try {
             GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+            dnsRecordManager.deleteAppRecord(gameMetadata);
             ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
             sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
             setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);

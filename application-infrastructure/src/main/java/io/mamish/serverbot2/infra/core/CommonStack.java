@@ -76,6 +76,9 @@ public class CommonStack extends Stack {
                 .build();
         apexHostedZone = HostedZone.fromLookup(this, "ApexHostedZone", existingZoneLookup);
 
+        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParameter",
+                CommonConfig.HOSTED_ZONE_ID, apexHostedZone.getHostedZoneId());
+
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
                 .validationMethod(ValidationMethod.DNS)
                 .domainName("*."+CommonConfig.APEX_DOMAIN_NAME)

@@ -18,6 +18,8 @@ public class CommonConfig {
     public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "app-vpc-id");
 
     public static final String APEX_DOMAIN_NAME = "test.mamish.io";
+    public static final Parameter HOSTED_ZONE_ID = new Parameter(PATH, "hosted-zone-id");
+    public static final long APP_DNS_RECORD_TTL = 10;
 
     public static final String COMMAND_SIGIL_CHARACTER = "!";
 
@@ -27,9 +29,9 @@ public class CommonConfig {
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
-    public static final int STANDARD_LAMBDA_MEMORY = 3008;
+    public static final int STANDARD_LAMBDA_MEMORY = 2048;
 
-    public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]{1,63}");
+    public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]{2,31}");
     public static final List<String> RESERVED_APP_NAMES = List.of(
             // Reserved group name for state tracking in network security service.
             // App names and SG name suffixes are mapped 1-to-1 so this must be a reserved app name.
