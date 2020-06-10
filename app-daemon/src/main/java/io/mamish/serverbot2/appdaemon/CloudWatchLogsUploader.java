@@ -17,7 +17,6 @@ import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,14 +25,14 @@ import java.util.concurrent.BlockingQueue;
 public class CloudWatchLogsUploader {
 
     // Chosen because CloudWatch Logs group names don't allow ':' characters.
-    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSVV")
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSz")
             .withZone(ZoneId.systemDefault());
     private static final CloudWatchLogsClient logsClient = CloudWatchLogsClient.create();
 
     // Cannot exceed CloudWatch Logs API limit of 10000
     private static final int MAX_BUFFERED_MESSAGES = 2048;
     private static final int FLUSH_THRESHOLD_MIN_CAPACITY = 1024;
-    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 3;
+    private static final int FLUSH_THRESHOLD_MAX_INTERVAL_MILLIS = 3000;
 
     private final BufferedReader streamReader;
     private final BlockingQueue<InputLogEvent> outgoingEntryQueue = new ArrayBlockingQueue<>(MAX_BUFFERED_MESSAGES);
@@ -91,12 +90,8 @@ public class CloudWatchLogsUploader {
         try {
             while (true) {
                 synchronized (this) {
-                    while (outgoingEntryQueue.remainingCapacity() > FLUSH_THRESHOLD_MIN_CAPACITY
-                            && lastUploadTime.until(Instant.now(), ChronoUnit.SECONDS) < FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS) {
-                        wait();
-                    }
+                    wait(FLUSH_THRESHOLD_MAX_INTERVAL_MILLIS);
                 }
-                lastUploadTime = Instant.now();
                 final int approxAvailable = outgoingEntryQueue.size() - outgoingEntryQueue.remainingCapacity();
                 List<InputLogEvent> eventsBatch = new ArrayList<>(approxAvailable);
                 outgoingEntryQueue.drainTo(eventsBatch, approxAvailable);
@@ -107,6 +102,7 @@ public class CloudWatchLogsUploader {
                         .logEvents(eventsBatch)
                 ).nextSequenceToken();
             }
+            // TODO: Spurious interrupts aren't impossible. Should have this resume logging if that occurs.
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
