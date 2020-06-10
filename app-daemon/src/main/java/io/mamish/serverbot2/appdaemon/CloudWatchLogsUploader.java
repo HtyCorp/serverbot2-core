@@ -39,8 +39,6 @@ public class CloudWatchLogsUploader {
 
     private final String logGroupName;
     private final String logStreamName;
-    private String nextUploadToken;
-    private Instant lastUploadTime = Instant.now();
 
     private final Logger logger = LogManager.getLogger(CloudWatchLogsUploader.class);
 
@@ -87,18 +85,26 @@ public class CloudWatchLogsUploader {
 
     private void streamUploadLoop() {
         AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        String nextSequenceToken = null; // No sequence token specified for first batch of events uploaded
         try {
             while (true) {
                 synchronized (this) {
                     wait(FLUSH_THRESHOLD_MAX_INTERVAL_MILLIS);
                 }
+
                 final int numMessages = outgoingEntryQueue.size();
+                if (numMessages == 0) {
+                    continue;
+                }
+
                 List<InputLogEvent> eventsBatch = new ArrayList<>(numMessages);
                 outgoingEntryQueue.drainTo(eventsBatch, numMessages);
-                nextUploadToken = logsClient.putLogEvents(r ->
+
+                String finalNextSequenceToken = nextSequenceToken;
+                nextSequenceToken = logsClient.putLogEvents(r ->
                         r.logGroupName(logGroupName)
                         .logStreamName(logStreamName)
-                        .sequenceToken(nextUploadToken)
+                        .sequenceToken(finalNextSequenceToken)
                         .logEvents(eventsBatch)
                 ).nextSequenceToken();
             }
