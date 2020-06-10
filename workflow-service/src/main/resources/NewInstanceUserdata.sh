@@ -76,6 +76,9 @@ ExecStart=/opt/serverbot2/daemon/run_latest_daemon.sh
 WantedBy=multi-user.target
 EOF
 
+echo '[SB2INIT] Enabling app daemon service for future launches...'
+systemctl enable serverbot2
+
 echo '[SB2INIT] Starting app daemon service...'
 systemctl start serverbot2
 

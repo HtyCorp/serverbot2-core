@@ -26,6 +26,7 @@ public class Util {
     public static final IManagedPolicy POLICY_SQS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess");
     public static final IManagedPolicy POLICY_EC2_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess");
     public static final IManagedPolicy POLICY_S3_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess");
+    public static final IManagedPolicy POLICY_LOGS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("CloudWatchLogsFullAccess");
     public static final IManagedPolicy POLICY_S3_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonS3ReadOnlyAccess");
     public static final IManagedPolicy POLICY_DYNAMODB_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess");
     public static final IManagedPolicy POLICY_XRAY_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess");

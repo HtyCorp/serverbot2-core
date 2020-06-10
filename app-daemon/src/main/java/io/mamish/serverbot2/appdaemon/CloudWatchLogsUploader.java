@@ -22,7 +22,7 @@ import java.util.concurrent.BlockingQueue;
 public class CloudWatchLogsUploader {
 
     // Chosen because CloudWatch Logs group names don't allow ':' characters.
-    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-ddTHH.mm.ss.SSSVV");
+    private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'THH.mm.ss.SSSVV");
     private static final CloudWatchLogsClient logsClient = CloudWatchLogsClient.create();
 
     // Cannot exceed CloudWatch Logs API limit of 10000
@@ -30,7 +30,7 @@ public class CloudWatchLogsUploader {
     private static final int FLUSH_THRESHOLD_MIN_CAPACITY = 1024;
     private static final int FLUSH_THRESHOLD_MAX_INTERVAL_SECONDS = 3;
 
-    private final BufferedReader stdoutReader;
+    private final BufferedReader streamReader;
     private final BlockingQueue<InputLogEvent> outgoingEntryQueue = new ArrayBlockingQueue<>(MAX_BUFFERED_MESSAGES);
 
     private final String logGroupName;
@@ -39,7 +39,7 @@ public class CloudWatchLogsUploader {
     private Instant lastUploadTime = Instant.now();
 
     public CloudWatchLogsUploader(InputStream inputStream, String appName, Instant when, String outputType) {
-        this.stdoutReader = new BufferedReader(new InputStreamReader(inputStream));
+        this.streamReader = new BufferedReader(new InputStreamReader(inputStream));
 
         this.logGroupName = IDUtils.slash(AppInstanceConfig.APP_LOGS_GROUP_PREFIX, appName);
         this.logStreamName = IDUtils.slash(timeFormatter.format(when), outputType);
@@ -53,7 +53,7 @@ public class CloudWatchLogsUploader {
         AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         try {
             String logLine;
-            while ((logLine = stdoutReader.readLine()) != null) {
+            while ((logLine = streamReader.readLine()) != null) {
                 InputLogEvent event = InputLogEvent.builder()
                         .timestamp(Instant.now().toEpochMilli())
                         .message(logLine)

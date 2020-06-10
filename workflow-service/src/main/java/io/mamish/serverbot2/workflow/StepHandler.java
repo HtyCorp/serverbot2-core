@@ -49,7 +49,7 @@ public class StepHandler {
         }
 
         gameMetadataService.createGame(new CreateGameRequest(executionState.getGameName(),
-                "New game (use !setname after completing installation)"));
+                "New unnamed server"));
     }
 
     void lockGame(ExecutionState executionState) {
