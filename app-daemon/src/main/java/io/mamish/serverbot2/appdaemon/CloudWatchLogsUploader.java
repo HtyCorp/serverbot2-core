@@ -67,11 +67,13 @@ public class CloudWatchLogsUploader {
         try {
             String logLine;
             while ((logLine = streamReader.readLine()) != null) {
+                logger.trace("Got log line: " + logLine);
                 InputLogEvent event = InputLogEvent.builder()
                         .timestamp(Instant.now().toEpochMilli())
                         .message(logLine)
                         .build();
                 outgoingEntryQueue.put(event);
+                logger.trace("Remaining capacity is " + outgoingEntryQueue.remainingCapacity());
                 if (outgoingEntryQueue.remainingCapacity() <= FLUSH_THRESHOLD_MIN_CAPACITY) {
                     synchronized (this) {
                         notifyAll();
@@ -89,14 +91,17 @@ public class CloudWatchLogsUploader {
         try {
             while (true) {
                 synchronized (this) {
+                    logger.trace("Upload loop entering wait");
                     wait(FLUSH_THRESHOLD_MAX_INTERVAL_MILLIS);
                 }
 
                 final int numMessages = outgoingEntryQueue.size();
                 if (numMessages == 0) {
+                    logger.trace("No lines to upload");
                     continue;
                 }
 
+                logger.trace("Have " + numMessages + " lines to upload");
                 List<InputLogEvent> eventsBatch = new ArrayList<>(numMessages);
                 outgoingEntryQueue.drainTo(eventsBatch, numMessages);
 
@@ -107,6 +112,7 @@ public class CloudWatchLogsUploader {
                         .sequenceToken(finalNextSequenceToken)
                         .logEvents(eventsBatch)
                 ).nextSequenceToken();
+                logger.trace("Finished upload and got next sequence token " + nextSequenceToken);
             }
             // TODO: Spurious interrupts aren't impossible. Should have this resume logging if that occurs.
         } catch (InterruptedException e) {
