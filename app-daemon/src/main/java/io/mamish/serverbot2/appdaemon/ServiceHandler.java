@@ -14,10 +14,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
-public class MessageHandler implements IAppDaemon {
+public class ServiceHandler implements IAppDaemon {
 
     private final Gson gson = new Gson();
-    private final Logger logger = LogManager.getLogger(MessageHandler.class);
+    private final Logger logger = LogManager.getLogger(ServiceHandler.class);
 
     private Process runningAppProcess;
 
@@ -75,14 +75,26 @@ public class MessageHandler implements IAppDaemon {
         FileReader gameConfigFile = new FileReader(configDir.resolve("game.cfg").toFile());
         GameConfigFile config = gson.fromJson(gameConfigFile, GameConfigFile.class);
 
-        Instant sessionStartTime = Instant.now();
+        if (config.getLaunchCommand() == null || config.getLaunchCommand().isEmpty()) {
+            logger.error("Missing launch command in game config file");
+            throw new RequestHandlingException("Missing launch command in game config file");
+        }
 
-        logger.debug("runProcess: launching process");
-
-        runningAppProcess = new ProcessBuilder()
+        logger.debug("runProcess: building process");
+        ProcessBuilder processBuilder = new ProcessBuilder()
                 .directory(gameDir.toFile())
-                .command(config.getLaunchCmd())
-                .start();
+                .command(config.getLaunchCommand());
+
+        if (config.getEnvironment() == null || config.getEnvironment().isEmpty()) {
+            logger.info("runProcess: no environment specified, using unmodified inherited env");
+        } else {
+            logger.info(() -> "runProcess: inserting requested env values:\n" + gson.toJson(config.getEnvironment()));
+            processBuilder.environment().putAll(config.getEnvironment());
+        }
+
+        logger.info("runProcess: starting process");
+        Instant sessionStartTime = Instant.now();
+        runningAppProcess = processBuilder.start();
 
         new CloudWatchLogsUploader(runningAppProcess.getInputStream(), GameMetadataFetcher.initial().getGameName(),
                 sessionStartTime, "stdout");

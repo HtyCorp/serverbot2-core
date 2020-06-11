@@ -40,14 +40,17 @@ mkdir /opt/serverbot2/logs
 cd /opt/serverbot2
 
 echo '[SB2INIT] Creating launch config example...'
-cat > config/game.cfg << "EOF"
+cat > config/launch.cfg << "EOF"
 {
-    "launchCmd": ["example.exe", "-game", "blah", "-port", "12345"]
+    "launchCommand": ["python3", "-m", "http.server", "8080"],
+    "environment": {
+        "PYTHONUNBUFFERED": "true"
+    }
 }
 EOF
 
 echo '[SB2INIT] Setting up app daemon fetch script...'
-cat > daemon/run_latest_daemon.sh << "EOF"
+cat > daemon/run_daemon.sh << "EOF"
 #!/bin/sh
 echo "[INFO] Locating artifact bucket with daemon executable..."
 PARAM_NAME='/app-instance-share/public/deployed-artifacts-bucket'
@@ -57,7 +60,7 @@ aws s3 cp s3://$BUCKET/app-daemon.jar /opt/serverbot2/daemon/app-daemon.jar
 echo "[INFO] Running daemon executable..."
 java -jar /opt/serverbot2/daemon/app-daemon.jar
 EOF
-chmod 774 daemon/run_latest_daemon.sh
+chmod 774 daemon/run_daemon.sh
 
 echo '[SB2INIT] Setting working directory owner to default EC2 user...'
 chown -R ubuntu:ubuntu /opt/serverbot2
@@ -71,7 +74,7 @@ After=network.target
 [Service]
 Type=simple
 User=ubuntu
-ExecStart=/opt/serverbot2/daemon/run_latest_daemon.sh
+ExecStart=/opt/serverbot2/daemon/run_daemon.sh
 [Install]
 WantedBy=multi-user.target
 EOF

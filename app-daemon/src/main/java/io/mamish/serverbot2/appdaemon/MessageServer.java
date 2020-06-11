@@ -15,6 +15,6 @@ public class MessageServer extends SqsApiServer<IAppDaemon> {
 
     @Override
     protected IAppDaemon createHandlerInstance() {
-        return new MessageHandler();
+        return new ServiceHandler();
     }
 }
