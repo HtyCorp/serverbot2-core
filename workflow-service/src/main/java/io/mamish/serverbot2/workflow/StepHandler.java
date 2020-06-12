@@ -57,7 +57,7 @@ public class StepHandler {
         try {
             gameMetadataService.lockGame(new LockGameRequest(executionState.getGameName()));
         } catch (RequestHandlingException e) {
-            appendMessage(executionState.getInitialMessageUuid(), "Error: Can only start a game if it is stopped");
+            appendMessage(executionState.getInitialMessageUuid(), "Error: game is currently in use");
             throw e;
         }
     }
@@ -106,7 +106,7 @@ public class StepHandler {
             throw new RuntimeException("Failed to read instance userdata resource file", e);
         }
 
-        String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName);
+        String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName, IDUtils.randomIdShort());
         sqsClient.createQueue(r -> r.queueName(queueName));
 
         gameMetadataService.updateGame(new UpdateGameRequest(gameName, null, null,
@@ -174,12 +174,16 @@ public class StepHandler {
     }
 
     void deleteGameResources(ExecutionState executionState) {
+        appendMessage(executionState.getInitialMessageUuid(), "Deleting game resources...");
+
         String name = executionState.getGameName();
         GameMetadata gameMetadata = getGameMetadata(name);
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
-        gameMetadataService.deleteGame(new DeleteGameRequest(name));
         networkSecurityService.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
+        gameMetadataService.deleteGame(new DeleteGameRequest(name));
+
+        appendMessage(executionState.getInitialMessageUuid(), "All game resources have been deleted.");
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {

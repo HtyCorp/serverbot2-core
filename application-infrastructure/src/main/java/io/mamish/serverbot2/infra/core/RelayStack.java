@@ -67,8 +67,8 @@ public class RelayStack extends Stack {
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "DiscordRelayTask")
                 .compatibility(Compatibility.FARGATE)
-                .cpu("512")
-                .memoryMiB("1024") // Note this has specific allowed values in Fargate: not arbitrary
+                .cpu("256")
+                .memoryMiB("512") // Note this has specific allowed values in Fargate: not arbitrary
                 .taskRole(taskRole)
                 .build();
 

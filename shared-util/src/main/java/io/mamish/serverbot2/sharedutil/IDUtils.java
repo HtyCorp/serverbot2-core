@@ -3,6 +3,7 @@ package io.mamish.serverbot2.sharedutil;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class IDUtils {
@@ -39,6 +40,11 @@ public class IDUtils {
 
     public static String randomUUIDJoined() {
         return UUID.randomUUID().toString().replaceAll("-","");
+    }
+
+    public static String randomIdShort() {
+        int randomInt = ThreadLocalRandom.current().nextInt(0xffffff);
+        return String.format("%06x", randomInt);
     }
 
     public static String epochSeconds() {

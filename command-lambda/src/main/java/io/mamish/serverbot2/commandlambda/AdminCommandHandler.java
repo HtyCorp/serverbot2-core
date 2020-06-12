@@ -82,6 +82,31 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     }
 
     @Override
+    public ProcessUserCommandResponse onCommandDeleteGame(CommandDeleteGame commandDeleteGame) {
+        String name = commandDeleteGame.getGameName();
+
+        DescribeGameResponse response = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+        if (!response.isPresent()) {
+            throw new RequestValidationException("Can't delete " + name + ": no such game exists.");
+        }
+        if (response.getGame().getGameReadyState() != GameReadyState.STOPPED) {
+            throw new RequestValidationException("Can't delete " + name + ": game is currently in use.");
+        }
+
+        ExecutionState state = sfnRunner.startExecution(
+                Machines.DeleteGame,
+                name,
+                commandDeleteGame.getContext().getMessageId(),
+                commandDeleteGame.getContext().getSenderId()
+        );
+
+        return new ProcessUserCommandResponse(
+                "Deleting " + name +"...",
+                state.getInitialMessageUuid()
+        );
+    }
+
+    @Override
     public ProcessUserCommandResponse onCommandOpenPort(CommandOpenPort commandOpenPort) {
         return runPortModifyCommand(commandOpenPort.getGameName(), commandOpenPort.getPortRange(), true);
     }
