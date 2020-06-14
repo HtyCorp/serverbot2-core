@@ -8,5 +8,6 @@ public interface INetworkSecurity {
     GenerateIpAuthUrlResponse generateIpAuthUrl(GenerateIpAuthUrlRequest request);
     AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request);
     DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroupRequest request);
+    GetNetworkUsageResponse getNetworkUsage(GetNetworkUsageRequest getNetworkUsageRequest);
 
 }

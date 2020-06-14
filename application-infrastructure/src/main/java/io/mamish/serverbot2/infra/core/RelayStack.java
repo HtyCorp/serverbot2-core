@@ -86,7 +86,7 @@ public class RelayStack extends Stack {
         ContainerDefinition relayContainer = taskDefinition.addContainer("DiscordRelayContainer", ContainerDefinitionOptions.builder()
                 .essential(true)
                 .image(ContainerImage.fromAsset(dockerDirPath))
-                .memoryReservationMiB(512)
+                .memoryReservationMiB(256)
                 .logging(relayLogsDriver)
                 .build());
 

@@ -4,19 +4,21 @@ import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
 import software.amazon.awscdk.services.certificatemanager.ValidationMethod;
-import software.amazon.awscdk.services.ec2.SubnetConfiguration;
-import software.amazon.awscdk.services.ec2.SubnetType;
-import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.kms.Key;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
 
 import java.util.List;
+import java.util.Map;
 
 public class CommonStack extends Stack {
 
@@ -61,9 +63,20 @@ public class CommonStack extends Stack {
                 .subnetConfiguration(singlePublicSubnet)
                 .build();
 
+        LogGroup appFlowLogsGroup = LogGroup.Builder.create(this, "AppFlowLogsGroup")
+                .logGroupName(CommonConfig.APPLICATION_VPC_FLOW_LOGS_GROUP_NAME)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .retention(RetentionDays.ONE_WEEK)
+                .build();
+
+        FlowLogOptions appFlowLogsOptions = FlowLogOptions.builder()
+                .trafficType(FlowLogTrafficType.ALL)
+                .destination(FlowLogDestination.toCloudWatchLogs(appFlowLogsGroup))
+                .build();
+
         applicationVpc = Vpc.Builder.create(this, "ApplicationVpc")
                 .cidr(CommonConfig.APPLICATION_VPC_CIDR)
-                //.flowLogs() // TODO: for idle connection tracker
+                .flowLogs(Map.of("default", appFlowLogsOptions))
                 .maxAzs(3)
                 .subnetConfiguration(singlePublicSubnet)
                 .build();

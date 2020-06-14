@@ -72,7 +72,7 @@ public class ServiceHandler implements IAppDaemon {
 
         logger.debug("runProcess: parsing game config file");
 
-        FileReader gameConfigFile = new FileReader(configDir.resolve("game.cfg").toFile());
+        FileReader gameConfigFile = new FileReader(configDir.resolve("launch.cfg").toFile());
         GameConfigFile config = gson.fromJson(gameConfigFile, GameConfigFile.class);
 
         if (config.getLaunchCommand() == null || config.getLaunchCommand().isEmpty()) {

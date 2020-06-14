@@ -16,6 +16,7 @@ public class CommonConfig {
 
     public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";
     public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "app-vpc-id");
+    public static final String APPLICATION_VPC_FLOW_LOGS_GROUP_NAME = "serverbot2/app/flowlogs";
 
     public static final String APEX_DOMAIN_NAME = "dev.mamish.io";
     public static final Parameter HOSTED_ZONE_ID = new Parameter(PATH, "hosted-zone-id");

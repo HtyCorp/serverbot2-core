@@ -18,7 +18,8 @@ public class NetSecStack extends Stack {
         super(parent, id, props);
 
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
-            Policies.EC2_FULL_ACCESS
+                Policies.EC2_FULL_ACCESS,
+                Policies.LOGS_FULL_ACCESS
         )).build();
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
 

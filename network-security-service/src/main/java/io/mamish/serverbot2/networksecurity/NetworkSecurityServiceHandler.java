@@ -4,6 +4,8 @@ import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.*;
+import io.mamish.serverbot2.networksecurity.netanalysis.CloudWatchFlowLogsAnalyser;
+import io.mamish.serverbot2.networksecurity.netanalysis.INetworkAnalyser;
 import io.mamish.serverbot2.networksecurity.securitygroups.Ec2GroupManager;
 import io.mamish.serverbot2.networksecurity.securitygroups.IGroupManager;
 import io.mamish.serverbot2.networksecurity.securitygroups.MockGroupManager;
@@ -27,6 +29,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     private final Crypto crypto = new Crypto();
     private final IGroupManager groupManager = chooseGroupManager();
+    private final INetworkAnalyser networkAnalyser = chooseNetworkAnalyser();
 
     public NetworkSecurityServiceHandler() {
         // Create reference group if missing. Should optimise this later to make it once-only.
@@ -160,6 +163,15 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         return groupManager.describeGroup(name);
     }
 
+    @Override
+    public GetNetworkUsageResponse getNetworkUsage(GetNetworkUsageRequest getNetworkUsageRequest) {
+        if (getNetworkUsageRequest.getWindowMinutes() < 0) {
+            throw new RequestValidationException("Analysis window time cannot be negative");
+        }
+        // TODO
+        return null;
+    }
+
     private void validateRequestedGameName(String name, boolean allowReserved) {
         Pattern NAME_REGEX = CommonConfig.APP_NAME_REGEX;
         if (!NAME_REGEX.matcher(name).matches()) {
@@ -177,6 +189,10 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         } else {
             return new Ec2GroupManager(crypto);
         }
+    }
+
+    private INetworkAnalyser chooseNetworkAnalyser() {
+        return new CloudWatchFlowLogsAnalyser();
     }
 
 }
