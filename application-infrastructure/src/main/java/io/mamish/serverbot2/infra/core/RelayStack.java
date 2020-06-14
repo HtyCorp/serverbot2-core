@@ -76,6 +76,7 @@ public class RelayStack extends Stack {
 
         LogGroup relayLogGroup = LogGroup.Builder.create(this, "DiscordRelayLogGroup")
                 .retention(RetentionDays.ONE_YEAR)
+                .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
         LogDriver relayLogsDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
                 .logGroup(relayLogGroup)
@@ -94,6 +95,7 @@ public class RelayStack extends Stack {
 
         LogGroup xrayLogGroup = LogGroup.Builder.create(this, "XrayDaemonLogGroup")
                 .retention(RetentionDays.ONE_YEAR)
+                .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
         LogDriver xrayLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
                 .logGroup(xrayLogGroup)

@@ -98,6 +98,12 @@ public class Util {
                 .build();
     }
 
+    public static void setConstructCfnRemovalPolicy(Construct construct, RemovalPolicy policy) {
+        // Ref: https://docs.aws.amazon.com/cdk/latest/guide/resources.html#resources_removal
+        CfnResource resource = (CfnResource) construct.getNode().findChild("Resource");
+        resource.applyRemovalPolicy(policy);
+    }
+
     public static String arn(Stack stack, String account, String region, String service, String resource) {
         return Arn.format(ArnComponents.builder()
                 .account(account)

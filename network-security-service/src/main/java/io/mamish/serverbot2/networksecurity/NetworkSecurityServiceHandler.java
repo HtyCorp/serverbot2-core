@@ -165,7 +165,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     @Override
     public GetNetworkUsageResponse getNetworkUsage(GetNetworkUsageRequest getNetworkUsageRequest) {
-        if (getNetworkUsageRequest.getWindowMinutes() < 0) {
+        if (getNetworkUsageRequest.getWindowSeconds() < 0) {
             throw new RequestValidationException("Analysis window time cannot be negative");
         }
         // TODO

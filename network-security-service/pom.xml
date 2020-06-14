@@ -55,6 +55,10 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>kms</artifactId>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>cloudwatchlogs</artifactId>
+        </dependency>
 
 
         <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-encryption-sdk-java -->

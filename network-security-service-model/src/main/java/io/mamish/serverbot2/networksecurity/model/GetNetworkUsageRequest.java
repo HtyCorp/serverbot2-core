@@ -11,20 +11,20 @@ public class GetNetworkUsageRequest {
     private String endpointVpcIp;
 
     @ApiArgumentInfo(order = 1, description = "Window of most recent minutes to examine")
-    private int windowMinutes;
+    private int windowSeconds;
 
     public GetNetworkUsageRequest() { }
 
-    public GetNetworkUsageRequest(String endpointVpcIp, int windowMinutes) {
+    public GetNetworkUsageRequest(String endpointVpcIp, int windowSeconds) {
         this.endpointVpcIp = endpointVpcIp;
-        this.windowMinutes = windowMinutes;
+        this.windowSeconds = windowSeconds;
     }
 
     public String getEndpointVpcIp() {
         return endpointVpcIp;
     }
 
-    public int getWindowMinutes() {
-        return windowMinutes;
+    public int getWindowSeconds() {
+        return windowSeconds;
     }
 }
