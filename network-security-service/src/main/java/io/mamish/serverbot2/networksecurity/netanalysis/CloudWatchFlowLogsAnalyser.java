@@ -68,7 +68,8 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
                 if (results == null || results.isEmpty()) {
                     logger.info("Empty results: returning a 'no-activity' final result");
-                    return new GetNetworkUsageResponse(false, -1);
+                    // Note 'null' age is just a reasonable multiple of window time
+                    return new GetNetworkUsageResponse(false, windowSeconds * 2);
                 }
 
                 // Get first result field of first result row (we know there's a field because it's part of query string)

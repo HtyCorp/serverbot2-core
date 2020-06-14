@@ -22,8 +22,12 @@ public class AppInstanceConfig {
 
     public static final Parameter ARTIFACT_BUCKET_NAME = new Parameter(PATH_PUBLIC, "deployed-artifacts-bucket");
 
+    public static final String APP_LOGS_GROUP_PREFIX = "serverbot2/app/serverlogs";
+
     public static final int APP_SHUTDOWN_TIMEOUT_SECONDS = 15;
 
-    public static final String APP_LOGS_GROUP_PREFIX = "serverbot2/app/serverlogs";
+    public static final int APP_IDLENESS_WARNING_TIME_SECONDS = 20 * 60;
+    public static final int APP_IDLENESS_SHUTDOWN_TIME_SECONDS = 30 * 60;
+
 
 }

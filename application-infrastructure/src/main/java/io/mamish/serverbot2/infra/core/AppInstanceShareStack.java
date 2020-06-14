@@ -4,6 +4,7 @@ import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -25,6 +26,9 @@ public class AppInstanceShareStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "ArtifactBucketNameParam",
                 AppInstanceConfig.ARTIFACT_BUCKET_NAME, deployedArtifactBucket.getBucketName());
 
+        // TODO: Need to come up with better permission scoping. This role is user-exposed so attack surface is
+        // considerable. Needs to be scoped in both AWS and project service terms.
+
         Role commonRole = Role.Builder.create(this, "AppInstanceCommonRole")
                 .assumedBy(new ServicePrincipal("ec2.amazonaws.com"))
                 .managedPolicies(List.of(
@@ -37,7 +41,9 @@ public class AppInstanceShareStack extends Stack {
 
         Util.addConfigPathReadPermissionToRole(this, commonRole, AppInstanceConfig.PATH_ALL);
 
-        Util.addLambdaInvokePermissionToRole(this, commonRole, GameMetadataConfig.FUNCTION_NAME);
+        Util.addLambdaInvokePermissionToRole(this, commonRole,
+                GameMetadataConfig.FUNCTION_NAME,
+                NetSecConfig.FUNCTION_NAME);
 
         CfnInstanceProfile commonInstanceProfile = CfnInstanceProfile.Builder.create(this, "AppInstanceCommonProfile")
                 .instanceProfileName(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME)
