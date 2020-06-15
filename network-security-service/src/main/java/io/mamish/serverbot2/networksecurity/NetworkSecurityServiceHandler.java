@@ -20,10 +20,14 @@ import software.amazon.awssdk.services.kms.model.KmsException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class NetworkSecurityServiceHandler implements INetworkSecurity {
+
+    private static final Pattern BASIC_IP_REGEX = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
 
     private final Logger logger = LogManager.getLogger(NetworkSecurityServiceHandler.class);
 
@@ -165,11 +169,22 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     @Override
     public GetNetworkUsageResponse getNetworkUsage(GetNetworkUsageRequest getNetworkUsageRequest) {
-        if (getNetworkUsageRequest.getWindowSeconds() < 0) {
+        String requestedEndpointIp = getNetworkUsageRequest.getEndpointVpcIp();
+        int requestedWindowSeconds = getNetworkUsageRequest.getWindowSeconds();
+
+        if (!(BASIC_IP_REGEX.matcher(requestedEndpointIp).matches())) {
+            throw new RequestValidationException("Requested endpoint IP isn't a valid IPv4 address");
+        }
+        if (requestedWindowSeconds < 0) {
             throw new RequestValidationException("Analysis window time cannot be negative");
         }
-        // TODO
-        return null;
+
+        ManagedSecurityGroup referenceGroup = groupManager.describeGroup(NetSecConfig.REFERENCE_SG_NAME);
+        List<String> authorisedIps = referenceGroup.getAllowedUsers().stream()
+                .map(DiscordUserIp::getIpAddress)
+                .collect(Collectors.toList());
+
+        return networkAnalyser.analyse(authorisedIps, requestedEndpointIp, requestedWindowSeconds);
     }
 
     private void validateRequestedGameName(String name, boolean allowReserved) {
