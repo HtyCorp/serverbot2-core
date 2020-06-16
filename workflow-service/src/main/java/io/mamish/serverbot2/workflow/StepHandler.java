@@ -2,9 +2,7 @@ package io.mamish.serverbot2.workflow;
 
 import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
 import io.mamish.serverbot2.appdaemon.model.StartAppRequest;
-import io.mamish.serverbot2.discordrelay.model.service.EditMessageRequest;
-import io.mamish.serverbot2.discordrelay.model.service.EditMode;
-import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
+import io.mamish.serverbot2.discordrelay.model.service.*;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
@@ -178,11 +176,13 @@ public class StepHandler {
 
         setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
 
-        appendMessage(executionState.getLaterMessageUuid(), "Server has been stopped.");
+        // TODO: Need to simplify 'laterMessageUuid' concept and how messages should flow.
+        // Could perhaps make the Discord stop command return no message, and have this flow send the initial message.
+        newMessage(executionState.getLaterMessageUuid(), gameMetadata.getGameName() + " has been stopped.");
     }
 
     void deleteGameResources(ExecutionState executionState) {
-        appendMessage(executionState.getInitialMessageUuid(), "Deleting game resources...");
+        newMessage(executionState.getInitialMessageUuid(), "Deleting game resources...");
 
         String name = executionState.getGameName();
         GameMetadata gameMetadata = getGameMetadata(name);
@@ -196,7 +196,7 @@ public class StepHandler {
         networkSecurityService.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
         gameMetadataService.deleteGame(new DeleteGameRequest(name));
 
-        appendMessage(executionState.getInitialMessageUuid(), "All game resources have been deleted.");
+        appendMessage(executionState.getInitialMessageUuid(), "All resources for " + name + " have been deleted.");
     }
 
     private static Collection<TagSpecification> instanceAndVolumeTags(Map<String,String> tagMap) {
@@ -229,6 +229,10 @@ public class StepHandler {
                 null,
                 taskToken
         ));
+    }
+
+    private void newMessage(String messageExternalId, String newContent) {
+        discordService.newMessage(new NewMessageRequest(newContent, messageExternalId, MessageChannel.SERVERS, null));
     }
 
     private void appendMessage(String messageExternalId, String newContent) {
