@@ -24,6 +24,11 @@
                             <key>serverbot2.version</key>
                             <value>${project.version}</value>
                         </systemProperty>
+                        <!-- https://docs.aws.amazon.com/xray-sdk-for-java/latest/javadoc/com/amazonaws/xray/strategy/ContextMissingStrategy.html -->
+                        <systemProperty>
+                            <key>com.amazonaws.xray.strategy.contextMissingStrategy</key>
+                            <value>IGNORE_ERROR</value>
+                        </systemProperty>
                     </systemProperties>
                 </configuration>
             </plugin>
