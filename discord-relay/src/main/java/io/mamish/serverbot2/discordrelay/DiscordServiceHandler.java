@@ -12,6 +12,7 @@ import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.user.User;
 
@@ -52,6 +53,7 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         String requestedUserId = newMessageRequest.getRecipientUserId();
         String requestedContent = newMessageRequest.getContent();
         String requestedExternalId = newMessageRequest.getExternalId();
+        SimpleEmbed requestedEmbed = newMessageRequest.getEmbed();
 
         if (requestedChannel != null && requestedUserId != null) {
             throw new RequestValidationException("Received NewMessageRequest with both a recipient channel and recipient user");
@@ -83,7 +85,12 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
             }
         }
 
-        Message message = channel.sendMessage(requestedContent).join();
+        Message message;
+        if (newMessageRequest.getEmbed() != null) {
+            message = channel.sendMessage(requestedContent, convertSimpleEmbed(requestedEmbed)).join();
+        } else {
+            message = channel.sendMessage(requestedContent).join();
+        }
 
         if (requestedExternalId != null) {
             messageTable.put(new DynamoMessageItem(requestedExternalId, channel.getIdAsString(),
@@ -92,6 +99,13 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
 
         return new NewMessageResponse(channel.getIdAsString(), message.getIdAsString());
 
+    }
+
+    private EmbedBuilder convertSimpleEmbed(SimpleEmbed embed) {
+        return new EmbedBuilder()
+                .setUrl(embed.getUrl())
+                .setTitle(embed.getTitle())
+                .setDescription(embed.getDescription());
     }
 
     @Override

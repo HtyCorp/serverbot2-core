@@ -19,7 +19,6 @@ import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -165,33 +164,21 @@ public class StepHandler {
     }
 
     void stopInstance(ExecutionState executionState) {
+        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
 
-        try {
-            GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
+        setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPING, null);
 
-            setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPING, null);
+        dnsRecordManager.deleteAppRecord(gameMetadata.getGameName());
+        sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+        ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
 
-            dnsRecordManager.deleteAppRecord(gameMetadata.getGameName());
-            sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
-            ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+        pollInstanceIdUntil(gameMetadata.getInstanceId(),
+                instance -> instance.state().name() == InstanceStateName.STOPPED,
+                null);
 
-            pollInstanceIdUntil(gameMetadata.getInstanceId(),
-                    instance -> instance.state().name() == InstanceStateName.STOPPED,
-                    null);
+        setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
 
-            setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
-
-            appendMessage(executionState.getLaterMessageUuid(), "Server has been stopped.");
-
-        } catch (SdkException e) {
-            logger.error("SDK exception while stopping instance", e);
-            appendMessage(executionState.getLaterMessageUuid(),
-                    "An unknown (platform) error occurred when trying to stop server host.");
-        } catch (ApiServerException e) {
-            logger.error("GMS API error when trying to stop server host.");
-            appendMessage(executionState.getLaterMessageUuid(),
-                    "An unknown (application) error occurred when trying to stop server host.");
-        }
+        appendMessage(executionState.getLaterMessageUuid(), "Server has been stopped.");
     }
 
     void deleteGameResources(ExecutionState executionState) {
@@ -245,7 +232,7 @@ public class StepHandler {
     }
 
     private void appendMessage(String messageExternalId, String newContent) {
-        discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND, true));
+        discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND));
     }
 
     private <T> T pollInstanceIdUntil(String instanceId, Predicate<Instance> condition,

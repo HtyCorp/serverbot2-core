@@ -10,6 +10,7 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.networksecurity.model.GenerateIpAuthUrlRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import org.apache.logging.log4j.LogManager;
@@ -85,21 +86,26 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
         // Send a message to the user privately before returning the standard channel message.
 
-        String welcomeMessage = "Thanks for using serverbot2. To whitelist your IP to join servers, click the following link:\n\n";
-        String urlParagraph = authUrl + "\n\n";
-        String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it replaces your last IP.\n\n";
-        String why = "(You're seeing this message because you sent an 'addip' message (ID "
-                + commandAddIp.getContext().getMessageId() + ") in the serverbot2 '"
-                + commandAddIp.getContext().getChannel().toLowerCase() + "' channel. Exposing these servers publicly "
-                + "is a security risk I'm responsible for, so only whitelisted IPs are allowed from now on.)";
+        String welcomeMessage = "Thanks for using serverbot2. To whitelist your IP to join servers, use this link.\n";
+        String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it"
+                + " replaces your last IP.\n\n";
 
-        String messageContent = welcomeMessage + urlParagraph + reassurance + why;
+        String cmdName = CommonConfig.COMMAND_SIGIL_CHARACTER + "addip";
+        String why = "(You're seeing this message because you used " + cmdName + " in a Serverbot2 channel. Exposing"
+                + " these servers publicly is a security risk, so only whitelisted IPs are allowed from now on.)";
+
+        String messageContent = welcomeMessage + reassurance + why;
+
+        SimpleEmbed authLinkEmbed = new SimpleEmbed(authUrl,
+                "Serverbot2 IP whitelist link",
+                "Click this link to automatically detect your IP address and whitelist it.");
 
         discordServiceClient.newMessage(new NewMessageRequest(
                 messageContent,
                 null,
                 null,
-                userId
+                userId,
+                authLinkEmbed
         ));
 
         return new ProcessUserCommandResponse(

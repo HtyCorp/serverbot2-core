@@ -15,6 +15,8 @@ public class NewMessageRequest {
     private MessageChannel recipientChannel;
     @ApiArgumentInfo(order = 3, description = "Discord ID of user to send message to. Mutually exclusive with `recipientChannel`")
     private String recipientUserId;
+    @ApiArgumentInfo(order = 4, description = "A simple embed object to send with the message")
+    private SimpleEmbed embed;
 
     public NewMessageRequest() {}
 
@@ -23,6 +25,14 @@ public class NewMessageRequest {
         this.externalId = externalId;
         this.recipientChannel = recipientChannel;
         this.recipientUserId = recipientUserId;
+    }
+
+    public NewMessageRequest(String content, String externalId, MessageChannel recipientChannel, String recipientUserId, SimpleEmbed embed) {
+        this.content = content;
+        this.externalId = externalId;
+        this.recipientChannel = recipientChannel;
+        this.recipientUserId = recipientUserId;
+        this.embed = embed;
     }
 
     public String getExternalId() {
@@ -39,5 +49,9 @@ public class NewMessageRequest {
 
     public String getContent() {
         return content;
+    }
+
+    public SimpleEmbed getEmbed() {
+        return embed;
     }
 }

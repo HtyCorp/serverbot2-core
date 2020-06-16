@@ -13,16 +13,13 @@ public class EditMessageRequest {
     private String externalId;
     @ApiArgumentInfo(order = 2, description = "Message edit mode: can replace all message content or append to it")
     private EditMode editMode;
-    @ApiArgumentInfo(order = 3, description = "Optional: set true to send a new message with this external ID if missing")
-    private boolean createIfMissing;
 
     public EditMessageRequest() {}
 
-    public EditMessageRequest(String content, String externalId, EditMode editMode, boolean createIfMissing) {
+    public EditMessageRequest(String content, String externalId, EditMode editMode) {
         this.content = content;
         this.externalId = externalId;
         this.editMode = editMode;
-        this.createIfMissing = createIfMissing;
     }
 
     public String getExternalId() {
@@ -31,10 +28,6 @@ public class EditMessageRequest {
 
     public EditMode getEditMode() {
         return editMode;
-    }
-
-    public boolean shouldCreateIfMissing() {
-        return createIfMissing;
     }
 
     public String getContent() {

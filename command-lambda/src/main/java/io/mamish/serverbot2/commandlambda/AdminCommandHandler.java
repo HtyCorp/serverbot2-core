@@ -4,6 +4,7 @@ import io.mamish.serverbot2.commandlambda.commands.admin.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
+import io.mamish.serverbot2.discordrelay.model.service.SimpleEmbed;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
@@ -139,12 +140,18 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         try {
             String terminalUrl = session.getSessionUrl();
+
+            String messageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
+            SimpleEmbed terminalUrlEmbed = new SimpleEmbed(terminalUrl,
+                    "Terminal login link",
+                    "Opens a terminal session for the server running " + gameName);
+
             discordServiceClient.newMessage(new NewMessageRequest(
-                    "Use this login link to connect to a server terminal for game " + gameName + ":\n\n"
-                            + terminalUrl,
+                    messageContent,
                     null,
                     null,
-                    commandTerminal.getContext().getSenderId()
+                    commandTerminal.getContext().getSenderId(),
+                    terminalUrlEmbed
             ));
             return new ProcessUserCommandResponse(
                     "A login link has been sent to your private messages.");
