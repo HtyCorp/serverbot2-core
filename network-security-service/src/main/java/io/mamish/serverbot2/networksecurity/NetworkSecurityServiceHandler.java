@@ -20,7 +20,6 @@ import software.amazon.awssdk.services.kms.model.KmsException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -109,7 +108,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         String authUrl = "https://"
                 + NetSecConfig.AUTH_SUBDOMAIN
                 + "."
-                + CommonConfig.APEX_DOMAIN_NAME
+                + CommonConfig.ROOT_DOMAIN_NAME.getValue()
                 + NetSecConfig.AUTH_PATH
                 + "?token="
                 + URLEncoder.encode(token, StandardCharsets.UTF_8);

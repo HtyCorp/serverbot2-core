@@ -51,7 +51,7 @@ public class IpAuthorizerStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(NetSecConfig.AUTH_SUBDOMAIN + "." + CommonConfig.APEX_DOMAIN_NAME)
+                .domainName(NetSecConfig.AUTH_SUBDOMAIN + "." + CommonConfig.ROOT_DOMAIN_NAME.getValue())
                 .certificate(commonStack.getWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());

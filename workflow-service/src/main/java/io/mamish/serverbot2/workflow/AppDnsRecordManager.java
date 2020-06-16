@@ -64,7 +64,7 @@ public class AppDnsRecordManager {
         }
 
         // Tested: FQDN does not require a trailing dot
-        String fqdn = IDUtils.dot(metadata.getGameName(), CommonConfig.APEX_DOMAIN_NAME);
+        String fqdn = IDUtils.dot(metadata.getGameName(), CommonConfig.ROOT_DOMAIN_NAME.getValue());
         ResourceRecord instanceIpRecord = ResourceRecord.builder().value(publicIp).build();
 
         return ResourceRecordSet.builder()
