@@ -182,8 +182,6 @@ public class StepHandler {
     }
 
     void deleteGameResources(ExecutionState executionState) {
-        newMessage(executionState.getInitialMessageUuid(), "Deleting game resources...");
-
         String name = executionState.getGameName();
         GameMetadata gameMetadata = getGameMetadata(name);
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
