@@ -31,6 +31,7 @@ public class CommonConfig {
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
     public static final int STANDARD_LAMBDA_MEMORY = 2048;
+    public static final int STANDARD_LAMBDA_TIMEOUT = 20;
 
     public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]{1,31}");
     public static final List<String> RESERVED_APP_NAMES = List.of(

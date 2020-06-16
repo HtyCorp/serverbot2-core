@@ -47,42 +47,41 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
         try {
             AWSXRay.beginSubsegment("PollQueryResult");
-            synchronized (this) {
-                List<List<ResultField>> results = null;
-                QueryStatus status = QueryStatus.SCHEDULED;
-                while (Utils.equalsAny(status, QueryStatus.SCHEDULED, QueryStatus.RUNNING)) {
-                    try {
-                        wait(QUERY_CHECK_INTERVAL_MILLIS);
-                    } catch (InterruptedException e) {
-                        logger.error("Unexpected thread interrupt while polling for query result", e);
-                    }
 
-                    GetQueryResultsResponse response = logsClient.getQueryResults(r -> r.queryId(queryId));
-                    status = response.status();
-                    results = response.results();
+            List<List<ResultField>> results = null;
+            QueryStatus status = QueryStatus.SCHEDULED;
+            while (Utils.equalsAny(status, QueryStatus.SCHEDULED, QueryStatus.RUNNING)) {
+                try {
+                    Thread.sleep(QUERY_CHECK_INTERVAL_MILLIS);
+                } catch (InterruptedException e) {
+                    logger.error("Unexpected thread interrupt while polling for query result", e);
                 }
 
-                if (status != QueryStatus.COMPLETE) {
-                    throw new RequestHandlingException("Non-success status (" + status + ") from Insights query");
-                }
-
-                if (results == null || results.isEmpty()) {
-                    logger.info("Empty results: returning a 'no-activity' final result");
-                    // Note 'null' age is just a reasonable multiple of window time
-                    return new GetNetworkUsageResponse(false, windowSeconds * 2);
-                }
-
-                // Get first result field of first result row (we know there's a field because it's part of query string)
-                ResultField timestampResult = results.get(0).get(0);
-                if (!timestampResult.field().equals("latestTimeUnix")) {
-                    throw new RequestHandlingException("Unexpected field names in query response");
-                }
-                long latestTimeUnix = Long.parseLong(timestampResult.value());
-                int latestActivityAgeSeconds = (int) Instant.ofEpochMilli(latestTimeUnix).until(now, ChronoUnit.SECONDS);
-
-                return new GetNetworkUsageResponse(true, latestActivityAgeSeconds);
-
+                GetQueryResultsResponse response = logsClient.getQueryResults(r -> r.queryId(queryId));
+                status = response.status();
+                results = response.results();
             }
+
+            if (status != QueryStatus.COMPLETE) {
+                throw new RequestHandlingException("Non-success status (" + status + ") from Insights query");
+            }
+
+            if (results == null || results.isEmpty()) {
+                logger.info("Empty results: returning a 'no-activity' final result");
+                // Note 'null' age is just a reasonable multiple of window time
+                return new GetNetworkUsageResponse(false, windowSeconds * 2);
+            }
+
+            // Get first result field of first result row (we know there's a field because it's part of query string)
+            ResultField timestampResult = results.get(0).get(0);
+            if (!timestampResult.field().equals("latestTimeUnix")) {
+                throw new RequestHandlingException("Unexpected field names in query response");
+            }
+            long latestTimeUnix = Long.parseLong(timestampResult.value());
+            int latestActivityAgeSeconds = (int) Instant.ofEpochMilli(latestTimeUnix).until(now, ChronoUnit.SECONDS);
+
+            return new GetNetworkUsageResponse(true, latestActivityAgeSeconds);
+
         } catch (RuntimeException e) {
             AWSXRay.getTraceEntity().addException(e);
             throw e;

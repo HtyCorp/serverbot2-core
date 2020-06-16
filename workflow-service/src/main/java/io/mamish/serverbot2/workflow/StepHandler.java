@@ -27,6 +27,8 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class StepHandler {
@@ -120,29 +122,36 @@ public class StepHandler {
     }
 
     void waitInstanceReady(ExecutionState executionState) {
-        setGameStateOrTaskToken(executionState.getGameName(), null, executionState.getTaskToken());
+        String name = executionState.getGameName();
+
+        setGameStateOrTaskToken(name, null, executionState.getTaskToken());
         appendMessage(executionState.getInitialMessageUuid(), "Waiting for server host startup...");
+
+        GameMetadata gameMetadata = getGameMetadata(name);
+        String publicIp = pollInstanceIdUntil(gameMetadata.getInstanceId(),
+                instance -> instance.publicIpAddress() != null,
+                Instance::publicIpAddress);
+        dnsRecordManager.updateAppRecord(name, publicIp);
     }
 
     void instanceReadyNotify(ExecutionState executionState) {
-        GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
-        String location = dnsRecordManager.updateAppRecordAndGetLocationString(gameMetadata);
+        String dnsLocation = dnsRecordManager.getLocationString(executionState.getGameName());
 
         appendMessage(executionState.getInitialMessageUuid(),
-                "Server host is up at " + location + ".\nAutomated install is not yet available - use"
+                "Server host is up at " + dnsLocation + ".\nAutomated install is not yet available - use"
                 + " !terminal to install application software through SSH session.");
     }
 
     void instanceReadyStartServer(ExecutionState executionState) {
         GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
-        String location = dnsRecordManager.updateAppRecordAndGetLocationString(gameMetadata);
         String appDaemonQueueName = gameMetadata.getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
+        String dnsLocation = dnsRecordManager.getLocationString(gameMetadata.getGameName());
         try {
             appDaemonClient.startApp(new StartAppRequest());
             logger.info("Successful StartApp call to app daemon");
             appendMessage(executionState.getInitialMessageUuid(),
-                    "Started game server at " + location +".\nFor games with long load times (e.g."
+                    "Started game server at " + dnsLocation +".\nFor games with long load times (e.g."
                     + " Minecraft), it might be a few minutes before you can connect.\n If your IP address isn't yet"
                     + " whitelisted to join, use !addip to whitelist it.");
         } catch (ApiServerException e) {
@@ -156,12 +165,24 @@ public class StepHandler {
     }
 
     void stopInstance(ExecutionState executionState) {
+
         try {
             GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
-            dnsRecordManager.deleteAppRecord(gameMetadata);
-            ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+
+            setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPING, null);
+
+            dnsRecordManager.deleteAppRecord(gameMetadata.getGameName());
             sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+            ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
+
+            pollInstanceIdUntil(gameMetadata.getInstanceId(),
+                    instance -> instance.state().name() == InstanceStateName.STOPPED,
+                    null);
+
             setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
+
+            appendMessage(executionState.getLaterMessageUuid(), "Server has been stopped.");
+
         } catch (SdkException e) {
             logger.error("SDK exception while stopping instance", e);
             appendMessage(executionState.getLaterMessageUuid(),
@@ -180,6 +201,11 @@ public class StepHandler {
         GameMetadata gameMetadata = getGameMetadata(name);
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
+
+        pollInstanceIdUntil(gameMetadata.getInstanceId(),
+                instance -> instance.state().name() == InstanceStateName.TERMINATED,
+                null);
+
         networkSecurityService.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
         gameMetadataService.deleteGame(new DeleteGameRequest(name));
 
@@ -219,7 +245,42 @@ public class StepHandler {
     }
 
     private void appendMessage(String messageExternalId, String newContent) {
-        discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND, false));
+        discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND, true));
+    }
+
+    private <T> T pollInstanceIdUntil(String instanceId, Predicate<Instance> condition,
+                                                   Function<Instance,T> mapper) {
+
+        Instance instance;
+
+        while (true) {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                logger.error("Unexpected thread interrupt while polling EC2 instance condition", e);
+                Thread.currentThread().interrupt();
+            }
+
+            logger.debug("Condition poll: describing EC2 instance");
+
+            // Since this class is the only thing calling this and will have recently created/deleted/changed the
+            // instance it's polling, reasonable to assume this won't ever fail due to instance-not-found
+            instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
+                    .reservations().get(0).instances().get(0);
+            if (condition.test(instance)) {
+                logger.debug("Condition poll: condition satisfied, exiting loop");
+                break;
+            }
+        }
+
+        if (mapper == null) {
+            logger.debug("Condition poll: no map function provided, returning null");
+            return null;
+        } else {
+            logger.debug("Condition poll: getting result data and returning");
+            return mapper.apply(instance);
+        }
+
     }
 
 }

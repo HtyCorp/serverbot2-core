@@ -47,6 +47,7 @@ public class WorkflowsStack extends Stack {
 
         Function taskFunction = Util.standardJavaFunction(this, "WorkflowFunction",
                 "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler", taskRole)
+                .timeout(Duration.seconds(WorkflowsConfig.STEP_LAMBDA_TIMEOUT_SECONDS))
                 .build();
 
         final long TIMEOUT_READY = WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS;

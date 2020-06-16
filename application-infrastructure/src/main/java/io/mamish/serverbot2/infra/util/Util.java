@@ -66,7 +66,7 @@ public class Util {
                 .handler(handler)
                 .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY)
                 .tracing(Tracing.ACTIVE)
-                .timeout(Duration.seconds(15));
+                .timeout(Duration.seconds(CommonConfig.STANDARD_LAMBDA_TIMEOUT));
     }
 
     public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler, IRole role) {
