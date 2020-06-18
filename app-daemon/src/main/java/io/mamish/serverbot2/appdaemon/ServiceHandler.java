@@ -5,6 +5,7 @@ import io.mamish.serverbot2.appdaemon.model.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
+import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,6 +13,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ServiceHandler implements IAppDaemon {
@@ -80,15 +82,23 @@ public class ServiceHandler implements IAppDaemon {
             throw new RequestHandlingException("Missing launch command in game config file");
         }
 
+        List<String> modifiedCommand = config.getLaunchCommand();
+        if (config.isRelativePath()) {
+            logger.debug("Launch config is a relative path: generating absolute path for process builder");
+            String absoluteCommand = gameDir.resolve(modifiedCommand.get(0)).toString();
+            modifiedCommand.set(0, absoluteCommand);
+            logger.debug("Replaced command with absolute variant '" + absoluteCommand + "'");
+        }
+
         logger.debug("runProcess: building process");
         ProcessBuilder processBuilder = new ProcessBuilder()
                 .directory(gameDir.toFile())
-                .command(config.getLaunchCommand());
+                .command(modifiedCommand);
 
         if (config.getEnvironment() == null || config.getEnvironment().isEmpty()) {
             logger.info("runProcess: no environment specified, using unmodified inherited env");
         } else {
-            logger.info(() -> "runProcess: inserting requested env values:\n" + gson.toJson(config.getEnvironment()));
+            LogUtils.debugInfo(logger, "runProcess: inserting requested env values:", config.getEnvironment());
             processBuilder.environment().putAll(config.getEnvironment());
         }
 
