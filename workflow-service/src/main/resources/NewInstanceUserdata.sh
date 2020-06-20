@@ -43,6 +43,7 @@ echo '[SB2INIT] Creating launch config example...'
 cat > config/launch.cfg << "EOF"
 {
     "launchCommand": ["python3", "-m", "http.server", "8080"],
+    "relativePath": "false",
     "environment": {
         "PYTHONUNBUFFERED": "true"
     }

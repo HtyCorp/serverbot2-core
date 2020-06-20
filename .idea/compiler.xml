@@ -27,8 +27,5 @@
         <module name="ip-authorizer" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="service-mocks" target="11" />
-    </bytecodeTargetLevel>
   </component>
 </project>
