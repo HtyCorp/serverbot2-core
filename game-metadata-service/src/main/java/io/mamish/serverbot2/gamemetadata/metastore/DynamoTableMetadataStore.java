@@ -77,9 +77,15 @@ public class DynamoTableMetadataStore implements IMetadataStore {
         // Refs:
         // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html
         // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.OperatorsAndFunctions.html
+
+        // Possible SDK bug in DynamoDbTable.deleteItem requires optional attributes to be specified. The expression
+        // name otherwise wouldn't be required.
+        // Tracking: https://github.com/aws/aws-sdk-java-v2/issues/1913
+
         String operator = (inStoppedState) ? "=" : "<>";
         return Expression.builder()
-                .expression("gameReadyState "+operator+" :stopped")
+                .expression("#state "+operator+" :stopped")
+                .putExpressionName("#state", "gameReadyState")
                 .putExpressionValue(":stopped", mkString(GameReadyState.STOPPED))
                 .build();
     }
