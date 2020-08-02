@@ -85,6 +85,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     private Map<String,String> noCacheHeaders() {
         // Ref: https://stackoverflow.com/questions/49547/how-do-we-control-web-page-caching-across-all-browsers
         return Map.of(
+            "Content-Type", "text/plain; charset=UTF-8",
             "Cache-Control", "no-cache, no-store, must-revalidate",
             "Pragma", "no-cache",
             "Expires", "0"

@@ -16,7 +16,6 @@ import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
-import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -35,11 +34,11 @@ public class AppDaemon {
     }
 
     private static final long HEARTBEAT_INTERVAL_SECONDS = (int) (WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS / 2.5);
-    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 5 * 60;
+    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 2 * 60;
 
     private final String gameName = GameMetadataFetcher.initial().getGameName();
     private final Instant daemonStartTime = Instant.now();
-    private boolean idleWarningIssued = false;
+    private IdleState idleState = IdleState.ACTIVE_USE;
 
     private final Logger logger = LogManager.getLogger(AppDaemon.class);
     private final SfnClient sfnClient = SfnClient.create();
@@ -88,63 +87,81 @@ public class AppDaemon {
     private void checkIdleness() {
 
         // Short circuit: don't bother checking if instance was too recently started to breach time limit
-
-        Instant now = Instant.now();
-        int secondsSinceStart = (int) daemonStartTime.until(now, ChronoUnit.SECONDS);
-
+        int secondsSinceStart = (int) daemonStartTime.until(Instant.now(), ChronoUnit.SECONDS);
         if (secondsSinceStart < AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS) {
             logger.info("Daemon uptime is less than minimum warning time - skipping idleness check");
             return;
         }
 
         // Now actually get the usage and issue warnings/shutdowns
-        // Need to give users at least one warning in all cases: if no warning yet issued, don't do shutdown yet
 
-        if (!idleWarningIssued) {
-            if (hasNetworkActivityInWindow(AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS)) {
-
-                idleWarningIssued = false;
-
-            } else {
-
-                discordServiceClient.newMessage(new NewMessageRequest(
-                        gameName + " is idle (no connections) and will shut down soon.",
-                        null, MessageChannel.SERVERS, null
-                ));
-                idleWarningIssued = true;
-
-            }
+        GetNetworkUsageResponse usage = networkSecurityServiceClient.getNetworkUsage(new GetNetworkUsageRequest(
+                InstanceMetadata.fetch().getPrivateIp(), AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS
+        ));
+        if (usage.hasAnyActivity()) {
+            logger.info("Idle check: last activity was " + usage.getLatestActivityAgeSeconds() + " seconds ago");
         } else {
-            if (hasNetworkActivityInWindow(AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS)) {
+            logger.info("Idle check: no recent usage within shutdown window");
+        }
 
-                idleWarningIssued = false;
+        // Internal state machine: users always get at least one warning before shutdown is committed
+        // States: ACTIVE_USE <---> WARNING_ISSUED ----> SHUTDOWN_STARTED
 
-            } else {
-
-                discordServiceClient.newMessage(new NewMessageRequest(
-                        gameName + " is idle (no connections) and is shutting down now.",
-                        null, MessageChannel.SERVERS, null
-                ));
-
-                GameMetadata gameMetadata = GameMetadataFetcher.fetch();
-                if (gameMetadata.getGameReadyState() == GameReadyState.RUNNING) {
-                    logger.info("Instance is idle and game is in running state - sending task token to shut down");
-                    sfnClient.sendTaskSuccess(r -> r.taskToken(gameMetadata.getTaskCompletionToken()).output("{}"));
-                } else {
-                    logger.error("Instance is idle but game is in unknown status - not attempting Sfn call");
+        switch(idleState) {
+            case ACTIVE_USE:
+                if (!hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS)) {
+                    logger.info("Idle check: issuing idleness warning");
+                    idleState = IdleState.WARNING_ISSUED;
+                    sendIdlenessWarning();
                 }
+                break;
 
-            }
+            case WARNING_ISSUED:
+                if (hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS)) {
+                    logger.info("Idle check: new recent activity, leaving warning state");
+                    idleState = IdleState.ACTIVE_USE;
+                } else if (!hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS)) {
+                    logger.info("Idle check: shutdown window breached, signalling shutdown");
+                    idleState = IdleState.SHUTDOWN_STARTED;
+                    sendIdleShutdownNotice();
+                    signalShutdownToSfn();
+                }
+                break;
+
+            case SHUTDOWN_STARTED:
+                logger.info("Idle check: still in shutdown state, nothing to do");
+                break;
+
         }
 
     }
 
-    private boolean hasNetworkActivityInWindow(int timeLimitSeconds) {
-        GetNetworkUsageResponse response = networkSecurityServiceClient.getNetworkUsage(new GetNetworkUsageRequest(
-                InstanceMetadata.fetch().getPrivateIp(), (int) (timeLimitSeconds * 1.5)
+    private boolean hasRecentActivity(GetNetworkUsageResponse usage, int timeSeconds) {
+        return usage.hasAnyActivity() && usage.getLatestActivityAgeSeconds() < timeSeconds;
+    }
+
+    private void sendIdlenessWarning() {
+        discordServiceClient.newMessage(new NewMessageRequest(
+                gameName + " is idle (no connections) and will shut down soon.",
+                null, MessageChannel.SERVERS, null
         ));
-        LogUtils.debugInfo(logger, "Network activity stats:", response);
-        return response.hasAnyActivity() && response.getLatestActivityAgeSeconds() < timeLimitSeconds;
+    }
+
+    private void sendIdleShutdownNotice() {
+        discordServiceClient.newMessage(new NewMessageRequest(
+                gameName + " is idle and shutting down now.",
+                null, MessageChannel.SERVERS, null
+        ));
+    }
+
+    private void signalShutdownToSfn() {
+        GameMetadata gameMetadata = GameMetadataFetcher.fetch();
+        if (gameMetadata.getGameReadyState() == GameReadyState.RUNNING) {
+            logger.info("Instance is idle and game is in running state - sending task token to shut down");
+            sfnClient.sendTaskSuccess(r -> r.taskToken(gameMetadata.getTaskCompletionToken()).output("{}"));
+        } else {
+            logger.error("Instance is idle but game is in unknown status - not attempting Sfn call");
+        }
     }
 
 }

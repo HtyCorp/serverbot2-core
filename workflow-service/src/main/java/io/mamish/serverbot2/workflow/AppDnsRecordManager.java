@@ -21,8 +21,9 @@ public class AppDnsRecordManager {
     public String getLocationString(String name) {
         ResourceRecordSet recordSet = lookupResourceRecord(name);
         String fqdn = recordSet.name();
+        String fqdnNoTrailingDot = fqdn.substring(0, fqdn.length()-1);
         String address = recordSet.resourceRecords().get(0).value();
-        return fqdn + " (" + address + ")";
+        return "'" + fqdnNoTrailingDot + "' (" + address + ")";
     }
 
     public void updateAppRecord(String name, String address) {

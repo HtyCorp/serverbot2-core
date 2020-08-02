@@ -122,7 +122,7 @@ public class StepHandler {
         String name = executionState.getGameName();
 
         setGameStateOrTaskToken(name, null, executionState.getTaskToken());
-        appendMessage(executionState.getInitialMessageUuid(), "Waiting for server host startup...");
+        appendMessage(executionState.getInitialMessageUuid(), "Waiting for host startup...");
 
         GameMetadata gameMetadata = getGameMetadata(name);
         String publicIp = pollInstanceIdUntil(gameMetadata.getInstanceId(),
@@ -148,9 +148,9 @@ public class StepHandler {
             appDaemonClient.startApp(new StartAppRequest());
             logger.info("Successful StartApp call to app daemon");
             appendMessage(executionState.getInitialMessageUuid(),
-                    "Started game server at " + dnsLocation +".\nFor games with long load times (e.g."
-                    + " Minecraft), it might be a few minutes before you can connect.\n If your IP address isn't yet"
-                    + " whitelisted to join, use !addip to whitelist it.");
+                    "Started at " + dnsLocation +".\nIf you're unable to connect:\n"
+                    + " * Make sure your IP address is whitelisted (use '!addip')\n"
+                    + " * For games with long load times, wait a few minutes and try again.");
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);
         }

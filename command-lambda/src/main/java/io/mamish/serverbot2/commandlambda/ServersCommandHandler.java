@@ -27,18 +27,12 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
     private final Logger logger = LogManager.getLogger(ServersCommandHandler.class);
 
     private final IGameMetadataService gameMetadataServiceClient;
-    private final INetworkSecurity networkSecurityServiceClient;
-    private final IDiscordService discordServiceClient;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
     public ServersCommandHandler() {
         logger.trace("Building GMS client");
         gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Building NetSec client");
-        networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-        logger.trace("Building DiscordRelay client");
-        discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
         logger.trace("Finished constructor");
     }
 
