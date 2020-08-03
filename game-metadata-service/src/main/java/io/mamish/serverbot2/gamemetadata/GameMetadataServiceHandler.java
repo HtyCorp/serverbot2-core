@@ -107,14 +107,12 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         if (item == null) {
             throw new RequestValidationException("No game '" + name + "' present in table");
         }
-        if (item.getGameReadyState().equals(GameReadyState.STOPPED)) {
-            throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
-        }
 
         // Field changes are implemented in GameMetadataBean to reduce chance of missing fields accidentally.
         item.updateFromApiUpdateRequest(request);
 
-        if (request.getBypassStateCheck()) {
+        // Boolean compare to also handle null case
+        if (Boolean.TRUE.equals(request.getBypassStateCheck())) {
             store.update(item);
         } else {
             try {
