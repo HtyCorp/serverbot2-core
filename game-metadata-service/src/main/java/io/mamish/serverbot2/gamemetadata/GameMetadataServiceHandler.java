@@ -114,10 +114,14 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
         // Field changes are implemented in GameMetadataBean to reduce chance of missing fields accidentally.
         item.updateFromApiUpdateRequest(request);
 
-        try {
-            store.updateIfStopped(item, false);
-        } catch (StoreConditionException e) {
-            throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
+        if (request.getBypassStateCheck()) {
+            store.update(item);
+        } else {
+            try {
+                store.updateIfStopped(item, false);
+            } catch (StoreConditionException e) {
+                throw new RequestHandlingException(ERR_MSG_GAME_LOCKED);
+            }
         }
 
         GameMetadata model = item.toModel();
