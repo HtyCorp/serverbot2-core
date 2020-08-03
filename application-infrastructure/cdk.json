@@ -1,4 +1,5 @@
 {
   "app": "mvn -e -q exec:java",
-  "output": "target/cdk-assembly"
+  "output": "target/cdk-assembly",
+  "@aws-cdk/core:newStyleStackSynthesis": "true"
 }
