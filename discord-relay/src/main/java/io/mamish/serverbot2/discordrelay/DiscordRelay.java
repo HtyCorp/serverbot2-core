@@ -33,13 +33,15 @@ public class DiscordRelay {
         new DiscordRelay();
     }
 
-    Logger logger = LogManager.getLogger(DiscordRelay.class);
+    private final Logger logger = LogManager.getLogger(DiscordRelay.class);
 
+    private final CommandArgParser commandArgParser;
     private final ChannelMap channelMap;
     private final ICommandService commandServiceClient;
     private final DynamoMessageTable messageTable;
 
     public DiscordRelay() {
+        commandArgParser = new CommandArgParser();
         commandServiceClient = ApiClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
         String apiToken = DiscordConfig.API_TOKEN.getValue();
         DiscordApi discordApi = new DiscordApiBuilder().setToken(apiToken).login().join();
@@ -91,7 +93,8 @@ public class DiscordRelay {
             return;
         }
 
-        List<String> words = Arrays.asList(content.substring(SIGIL.length()).split("\\s+"));
+        String rawInput = content.substring(SIGIL.length()); // Take everything after sigil
+        List<String> words = commandArgParser.parseArgs(rawInput);
         if (words.size() < 1 || words.get(0).length() == 0) {
             logIgnoreMessageReason(receivedMessage,"no command immediately after sigil character");
             return;
