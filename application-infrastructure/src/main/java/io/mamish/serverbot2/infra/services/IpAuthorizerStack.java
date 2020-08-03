@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -7,7 +7,6 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.apigateway.DomainNameOptions;
 import software.amazon.awscdk.services.apigateway.EndpointConfiguration;
 import software.amazon.awscdk.services.apigateway.EndpointType;
@@ -22,8 +21,8 @@ import java.util.List;
 
 public class IpAuthorizerStack extends Stack {
 
-    public IpAuthorizerStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
-        super(parent, id, props);
+    public IpAuthorizerStack(Construct parent, String id, CommonStack commonStack) {
+        super(parent, id);
 
         // Define function and associated role
 

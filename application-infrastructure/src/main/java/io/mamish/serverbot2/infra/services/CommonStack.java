@@ -1,20 +1,21 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.DeploymentEnv;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
+import software.amazon.awscdk.services.certificatemanager.CertificateValidation;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
-import software.amazon.awscdk.services.certificatemanager.ValidationMethod;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.HostedZone;
-import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
 import software.amazon.awscdk.services.route53.IHostedZone;
 
 import java.util.List;
@@ -48,8 +49,30 @@ public class CommonStack extends Stack {
         return netSecKmsKey;
     }
 
-    public CommonStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public CommonStack(Construct parent, String id, DeploymentEnv env) {
+        super(parent, id);
+
+        Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
+                DiscordConfig.API_TOKEN, env.getDiscordApiToken());
+
+        Util.instantiateConfigSsmParameter(this, "PersistentBucketParam",
+                AppInstanceConfig.ARTIFACT_BUCKET_NAME, env.getPersistentArtifactBucket());
+        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParam",
+                CommonConfig.HOSTED_ZONE_ID, env.getRoute53ZoneId());
+        Util.instantiateConfigSsmParameter(this, "DomainNameParam",
+                CommonConfig.ROOT_DOMAIN_NAME, env.getDomainName());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdWelcomeParam",
+                DiscordConfig.CHANNEL_ID_WELCOME, env.getDiscordRelayChannelIdWelcome());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdMainParam",
+                DiscordConfig.CHANNEL_ID_SERVERS, env.getDiscordRelayChannelIdMain());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdAdminParam",
+                DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdDebugParam",
+                DiscordConfig.CHANNEL_ID_DEBUG, env.getDiscordRelayChannelIdDebug());
+        Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
+                DiscordConfig.CHANNEL_ROLE_SERVERS, env.getDiscordRelayRoleIdMain());
+        Util.instantiateConfigSsmParameter(this, "RoleIdDebugParam",
+                DiscordConfig.CHANNEL_ROLE_DEBUG, env.getDiscordRelayRoleIdDebug());
 
         List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
                 .name("main")
@@ -86,16 +109,10 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
                         CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId());
 
-        HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()
-                .domainName(CommonConfig.ROOT_DOMAIN_NAME.getValue())
-                .build();
-        apexHostedZone = HostedZone.fromLookup(this, "ApexHostedZone", existingZoneLookup);
-
-        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParameter",
-                CommonConfig.HOSTED_ZONE_ID, apexHostedZone.getHostedZoneId());
+        apexHostedZone = HostedZone.fromHostedZoneId(this, "ApexHostedZone", env.getRoute53ZoneId());
 
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
-                .validationMethod(ValidationMethod.DNS)
+                .validation(CertificateValidation.fromDns(apexHostedZone))
                 .domainName("*."+CommonConfig.ROOT_DOMAIN_NAME.getValue())
                 .hostedZone(apexHostedZone)
                 .build();

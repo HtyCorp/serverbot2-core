@@ -18,7 +18,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>io.mamish.serverbot2.infra.app.ServerbotFullApp</mainClass>
+                    <mainClass>io.mamish.serverbot2.infra.deploy.Main</mainClass>
                     <systemProperties>
                         <systemProperty>
                             <key>serverbot2.version</key>
@@ -60,6 +60,11 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>cdk-pipelines</artifactId>
+            <version>${awscdk.version}</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awscdk</groupId>

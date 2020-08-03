@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -7,7 +7,6 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
@@ -17,8 +16,8 @@ import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public AppInstanceShareStack(Construct parent, String id) {
+        super(parent, id);
 
         Bucket deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
                 .build();

@@ -24,10 +24,6 @@ public class CommonConfig {
 
     public static final String COMMAND_SIGIL_CHARACTER = "!";
 
-    // See if we can get away with not including these. Would be nice to stay dynamic.
-//    public static final Region REGION = Region.AP_SOUTHEAST_2;
-//    public static final String REGION_NAME = "ap-southeast-2";
-
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
     public static final int STANDARD_LAMBDA_MEMORY = 2048;

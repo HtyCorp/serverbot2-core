@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -24,8 +24,8 @@ import java.util.Map;
 
 public class WorkflowsStack extends Stack {
 
-    public WorkflowsStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public WorkflowsStack(Construct parent, String id) {
+        super(parent, id);
 
         Role taskRole = Util.standardLambdaRole(this, "WorkflowFunctionRole", List.of(
                 Policies.EC2_FULL_ACCESS,
