@@ -56,6 +56,15 @@ public class DynamoTableMetadataStore implements IMetadataStore {
     }
 
     @Override
+    public void update(GameMetadataBean item) {
+        try {
+            table.updateItem(r -> r.item(item).ignoreNulls(true));
+        } catch (ConditionalCheckFailedException e) {
+            throw new StoreConditionException(e);
+        }
+    }
+
+    @Override
     public void updateIfStopped(GameMetadataBean item, boolean isStopped) {
         try {
             table.updateItem(r -> r.item(item).ignoreNulls(true).conditionExpression(conditionIsInStoppedState(isStopped)));

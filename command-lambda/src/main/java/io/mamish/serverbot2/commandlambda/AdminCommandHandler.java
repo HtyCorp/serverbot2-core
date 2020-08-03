@@ -9,10 +9,7 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
-import io.mamish.serverbot2.gamemetadata.model.DescribeGameRequest;
-import io.mamish.serverbot2.gamemetadata.model.DescribeGameResponse;
-import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
-import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
+import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ModifyPortsRequest;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
@@ -80,6 +77,29 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                 "Creating new game '" + name + "'...",
                 state.getInitialMessageUuid()
         );
+    }
+
+    @Override
+    public ProcessUserCommandResponse onCommandUpdateDescription(CommandUpdateDescription commandUpdateDescription) {
+        String game = commandUpdateDescription.getGameName();
+        String newDescription = commandUpdateDescription.getNewDescription();
+
+        try {
+            UpdateGameResponse response = gameMetadataServiceClient.updateGame(new UpdateGameRequest(
+                    game,
+                    newDescription,
+                    null,
+                    null,
+                    null,
+                    null,
+                    true
+            ));
+        } catch (RequestValidationException e) {
+            logger.warn("RequestValidationException from GMS: assuming game does not exist. Message: " + e.getMessage());
+            throw new RequestValidationException("Can't update " + game + ": no such game exists.");
+        }
+
+        return new ProcessUserCommandResponse("Updated description for " + game);
     }
 
     @Override

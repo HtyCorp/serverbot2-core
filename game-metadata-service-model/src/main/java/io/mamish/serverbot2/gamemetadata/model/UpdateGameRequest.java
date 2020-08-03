@@ -25,6 +25,9 @@ public class UpdateGameRequest {
     @ApiArgumentInfo(order = 5, description = "Task token for current execution state in Step Functions")
     private String taskCompletionToken;
 
+    @ApiArgumentInfo(order = 6, description = "Disable state check, forcing update to work regardless")
+    private Boolean bypassStateCheck;
+
     public UpdateGameRequest() { }
 
     public UpdateGameRequest(String gameName, String fullName, GameReadyState state, String instanceId, String instanceQueueName, String taskCompletionToken) {
@@ -34,6 +37,11 @@ public class UpdateGameRequest {
         this.instanceId = instanceId;
         this.instanceQueueName = instanceQueueName;
         this.taskCompletionToken = taskCompletionToken;
+    }
+
+    public UpdateGameRequest(String gameName, String fullName, GameReadyState state, String instanceId, String instanceQueueName, String taskCompletionToken, boolean bypassStateCheck) {
+        this(gameName, fullName, state, instanceId, instanceQueueName, taskCompletionToken);
+        this.bypassStateCheck = bypassStateCheck;
     }
 
     public String getGameName() {
@@ -58,5 +66,9 @@ public class UpdateGameRequest {
 
     public String getTaskCompletionToken() {
         return taskCompletionToken;
+    }
+
+    public Boolean getBypassStateCheck() {
+        return bypassStateCheck;
     }
 }

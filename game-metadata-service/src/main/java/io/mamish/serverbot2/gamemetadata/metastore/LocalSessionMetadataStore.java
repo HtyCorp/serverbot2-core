@@ -44,9 +44,22 @@ public class LocalSessionMetadataStore implements IMetadataStore {
     }
 
     @Override
+    public void update(GameMetadataBean item) {
+        doUpdate(item, null);
+    }
+
+    @Override
     public void updateIfStopped(GameMetadataBean item, boolean isStopped) {
+        doUpdate(item, isStopped);
+    }
+
+    private void doUpdate(GameMetadataBean item, Boolean optionalExpectedState) {
         GameMetadataBean currentOrNull = localStore.get(item.getGameName());
-        throwConditionExceptionIfWrongState(currentOrNull, isStopped);
+
+        if (optionalExpectedState != null) {
+            throwConditionExceptionIfWrongState(currentOrNull, optionalExpectedState);
+        }
+
         if (currentOrNull == null) {
             GameMetadataBean newItem = new GameMetadataBean(item);
             localStore.put(newItem.getGameName(), newItem);

@@ -10,12 +10,6 @@ public class CommandTerminal extends AbstractCommandDto  {
     @ApiArgumentInfo(order = 0, description = "Name of the game to connect to (must be running already)")
     private String gameName;
 
-    public CommandTerminal() { }
-
-    public CommandTerminal(String gameName) {
-        this.gameName = gameName;
-    }
-
     public String getGameName() {
         return gameName;
     }
