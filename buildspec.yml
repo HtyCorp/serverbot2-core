@@ -11,7 +11,7 @@ phases:
       - "mvn clean install -Dmaven.test.skip=true"
       # Copy relay artifacts to package as a Docker asset in CDK
       - "mkdir -p $CODEBUILD_SRC_DIR/relay-docker"
-      - "cp discord-relay/target/discord-relay-assembly.jar relay-docker/discord-relay.jar"
+      - "cp discord-relay/target/discord-relay-1.0-SNAPSHOT-jar-with-dependencies.jar relay-docker/discord-relay.jar"
       - "cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Dockerfile"
       # Synthesize application/service CDK stacks for application deployment
       - "(cd application-infrastructure && cdk synth >/dev/null)"
