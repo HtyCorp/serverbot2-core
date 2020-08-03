@@ -4,9 +4,9 @@ import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
 import io.mamish.serverbot2.framework.common.ApiArgumentInfo;
 import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
-@ApiRequestInfo(order = 9, name = "updatedescription", numRequiredFields = 2,
+@ApiRequestInfo(order = 9, name = "setdescription", numRequiredFields = 2,
         description = "Update the description for a game")
-public class CommandUpdateDescription extends AbstractCommandDto {
+public class CommandSetDescription extends AbstractCommandDto {
 
     @ApiArgumentInfo(order = 0, description = "Name of game to update")
     private String gameName;

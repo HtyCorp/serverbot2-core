@@ -7,7 +7,7 @@ public interface IAdminCommandHandler {
 
     ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp);
     ProcessUserCommandResponse onCommandNewGame(CommandNewGame commandNewGame);
-    ProcessUserCommandResponse onCommandUpdateDescription(CommandUpdateDescription commandUpdateDescription);
+    ProcessUserCommandResponse onCommandSetDescription(CommandSetDescription commandSetDescription);
     ProcessUserCommandResponse onCommandDeleteGame(CommandDeleteGame commandDeleteGame);
     ProcessUserCommandResponse onCommandOpenPort(CommandOpenPort commandOpenPort);
     ProcessUserCommandResponse onCommandClosePort(CommandClosePort commandClosePort);

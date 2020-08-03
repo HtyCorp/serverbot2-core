@@ -80,9 +80,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     }
 
     @Override
-    public ProcessUserCommandResponse onCommandUpdateDescription(CommandUpdateDescription commandUpdateDescription) {
-        String game = commandUpdateDescription.getGameName();
-        String newDescription = commandUpdateDescription.getNewDescription();
+    public ProcessUserCommandResponse onCommandSetDescription(CommandSetDescription commandSetDescription) {
+        String game = commandSetDescription.getGameName();
+        String newDescription = commandSetDescription.getNewDescription();
 
         try {
             UpdateGameResponse response = gameMetadataServiceClient.updateGame(new UpdateGameRequest(
