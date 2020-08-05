@@ -34,7 +34,10 @@ public class AppDaemon {
     }
 
     private static final long HEARTBEAT_INTERVAL_SECONDS = (int) (WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS / 2.5);
-    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 2 * 60;
+
+    // Temporarily extended to 15-min check due to IP re-auth issue: if connected user re-auths, netsec:GetNetworkUsage
+    // CWL scan no longer matches VPCFL entries from the previous IP address when getting "latest activity" time.
+    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 15 * 60;
 
     private final String gameName = GameMetadataFetcher.initial().getGameName();
     private final Instant daemonStartTime = Instant.now();
