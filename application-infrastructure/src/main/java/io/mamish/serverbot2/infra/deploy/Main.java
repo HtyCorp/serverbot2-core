@@ -7,6 +7,7 @@ import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.core.StageProps;
 import software.amazon.awscdk.pipelines.AddStageOptions;
 import software.amazon.awscdk.pipelines.CdkPipeline;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.ssm.SsmClient;
 
 public class Main {
@@ -44,7 +45,8 @@ public class Main {
     }
 
     private static DeploymentConfig loadDeploymentConfig() {
-        String configString = SsmClient.create().getParameter(r -> r.name("DeploymentConfig")).parameter().value();
+        SsmClient ssmClient = SsmClient.builder().httpClient(UrlConnectionHttpClient.create()).build();
+        String configString = ssmClient.getParameter(r -> r.name("DeploymentConfig")).parameter().value();
         Gson gson = new Gson();
         return gson.fromJson(configString, DeploymentConfig.class);
     }

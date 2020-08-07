@@ -28,7 +28,6 @@ public class PipelineStack extends Stack {
         super(parent, id, stackProps);
 
         Artifact sourceArtifact = Artifact.artifact("github_source");
-        Artifact appDaemonJarArtifact = Artifact.artifact("app_daemon_jar");
         Artifact assemblyArtifact = Artifact.artifact("cloud_assembly");
 
         GitHubSourceAction gitHubSource = GitHubSourceAction.Builder.create()
@@ -57,7 +56,7 @@ public class PipelineStack extends Stack {
                 .project(codeBuildProject)
                 .actionName("BuildAndSynth")
                 .input(sourceArtifact)
-                .outputs(List.of(appDaemonJarArtifact, assemblyArtifact))
+                .outputs(List.of(assemblyArtifact))
                 .build();
 
         pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
