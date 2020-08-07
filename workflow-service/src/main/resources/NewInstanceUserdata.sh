@@ -53,11 +53,11 @@ EOF
 echo '[SB2INIT] Setting up app daemon fetch script...'
 cat > daemon/run_daemon.sh << "EOF"
 #!/bin/sh
-echo "[INFO] Locating artifact bucket with daemon executable..."
-PARAM_NAME='/app-instance-share/public/deployed-artifacts-bucket'
-BUCKET=$(aws ssm get-parameter --name "$PARAM_NAME"  --query Parameter.Value --output text)
-echo "[INFO] Artifact bucket is '$BUCKET'"
-aws s3 cp s3://$BUCKET/app-daemon.jar /opt/serverbot2/daemon/app-daemon.jar
+echo "[INFO] Locating app daemon artifact..."
+PARAM_NAME='/app-instance-share/public/app-daemon-jar-s3-url'
+JAR_S3_URL=$(aws ssm get-parameter --name "$PARAM_NAME"  --query Parameter.Value --output text)
+echo "[INFO] Artifact S3 URL is '$JAR_S3_URL'"
+aws s3 cp "$JAR_S3_URL" /opt/serverbot2/daemon/app-daemon.jar
 echo "[INFO] Running daemon executable..."
 java -jar /opt/serverbot2/daemon/app-daemon.jar
 EOF

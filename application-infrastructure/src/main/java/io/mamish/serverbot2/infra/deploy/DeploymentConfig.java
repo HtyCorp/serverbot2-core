@@ -4,9 +4,10 @@ import java.util.List;
 
 public class DeploymentConfig {
 
-    private List<DeploymentEnv> environments;
+    private List<ApplicationEnv> environments;
 
-    public List<DeploymentEnv> getEnvironments() {
+    public List<ApplicationEnv> getEnvironments() {
         return environments;
     }
+
 }

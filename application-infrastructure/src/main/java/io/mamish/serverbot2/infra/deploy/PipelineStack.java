@@ -1,10 +1,7 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
-import software.amazon.awscdk.core.App;
-import software.amazon.awscdk.core.Construct;
-import software.amazon.awscdk.core.SecretValue;
-import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
 import software.amazon.awscdk.services.codebuild.BuildEnvironment;
 import software.amazon.awscdk.services.codebuild.ComputeType;
@@ -21,8 +18,14 @@ import java.util.List;
 
 public class PipelineStack extends Stack {
 
-    public PipelineStack(Construct parent, String id) {
-        super(parent, id);
+    private CdkPipeline pipeline;
+
+    public CdkPipeline getPipeline() {
+        return pipeline;
+    }
+
+    public PipelineStack(Construct parent, String id, StackProps stackProps) {
+        super(parent, id, stackProps);
 
         Artifact sourceArtifact = Artifact.artifact("github_source");
         Artifact appDaemonJarArtifact = Artifact.artifact("app_daemon_jar");
@@ -57,7 +60,7 @@ public class PipelineStack extends Stack {
                 .outputs(List.of(appDaemonJarArtifact, assemblyArtifact))
                 .build();
 
-        CdkPipeline pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
+        pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
                 .pipelineName("CDKDeploymentPipeline")
                 .sourceAction(gitHubSource)
                 .synthAction(codeBuildAction)

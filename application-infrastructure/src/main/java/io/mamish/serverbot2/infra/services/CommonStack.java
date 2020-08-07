@@ -1,11 +1,11 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.deploy.DeploymentEnv;
+import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.Util;
-import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -49,14 +49,12 @@ public class CommonStack extends Stack {
         return netSecKmsKey;
     }
 
-    public CommonStack(Construct parent, String id, DeploymentEnv env) {
+    public CommonStack(Construct parent, String id, ApplicationEnv env) {
         super(parent, id);
 
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
                 DiscordConfig.API_TOKEN, env.getDiscordApiToken());
 
-        Util.instantiateConfigSsmParameter(this, "PersistentBucketParam",
-                AppInstanceConfig.ARTIFACT_BUCKET_NAME, env.getPersistentArtifactBucket());
         Util.instantiateConfigSsmParameter(this, "HostedZoneIdParam",
                 CommonConfig.HOSTED_ZONE_ID, env.getRoute53ZoneId());
         Util.instantiateConfigSsmParameter(this, "DomainNameParam",
@@ -113,7 +111,7 @@ public class CommonStack extends Stack {
 
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
                 .validation(CertificateValidation.fromDns(apexHostedZone))
-                .domainName("*."+CommonConfig.ROOT_DOMAIN_NAME.getValue())
+                .domainName(IDUtils.dot("*", env.getDomainName()))
                 .hostedZone(apexHostedZone)
                 .build();
 

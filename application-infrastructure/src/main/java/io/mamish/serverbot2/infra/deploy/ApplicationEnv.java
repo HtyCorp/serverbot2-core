@@ -1,14 +1,15 @@
 package io.mamish.serverbot2.infra.deploy;
 
-public class DeploymentEnv {
+public class ApplicationEnv {
+
+    private boolean enabled;
+    private boolean requiresApproval;
 
     private String name;
     private String accountId;
     private String region;
 
     private String discordApiToken;
-
-    private String persistentArtifactBucket;
 
     private String domainName;
     private String route53ZoneId;
@@ -20,6 +21,14 @@ public class DeploymentEnv {
 
     private String discordRelayRoleIdMain;
     private String discordRelayRoleIdDebug;
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean requiresApproval() {
+        return requiresApproval;
+    }
 
     public String getName() {
         return name;
@@ -35,10 +44,6 @@ public class DeploymentEnv {
 
     public String getDiscordApiToken() {
         return discordApiToken;
-    }
-
-    public String getPersistentArtifactBucket() {
-        return persistentArtifactBucket;
     }
 
     public String getDomainName() {

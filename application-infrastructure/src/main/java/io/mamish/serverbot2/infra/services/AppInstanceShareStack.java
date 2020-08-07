@@ -11,6 +11,7 @@ import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.s3.Bucket;
+import software.amazon.awscdk.services.s3.assets.Asset;
 
 import java.util.List;
 
@@ -19,11 +20,14 @@ public class AppInstanceShareStack extends Stack {
     public AppInstanceShareStack(Construct parent, String id) {
         super(parent, id);
 
-        Bucket deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
-                .build();
+        // Distribute app daemon JAR file as an asset. Create an SSM param with the S3 URL so app instances can fetch.
 
-        Util.instantiateConfigSsmParameter(this, "ArtifactBucketNameParam",
-                AppInstanceConfig.ARTIFACT_BUCKET_NAME, deployedArtifactBucket.getBucketName());
+        String appDaemonJarPath = System.getenv("CODEBUILD_SRC_DIR") + "/gen/app-daemon/app-daemon.jar";
+        Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
+                .path(appDaemonJarPath)
+                .build();
+        Util.instantiateConfigSsmParameter(this, "AppDaemonJarParam",
+                AppInstanceConfig.APP_DAEMON_JAR_S3_URL, appDaemonJarAsset.getS3ObjectUrl());
 
         // TODO: Need to come up with better permission scoping. This role is user-exposed so attack surface is
         // considerable. Needs to be scoped in both AWS and project service terms.
