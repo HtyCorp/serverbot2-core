@@ -25,9 +25,11 @@ phases:
     commands:
       - "echo \"Build completed at $(date)\""
 artifacts:
-  secondary-artifacts:
-    cloud_assembly:
-      files:
-        - "**/*"
-      discard-paths: no
-      base-directory: "gen/cloud-assembly"
+  name: "cloud-assembly"
+  base-directory: "gen/cloud-assembly"
+  discard-paths: no
+  files:
+    - "**/*"
+cache:
+  paths:
+    - '/root/.m2/**/*'

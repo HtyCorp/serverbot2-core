@@ -3,16 +3,14 @@ package io.mamish.serverbot2.infra.deploy;
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
-import software.amazon.awscdk.services.codebuild.BuildEnvironment;
-import software.amazon.awscdk.services.codebuild.ComputeType;
-import software.amazon.awscdk.services.codebuild.LinuxBuildImage;
-import software.amazon.awscdk.services.codebuild.PipelineProject;
+import software.amazon.awscdk.services.codebuild.*;
 import software.amazon.awscdk.services.codepipeline.Artifact;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
+import software.amazon.awscdk.services.s3.Bucket;
 
 import java.util.List;
 
@@ -26,6 +24,17 @@ public class PipelineStack extends Stack {
 
     public PipelineStack(Construct parent, String id, StackProps stackProps) {
         super(parent, id, stackProps);
+
+        // Bucket for Maven depedency caching
+
+        Bucket cacheBucket = Bucket.Builder.create(this, "MavenDependencyCacheBucket")
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+        BucketCacheOptions cacheOptions = BucketCacheOptions.builder()
+                .prefix("m2")
+                .build();
+
+        // CodePipeline and CodeBuild
 
         Artifact sourceArtifact = Artifact.artifact("github_source");
         Artifact assemblyArtifact = Artifact.artifact("cloud_assembly");
@@ -50,6 +59,7 @@ public class PipelineStack extends Stack {
         PipelineProject codeBuildProject = PipelineProject.Builder.create(this, "CodeBuildProject")
                 .environment(codeBuildBuildEnvironment)
                 .role(codeBuildRole)
+                .cache(Cache.bucket(cacheBucket, cacheOptions))
                 .build();
 
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
