@@ -5,7 +5,7 @@ phases:
     runtime-versions:
       java: corretto11
     commands:
-      - "npm install -g aws-cdk"
+      - "npm install -g aws-cdk@1.56.0"
   build:
     commands:
       - "mkdir gen"
