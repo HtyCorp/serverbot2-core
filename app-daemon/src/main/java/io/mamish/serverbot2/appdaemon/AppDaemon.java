@@ -34,13 +34,13 @@ public class AppDaemon {
     }
 
     private static final long HEARTBEAT_INTERVAL_SECONDS = (int) (WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS / 2.5);
+    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 2 * 60;
 
-    // Temporarily extended to 15-min check due to IP re-auth issue: if connected user re-auths, netsec:GetNetworkUsage
-    // CWL scan no longer matches VPCFL entries from the previous IP address when getting "latest activity" time.
-    private static final long IDLENESS_CHECK_INTERVAL_SECONDS = 15 * 60;
+    private static final int WARNING_TIME_SECONDS = AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS;
+    private static final int SHUTDOWN_TIME_SECONDS = AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS;
 
     private final String gameName = GameMetadataFetcher.initial().getGameName();
-    private final Instant daemonStartTime = Instant.now();
+    private Instant latestNetworkActivityTime = Instant.now();
     private IdleState idleState = IdleState.ACTIVE_USE;
 
     private final Logger logger = LogManager.getLogger(AppDaemon.class);
@@ -89,22 +89,30 @@ public class AppDaemon {
 
     private void checkIdleness() {
 
-        // Short circuit: don't bother checking if instance was too recently started to breach time limit
-        int secondsSinceStart = (int) daemonStartTime.until(Instant.now(), ChronoUnit.SECONDS);
-        if (secondsSinceStart < AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS) {
-            logger.info("Daemon uptime is less than minimum warning time - skipping idleness check");
+        Instant now = Instant.now();
+
+        // Short circuit: don't proceed (avoid API calls) if locally known activity age is less than warning time
+        int secondsSinceLatest = (int) latestNetworkActivityTime.until(now, ChronoUnit.SECONDS);
+        if (secondsSinceLatest < WARNING_TIME_SECONDS) {
+            logger.info("Skipping idleness check - local known latest is still within warning period");
             return;
         }
 
-        // Now actually get the usage and issue warnings/shutdowns
-
-        GetNetworkUsageResponse usage = networkSecurityServiceClient.getNetworkUsage(new GetNetworkUsageRequest(
-                InstanceMetadata.fetch().getPrivateIp(), AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS
+        // Get actual latest activity time from NetSec: update locally known latest time if more recent.
+        // Note this ignores the response data if it's *older* than local; can happen if a user re-auths since
+        // that overwrites the old IP and GetNetworkUsage only counts activity from currently whitelisted IPs.
+        GetNetworkUsageResponse response = networkSecurityServiceClient.getNetworkUsage(new GetNetworkUsageRequest(
+                InstanceMetadata.fetch().getPrivateIp(), SHUTDOWN_TIME_SECONDS
         ));
-        if (usage.hasAnyActivity()) {
-            logger.info("Idle check: last activity was " + usage.getLatestActivityAgeSeconds() + " seconds ago");
+        logger.info("Idle check: NetSec latest activity response: hasActivity=" + response.hasAnyActivity()
+                + ", age=" + response.getLatestActivityAgeSeconds());
+
+        if (response.hasAnyActivity() && response.getLatestActivityAgeSeconds() < secondsSinceLatest) {
+            secondsSinceLatest = response.getLatestActivityAgeSeconds();
+            latestNetworkActivityTime = now.minus(secondsSinceLatest, ChronoUnit.SECONDS);
+            logger.info("Idle check: NetSec is reporting more recent activity - updating local data");
         } else {
-            logger.info("Idle check: no recent usage within shutdown window");
+            logger.info("Idle check: NetSec reported activity isn't newer than local - ignoring");
         }
 
         // Internal state machine: users always get at least one warning before shutdown is committed
@@ -112,18 +120,21 @@ public class AppDaemon {
 
         switch(idleState) {
             case ACTIVE_USE:
-                if (!hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS)) {
+                if (secondsSinceLatest >= WARNING_TIME_SECONDS) {
                     logger.info("Idle check: issuing idleness warning");
                     idleState = IdleState.WARNING_ISSUED;
+                    // On transition, set local latest time to now minus the warning time.
+                    // This guarantees users have at least (shutdown_time - warning_time) until shutdown happens.
+                    latestNetworkActivityTime = now.minus(WARNING_TIME_SECONDS, ChronoUnit.SECONDS);
                     sendIdlenessWarning();
                 }
                 break;
 
             case WARNING_ISSUED:
-                if (hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_WARNING_TIME_SECONDS)) {
+                if (secondsSinceLatest < WARNING_TIME_SECONDS) {
                     logger.info("Idle check: new recent activity, leaving warning state");
                     idleState = IdleState.ACTIVE_USE;
-                } else if (!hasRecentActivity(usage, AppInstanceConfig.APP_IDLENESS_SHUTDOWN_TIME_SECONDS)) {
+                } else if (secondsSinceLatest >= SHUTDOWN_TIME_SECONDS) {
                     logger.info("Idle check: shutdown window breached, signalling shutdown");
                     idleState = IdleState.SHUTDOWN_STARTED;
                     sendIdleShutdownNotice();
@@ -137,10 +148,6 @@ public class AppDaemon {
 
         }
 
-    }
-
-    private boolean hasRecentActivity(GetNetworkUsageResponse usage, int timeSeconds) {
-        return usage.hasAnyActivity() && usage.getLatestActivityAgeSeconds() < timeSeconds;
     }
 
     private void sendIdlenessWarning() {

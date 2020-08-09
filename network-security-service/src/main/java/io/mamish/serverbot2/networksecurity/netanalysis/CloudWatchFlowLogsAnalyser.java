@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
+    private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
     private static final long QUERY_CHECK_INTERVAL_MILLIS = 2000;
 
     private final CloudWatchLogsClient logsClient = CloudWatchLogsClient.builder()
@@ -68,8 +69,7 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
             if (results == null || results.isEmpty()) {
                 logger.info("Empty results: returning a 'no-activity' final result");
-                // Note 'null' age is just a reasonable multiple of window time
-                return new GetNetworkUsageResponse(false, windowSeconds * 2);
+                return new GetNetworkUsageResponse(false, PLACEHOLDER_AGE_FOR_NO_ACTIVITY);
             }
 
             // Get first result field of first result row (we know there's a field because it's part of query string)
