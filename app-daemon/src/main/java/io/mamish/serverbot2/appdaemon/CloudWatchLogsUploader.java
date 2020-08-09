@@ -67,6 +67,12 @@ public class CloudWatchLogsUploader {
         try {
             String logLine;
             while ((logLine = streamReader.readLine()) != null) {
+
+                // API error if InputLogEvent.message is empty - just make it a space if so
+                if (logLine.isEmpty()) {
+                    logLine = " ";
+                }
+
                 logger.trace("Got log line: " + logLine);
                 InputLogEvent event = InputLogEvent.builder()
                         .timestamp(Instant.now().toEpochMilli())
@@ -74,11 +80,13 @@ public class CloudWatchLogsUploader {
                         .build();
                 outgoingEntryQueue.put(event);
                 logger.trace("Remaining capacity is " + outgoingEntryQueue.remainingCapacity());
+
                 if (outgoingEntryQueue.remainingCapacity() <= FLUSH_THRESHOLD_MIN_CAPACITY) {
                     synchronized (this) {
                         notifyAll();
                     }
                 }
+
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
