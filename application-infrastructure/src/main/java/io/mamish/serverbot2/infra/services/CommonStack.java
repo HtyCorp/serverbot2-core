@@ -17,6 +17,7 @@ import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.HostedZone;
+import software.amazon.awscdk.services.route53.HostedZoneAttributes;
 import software.amazon.awscdk.services.route53.IHostedZone;
 
 import java.util.List;
@@ -109,7 +110,12 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
                         CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId());
 
-        apexHostedZone = HostedZone.fromHostedZoneId(this, "ApexHostedZone", env.getRoute53ZoneId());
+        HostedZoneAttributes existingZoneAttributes = HostedZoneAttributes.builder()
+                .hostedZoneId(env.getRoute53ZoneId())
+                .zoneName(env.getDomainName())
+                .build();
+        apexHostedZone = HostedZone.fromHostedZoneAttributes(this, "ApexHostedZoneImport",
+                existingZoneAttributes);
 
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
                 .validation(CertificateValidation.fromDns(apexHostedZone))
