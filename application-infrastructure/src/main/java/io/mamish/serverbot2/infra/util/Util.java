@@ -13,6 +13,7 @@ import software.amazon.awscdk.services.lambda.Tracing;
 import software.amazon.awscdk.services.secretsmanager.CfnSecret;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +21,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Util {
+
+    public static String codeBuildPath(String... path) {
+        String codeBuildDir = System.getenv("CODEBUILD_SRC_DIR");
+        return Paths.get(codeBuildDir, path).toString();
+    }
 
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 

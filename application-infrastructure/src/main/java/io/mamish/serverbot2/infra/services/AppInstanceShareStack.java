@@ -21,7 +21,7 @@ public class AppInstanceShareStack extends Stack {
 
         // Distribute app daemon JAR file as an asset. Create an SSM param with the S3 URL so app instances can fetch.
 
-        String appDaemonJarPath = System.getenv("CODEBUILD_SRC_DIR") + "/gen/app-daemon/app-daemon.jar";
+        String appDaemonJarPath = Util.codeBuildPath( "gen", "app-daemon", "app-daemon.jar");
         Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
                 .path(appDaemonJarPath)
                 .build();

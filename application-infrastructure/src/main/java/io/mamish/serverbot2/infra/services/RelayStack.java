@@ -82,7 +82,7 @@ public class RelayStack extends Stack {
                 .streamPrefix("DiscordRelay")
                 .build());
 
-        String dockerDirPath = System.getenv("CODEBUILD_SRC_DIR") + "gen/relay-docker";
+        String dockerDirPath = Util.codeBuildPath("gen", "relay-docker");
         ContainerDefinition relayContainer = taskDefinition.addContainer("DiscordRelayContainer", ContainerDefinitionOptions.builder()
                 .essential(true)
                 .image(ContainerImage.fromAsset(dockerDirPath))
