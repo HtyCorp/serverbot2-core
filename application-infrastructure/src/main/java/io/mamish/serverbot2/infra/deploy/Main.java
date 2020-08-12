@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import com.google.gson.Gson;
+import io.mamish.serverbot2.sharedconfig.DeployConfig;
 import software.amazon.awscdk.core.App;
 import software.amazon.awscdk.core.Environment;
 import software.amazon.awscdk.core.StackProps;
@@ -19,11 +20,11 @@ public class Main {
         PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps());
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
-        DeploymentConfig config = loadDeploymentConfig();
-        for (ApplicationEnv env: config.getEnvironments()) {
+        DeploymentManifest manifest = loadDeploymentManifest();
+        for (ApplicationEnv env: manifest.getEnvironments()) {
             if (env.isEnabled()) {
 
-                String stageId = env.getName() + "Stage";
+                String stageId = env.getName() + "Deployment";
                 Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageProps = StageProps.builder().env(stageEnv).build();
                 AddStageOptions stageOptions = AddStageOptions.builder().manualApprovals(env.requiresApproval()).build();
@@ -44,11 +45,11 @@ public class Main {
         return StackProps.builder().env(defaultEnv).build();
     }
 
-    private static DeploymentConfig loadDeploymentConfig() {
+    private static DeploymentManifest loadDeploymentManifest() {
         SsmClient ssmClient = SsmClient.builder().httpClient(UrlConnectionHttpClient.create()).build();
-        String configString = ssmClient.getParameter(r -> r.name("DeploymentConfig")).parameter().value();
-        Gson gson = new Gson();
-        return gson.fromJson(configString, DeploymentConfig.class);
+        String manifestParamName = DeployConfig.ENVIRONMENT_MANIFEST_PARAM_NAME;
+        String manifestString = ssmClient.getParameter(r -> r.name(manifestParamName)).parameter().value();
+        return (new Gson()).fromJson(manifestString, DeploymentManifest.class);
     }
 
 }

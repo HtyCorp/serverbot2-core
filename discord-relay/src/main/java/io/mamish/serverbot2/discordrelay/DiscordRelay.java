@@ -21,7 +21,6 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.event.message.MessageCreateEvent;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

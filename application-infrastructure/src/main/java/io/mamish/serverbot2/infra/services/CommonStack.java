@@ -8,6 +8,7 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.certificatemanager.CertificateValidation;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
@@ -52,8 +53,9 @@ public class CommonStack extends Stack {
     public CommonStack(Construct parent, String id, ApplicationEnv env) {
         super(parent, id);
 
+        SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretName());
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
-                DiscordConfig.API_TOKEN, env.getDiscordApiToken());
+                DiscordConfig.API_TOKEN, discordApiTokenSource.toString());
 
         Util.instantiateConfigSsmParameter(this, "HostedZoneIdParam",
                 CommonConfig.HOSTED_ZONE_ID, env.getRoute53ZoneId());

@@ -10,7 +10,6 @@ import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
-import software.amazon.awscdk.services.s3.Bucket;
 import software.amazon.awscdk.services.s3.assets.Asset;
 
 import java.util.List;

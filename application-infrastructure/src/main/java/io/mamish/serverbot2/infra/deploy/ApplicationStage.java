@@ -1,7 +1,9 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import io.mamish.serverbot2.infra.services.*;
-import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.Stage;
+import software.amazon.awscdk.core.StageProps;
 
 public class ApplicationStage extends Stage {
 
