@@ -7,6 +7,9 @@ import software.amazon.awscdk.services.codebuild.*;
 import software.amazon.awscdk.services.codepipeline.Artifact;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
+import software.amazon.awscdk.services.iam.Effect;
+import software.amazon.awscdk.services.iam.PolicyStatement;
+import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.s3.Bucket;
 
 import java.util.List;
@@ -53,6 +56,11 @@ public class PipelineStack extends Stack {
                 .environment(codeBuildBuildEnvironment)
                 .cache(Cache.bucket(cacheBucket, cacheOptions))
                 .build();
+        codeBuildProject.addToRolePolicy(PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("ssm:GetParameter"))
+                .resources(List.of("arn:aws:ssm:*:*:parameter/"+DeployConfig.ENVIRONMENT_MANIFEST_PARAM_NAME))
+                .build());
 
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
                 .project(codeBuildProject)

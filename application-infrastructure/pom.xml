@@ -57,6 +57,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Only required extra API access for build: get deployment manifest from SSM -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>ssm</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>core</artifactId>
@@ -149,11 +155,6 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>s3</artifactId>
-            <version>${awscdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awscdk</groupId>
-            <artifactId>cdk-app-delivery</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
         <dependency>
