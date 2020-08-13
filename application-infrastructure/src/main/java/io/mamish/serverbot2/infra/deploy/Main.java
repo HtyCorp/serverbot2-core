@@ -15,33 +15,35 @@ public class Main {
 
     public static void main(String[] args) {
 
+        DeploymentManifest manifest = loadDeploymentManifest();
+
         App app = new App();
 
+        // Pre-populate AZ IDs: pipelines can't get them from context lookups, and they must be added programmatically
+        // before any nodes/constructs are added to `app`.
+        // Obviously this will fail for regions with less than 3 AZs.
+        // Format ref: https://docs.aws.amazon.com/cdk/latest/guide/context.html#context_viewing
+        for (ApplicationEnv env: manifest.getEnvironments()) {
+            String account = env.getAccountId();
+            String region = env.getRegion();
+            String envZonesKey = String.format("availability-zones:account=%s:region=%s", account, region);
+            String envZonesList = String.format("[ \"%sa\", \"%sb\", \"%sc\" ]", region, region, region);
+            app.getNode().setContext(envZonesKey, envZonesList);
+        }
+
+        // Build central CDK pipeline.
         PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps());
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
-        DeploymentManifest manifest = loadDeploymentManifest();
+        // Add an application stage for every enabled environment in manifest.
         for (ApplicationEnv env: manifest.getEnvironments()) {
             if (env.isEnabled()) {
-
-                String account = env.getAccountId();
-                String region = env.getRegion();
-
-                // Inject typical 3-AZ zone IDs since pipelines don't support context lookups to get them dynamically.
-                // Obviously this will fail for regions with less than 3 AZs.
-                // Format ref: https://docs.aws.amazon.com/cdk/latest/guide/context.html#context_viewing
-                String envZonesKey = String.format("availability-zones:account=%s:region=%s", account, region);
-                String envZonesList = String.format("[ \"%sa\", \"%sb\", \"%sc\" ]", region, region, region);
-                app.getNode().setContext(envZonesKey, envZonesList);
-
-                // Add a new application stage for this environment.
                 String stageId = env.getName() + "Deployment";
                 Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageProps = StageProps.builder().env(stageEnv).build();
                 AddStageOptions stageOptions = AddStageOptions.builder().manualApprovals(env.requiresApproval()).build();
 
                 pipeline.addApplicationStage(new ApplicationStage(app, stageId, stageProps, env), stageOptions);
-
             }
         }
 
