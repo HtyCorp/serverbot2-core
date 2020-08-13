@@ -24,6 +24,17 @@ public class Main {
         for (ApplicationEnv env: manifest.getEnvironments()) {
             if (env.isEnabled()) {
 
+                String account = env.getAccountId();
+                String region = env.getRegion();
+
+                // Inject typical 3-AZ zone IDs since pipelines don't support context lookups to get them dynamically.
+                // Obviously this will fail for regions with less than 3 AZs.
+                // Format ref: https://docs.aws.amazon.com/cdk/latest/guide/context.html#context_viewing
+                String envZonesKey = String.format("availability-zones:account=%s:region=%s", account, region);
+                String envZonesList = String.format("[ \"%sa\", \"%sb\", \"%sc\" ]", region, region, region);
+                app.getNode().setContext(envZonesKey, envZonesList);
+
+                // Add a new application stage for this environment.
                 String stageId = env.getName() + "Deployment";
                 Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageProps = StageProps.builder().env(stageEnv).build();
