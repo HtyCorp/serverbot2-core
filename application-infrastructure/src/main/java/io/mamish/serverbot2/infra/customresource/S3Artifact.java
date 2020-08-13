@@ -30,10 +30,10 @@ public class S3Artifact extends Construct {
                 .build();
 
         String providerCodePath = Util.codeBuildPath("application-infrastructure", "src", "main", "resources",
-                "s3_artifact_function.py");
+                "s3_artifact_resource_provider");
         Function providerFunction = Function.Builder.create(this, "Function")
                 .runtime(Runtime.PYTHON_3_7)
-                .handler("s3_artifact_function.lambda_handler")
+                .handler("lambda_function.lambda_handler")
                 .code(Code.fromAsset(providerCodePath))
                 .build();
         props.getSourceS3Asset().grantRead(providerFunction);
