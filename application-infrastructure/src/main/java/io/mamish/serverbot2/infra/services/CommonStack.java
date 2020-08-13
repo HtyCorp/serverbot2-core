@@ -83,6 +83,7 @@ public class CommonStack extends Stack {
 
         deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
                 .bucketName(env.getArtifactBucketName())
+                .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
         List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
