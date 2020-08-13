@@ -35,12 +35,12 @@ public class S3Artifact extends Construct {
                 .runtime(Runtime.PYTHON_3_7)
                 .handler("lambda_function.lambda_handler")
                 .code(Code.fromAsset(providerCodePath))
+                .timeout(Duration.seconds(60))
                 .build();
         props.getSourceS3Asset().grantRead(providerFunction);
         props.getTargetBucket().grantWrite(providerFunction);
         Provider provider = Provider.Builder.create(this, "Provider")
                 .onEventHandler(providerFunction)
-                .totalTimeout(Duration.minutes(1))
                 .build();
 
         Map<String,Object> propertyMap = Map.of(
