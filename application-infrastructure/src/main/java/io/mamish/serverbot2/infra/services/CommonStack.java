@@ -19,17 +19,23 @@ import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneAttributes;
 import software.amazon.awscdk.services.route53.IHostedZone;
+import software.amazon.awscdk.services.s3.Bucket;
 
 import java.util.List;
 import java.util.Map;
 
 public class CommonStack extends Stack {
 
+    private final Bucket deployedArtifactBucket;
     private final Vpc serviceVpc;
     private final Vpc applicationVpc;
     private final IHostedZone apexHostedZone;
     private final DnsValidatedCertificate wildcardCertificate;
     private final Key netSecKmsKey;
+
+    public Bucket getDeployedArtifactBucket() {
+        return deployedArtifactBucket;
+    }
 
     public Vpc getServiceVpc() {
         return serviceVpc;
@@ -54,7 +60,7 @@ public class CommonStack extends Stack {
     public CommonStack(Construct parent, String id, ApplicationEnv env) {
         super(parent, id);
 
-        SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretName());
+        SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretArn());
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
                 DiscordConfig.API_TOKEN, discordApiTokenSource.toString());
 
@@ -74,6 +80,10 @@ public class CommonStack extends Stack {
                 DiscordConfig.CHANNEL_ROLE_SERVERS, env.getDiscordRelayRoleIdMain());
         Util.instantiateConfigSsmParameter(this, "RoleIdDebugParam",
                 DiscordConfig.CHANNEL_ROLE_DEBUG, env.getDiscordRelayRoleIdDebug());
+
+        deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
+                .bucketName(env.getArtifactBucketName())
+                .build();
 
         List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
                 .name("main")

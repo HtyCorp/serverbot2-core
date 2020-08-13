@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.customresource.S3Artifact;
+import io.mamish.serverbot2.infra.customresource.S3ArtifactProps;
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
@@ -16,15 +18,21 @@ import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(Construct parent, String id) {
+    public AppInstanceShareStack(Construct parent, String id, CommonStack commonStack) {
         super(parent, id);
 
-        // Distribute app daemon JAR file as an asset. Create an SSM param with the S3 URL so app instances can fetch.
+        // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer
+        // looking S3 bucket from the CDK asset staging bucket.
 
         String appDaemonJarPath = Util.codeBuildPath( "gen", "app-daemon", "app-daemon.jar");
         Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
                 .path(appDaemonJarPath)
                 .build();
+        S3Artifact appDaemonArtifact = new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
+                appDaemonJarAsset, commonStack.getDeployedArtifactBucket(), "app-daemon",
+                ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
+        ));
+
         Util.instantiateConfigSsmParameter(this, "AppDaemonJarParam",
                 AppInstanceConfig.APP_DAEMON_JAR_S3_URL, appDaemonJarAsset.getS3ObjectUrl());
 

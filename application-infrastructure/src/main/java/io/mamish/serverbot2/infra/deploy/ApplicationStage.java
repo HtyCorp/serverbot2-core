@@ -23,7 +23,7 @@ public class ApplicationStage extends Stage {
         commonStack = new CommonStack(this, "CommonResources", env);
         ipAuthorizerStack = new IpAuthorizerStack(this, "IpAuthorizerApi", commonStack, env);
         relayStack = new RelayStack(this, "DiscordRelay", commonStack);
-        appInstanceShareStack = new AppInstanceShareStack(this, "AppInstanceResources");
+        appInstanceShareStack = new AppInstanceShareStack(this, "AppInstanceResources", commonStack);
         commandStack = new CommandStack(this, "CommandService");
         workflowsStack = new WorkflowsStack(this, "WorkflowService");
         gameMetadataStack = new GameMetadataStack(this, "GameMetadataService");

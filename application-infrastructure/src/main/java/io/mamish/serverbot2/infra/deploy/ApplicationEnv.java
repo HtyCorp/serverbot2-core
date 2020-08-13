@@ -9,7 +9,9 @@ public class ApplicationEnv {
     private String accountId;
     private String region;
 
-    private String discordApiTokenSourceSecretName;
+    private String discordApiTokenSourceSecretArn;
+
+    private String artifactBucketName;
 
     private String domainName;
     private String route53ZoneId;
@@ -42,8 +44,12 @@ public class ApplicationEnv {
         return region;
     }
 
-    public String getDiscordApiTokenSourceSecretName() {
-        return discordApiTokenSourceSecretName;
+    public String getDiscordApiTokenSourceSecretArn() {
+        return discordApiTokenSourceSecretArn;
+    }
+
+    public String getArtifactBucketName() {
+        return artifactBucketName;
     }
 
     public String getDomainName() {
