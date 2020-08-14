@@ -20,8 +20,10 @@ def copy_object(event):
         Bucket = props["TargetS3Bucket"],
         Key = props["TargetS3Key"]
     )
+
+    physical_id = props["TargetS3Bucket"] + "/" + props["TargetS3Key"]
     return {
-        "PhysicalResourceId": props["TargetS3Key"],
+        "PhysicalResourceId": physical_id,
         "Data": {}
     }
 

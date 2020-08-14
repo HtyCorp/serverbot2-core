@@ -20,13 +20,12 @@ public class S3Artifact extends Construct {
     public S3Artifact(Construct scope, String id, S3ArtifactProps props) {
         super(scope, id);
 
-        String targetKeyWithMd5 = props.getArtifactKeyPrefix() + "-" + props.getSourceS3Asset().getAssetHash()
-                + props.getArtifactKeySuffix();
-        String targetUrlWithMd5 = IDUtils.slash("s3:/", props.getTargetBucket().getBucketName(), targetKeyWithMd5);
+        String targetKeyRandomSuffix = props.getArtifactKeyPrefix() + "-" + IDUtils.randomIdShort() + props.getArtifactKeySuffix();
+        String targetS3Url = IDUtils.slash("s3:/", props.getTargetBucket().getBucketName(), targetKeyRandomSuffix);
 
         StringParameter urlParameter = StringParameter.Builder.create(this, "UrlParameter")
                 .parameterName(props.getArtifactS3UrlParameterName())
-                .stringValue(targetUrlWithMd5)
+                .stringValue(targetS3Url)
                 .build();
 
         String providerCodePath = Util.codeBuildPath("application-infrastructure", "src", "main", "resources",
@@ -47,7 +46,7 @@ public class S3Artifact extends Construct {
                 "SourceS3Bucket", props.getSourceS3Asset().getS3BucketName(),
                 "SourceS3Key", props.getSourceS3Asset().getS3ObjectKey(),
                 "TargetS3Bucket", props.getTargetBucket().getBucketName(),
-                "TargetS3Key", targetKeyWithMd5
+                "TargetS3Key", targetKeyRandomSuffix
         );
         CustomResource resource = CustomResource.Builder.create(this, "Resource")
                 .resourceType("Custom::S3Artifact")
