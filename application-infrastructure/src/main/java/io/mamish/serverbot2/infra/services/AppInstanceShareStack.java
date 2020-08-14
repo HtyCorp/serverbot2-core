@@ -33,9 +33,6 @@ public class AppInstanceShareStack extends Stack {
                 ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
         ));
 
-        Util.instantiateConfigSsmParameter(this, "AppDaemonJarParam",
-                AppInstanceConfig.APP_DAEMON_JAR_S3_URL, appDaemonJarAsset.getS3ObjectUrl());
-
         // TODO: Need to come up with better permission scoping. This role is user-exposed so attack surface is
         // considerable. Needs to be scoped in both AWS and project service terms.
 
