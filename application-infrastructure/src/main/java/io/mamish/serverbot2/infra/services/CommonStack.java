@@ -137,6 +137,7 @@ public class CommonStack extends Stack {
         netSecKmsKey = Key.Builder.create(this, "NetSecGeneralKey")
                 .trustAccountIdentities(true)
                 .alias(NetSecConfig.KMS_ALIAS)
+                .description("Used by NetSec service to encrypt user IDs and IP auth tokens")
                 .build();
 
     }
