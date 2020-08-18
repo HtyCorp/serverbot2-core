@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -86,9 +87,10 @@ public class StepHandler {
 
         String newInstanceId;
         try {
-            InputStream userdataStream = getClass().getClassLoader().getResourceAsStream("NewInstanceUserdata.sh");
-            Objects.requireNonNull(userdataStream);
-            String userdataString = Base64.getEncoder().encodeToString(userdataStream.readAllBytes());
+            InputStream templateStream = getClass().getClassLoader().getResourceAsStream("instance_init.sh.template");
+            String userdataTemplate = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
+            String finalUserdata = userdataTemplate.replace("${SB2::OsUserName}", AppInstanceConfig.MANAGED_OS_USER_NAME);
+            String encodedUserdata = Base64.getEncoder().encodeToString(finalUserdata.getBytes(StandardCharsets.UTF_8));
 
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
                     r.imageId(amiLocator.getIdealAmi().getAmiId())
@@ -99,7 +101,7 @@ public class StepHandler {
                             .iamInstanceProfile(spec -> spec.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
                             .minCount(1)
                             .maxCount(1)
-                            .userData(userdataString));
+                            .userData(encodedUserdata));
             newInstanceId = runInstancesResponse.instances().get(0).instanceId();
         } catch (IOException e) {
             throw new RuntimeException("Failed to read instance userdata resource file", e);

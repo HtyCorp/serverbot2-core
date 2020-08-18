@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.core;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -32,6 +33,10 @@ public class CommandStack extends Stack {
                 .actions(List.of("ssm:StartSession"))
                 .resources(List.of("*"))
                 .build());
+
+        // User construct doesn't expose tags: need to use backing CFN resource directly
+        ((CfnUser)ssmSessionUser.getNode().getDefaultChild()).getTags().setTag("SSMSessionRunAs",
+                AppInstanceConfig.MANAGED_OS_USER_NAME);
 
         CfnAccessKey accessKey = CfnAccessKey.Builder.create(this, "SsmSessionUserKey")
                 .userName(ssmSessionUser.getUserName())

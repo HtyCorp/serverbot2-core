@@ -23,7 +23,7 @@ apt-get -y install java-11-amazon-corretto-jdk
 echo '[SB2INIT] Installing and configuring apt-provided AWS CLI version...'
 apt-get -y install awscli jq
 AWS_REGION=$(curl -s 'http://169.254.169.254/latest/dynamic/instance-identity/document' | jq -r .region)
-sudo -Hu ubuntu aws configure set region $AWS_REGION
+sudo -Hu ${SB2::OsUserName} aws configure set region $AWS_REGION
 
 echo '[SB2INIT] Installing steamcmd...'
 # steamcmd requires an EULA agreement - must preset for noninteractive
@@ -36,7 +36,6 @@ mkdir /opt/serverbot2
 mkdir /opt/serverbot2/daemon
 mkdir /opt/serverbot2/config
 mkdir /opt/serverbot2/game
-mkdir /opt/serverbot2/logs
 cd /opt/serverbot2
 
 echo '[SB2INIT] Creating launch config example...'
@@ -64,7 +63,7 @@ EOF
 chmod 774 daemon/run_daemon.sh
 
 echo '[SB2INIT] Setting working directory owner to default EC2 user...'
-chown -R ubuntu:ubuntu /opt/serverbot2
+chown -R ${SB2::OsUserName}:${SB2::OsUserName} /opt/serverbot2
 
 echo '[SB2INIT] Setting up app daemon service unit...'
 cat >/etc/systemd/system/serverbot2.service << "EOF"
@@ -74,7 +73,7 @@ Requires=network.target
 After=network.target
 [Service]
 Type=simple
-User=ubuntu
+User=${SB2::OsUserName}
 ExecStart=/opt/serverbot2/daemon/run_daemon.sh
 [Install]
 WantedBy=multi-user.target

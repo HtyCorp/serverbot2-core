@@ -24,6 +24,8 @@ public class AppInstanceConfig {
 
     public static final String APP_LOGS_GROUP_PREFIX = "serverbot2/app/serverlogs";
 
+    public static final String MANAGED_OS_USER_NAME = "ubuntu";
+
     public static final int APP_SHUTDOWN_TIMEOUT_SECONDS = 15;
 
     public static final int APP_IDLENESS_WARNING_TIME_SECONDS = 20 * 60;
