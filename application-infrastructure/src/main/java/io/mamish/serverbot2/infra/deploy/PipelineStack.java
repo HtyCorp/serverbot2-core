@@ -9,7 +9,6 @@ import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
 import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
 import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.PolicyStatement;
-import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.s3.Bucket;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public class PipelineStack extends Stack {
     public PipelineStack(Construct parent, String id, StackProps stackProps) {
         super(parent, id, stackProps);
 
-        // Bucket for Maven depedency caching
+        // Bucket for Maven dependency caching
 
         Bucket cacheBucket = Bucket.Builder.create(this, "MavenDependencyCacheBucket")
                 .removalPolicy(RemovalPolicy.DESTROY)
@@ -36,7 +35,11 @@ public class PipelineStack extends Stack {
 
         // CodePipeline and CodeBuild
 
+        // Inputs:
         Artifact sourceArtifact = Artifact.artifact("github_source");
+        // Artifact manifestArtifact = Artifact.artifact("environment_manifest");
+
+        // Outputs:
         Artifact assemblyArtifact = Artifact.artifact("cloud_assembly");
 
         GitHubSourceAction gitHubSource = GitHubSourceAction.Builder.create()
@@ -47,6 +50,16 @@ public class PipelineStack extends Stack {
                 .repo(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_REPO)
                 .branch(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_BRANCH)
                 .build();
+
+        // Shelving this until I can figure out if pipelines lib can allow multiple source artifacts
+//        String generatedBucketName = IDUtils.kebab("serverbot2-pipeline-manifest-copy",
+//                Util.defaultAccount(), Util.defaultRegion());
+//        S3SourceAction s3ManifestSource = S3SourceAction.Builder.create()
+//                .actionName("PullS3ManifestFile")
+//                .bucket(Bucket.fromBucketName(this, "ManifestCopyBucket", generatedBucketName))
+//                .bucketKey("manifest.zip")
+//                .output(manifestArtifact)
+//                .build();
 
         BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
                 .buildImage(LinuxBuildImage.STANDARD_4_0)

@@ -27,6 +27,19 @@ public class Util {
         return Paths.get(codeBuildDir, path).toString();
     }
 
+    public static String environmentManifestPath() {
+        String manifestDir = System.getenv("CODEBUILD_SRC_DIR_environment_manifest");
+        return Paths.get(manifestDir, "manifest.json").toString();
+    }
+
+    public static String defaultAccount() {
+        return System.getenv("CDK_DEFAULT_ACCOUNT");
+    }
+
+    public static String defaultRegion() {
+        return System.getenv("CDK_DEFAULT_REGION");
+    }
+
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
         List<IManagedPolicy> combinedPolicies = new ArrayList<>();

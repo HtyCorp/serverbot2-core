@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import com.google.gson.Gson;
+import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awscdk.core.*;
@@ -42,8 +43,8 @@ public class Main {
 
     private static StackProps makeDefaultProps() {
         Environment defaultEnv = Environment.builder()
-                .account(System.getenv("CDK_DEFAULT_ACCOUNT"))
-                .region(System.getenv("CDK_DEFAULT_REGION"))
+                .account(Util.defaultAccount())
+                .region(Util.defaultRegion())
                 .build();
         return StackProps.builder().env(defaultEnv).build();
     }
