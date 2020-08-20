@@ -5,31 +5,31 @@ phases:
     runtime-versions:
       java: corretto11
     commands:
-      - "npm install -g aws-cdk"
+      - "npm install -g aws-cdk@1.58.0"
   build:
     commands:
-      - "mvn clean install"
-      # Copy relay artifacts to package as a Docker asset in CDK
-      - "mkdir -p $CODEBUILD_SRC_DIR/relay-docker"
-      - "cp discord-relay/target/discord-relay-assembly.jar relay-docker/discord-relay.jar"
-      - "cp application-infrastructure/src/main/resources/RelayDockerfile relay-docker/Dockerfile"
-      # Synthesize deployment (i.e. pipeline) CDK stack for self-update
-      - "(cd deployment-infrastructure/ && cdk synth >/dev/null)"
-      - "echo \"Generated $(cat deployment-infrastructure/target/cdk-assembly/*.template.json | wc -l) template lines\""
+      - "mkdir gen"
+      - "mvn clean install -Dmaven.test.skip=true"
+      # Prepare docker directory for Discord relay
+      - "mkdir gen/relay-docker"
+      - "cp discord-relay/target/discord-relay-1.0-SNAPSHOT-jar-with-dependencies.jar gen/relay-docker/discord-relay.jar"
+      - "cp application-infrastructure/src/main/resources/RelayDockerfile gen/relay-docker/Dockerfile"
+      # Copy app daemon jar with simplified name
+      - "mkdir gen/app-daemon"
+      - "cp app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar gen/app-daemon/app-daemon.jar"
       # Synthesize application/service CDK stacks for application deployment
-      - "(cd application-infrastructure && cdk synth >/dev/null)"
-      - "echo \"Generated $(cat application-infrastructure/target/cdk-assembly/*.template.json | wc -l) template lines\""
+      - "mkdir gen/cloud-assembly"
+      - "(cd application-infrastructure/ && cdk synth -o ../gen/cloud-assembly)"
+      - "echo \"Generated $(cat gen/cloud-assembly/*.template.json | wc -l) template lines\""
   post_build:
     commands:
       - "echo \"Build completed at $(date)\""
 artifacts:
-  secondary-artifacts:
-    s3_jar_files:
-      files:
-        - "app-daemon/target/app-daemon.jar"
-      discard-paths: yes
-    cdk_assembly:
-      files:
-        - "**/*"
-      discard-paths: no
-      base-directory: "application-infrastructure/target/cdk-assembly"
+  name: "cloud_assembly"
+  base-directory: "gen/cloud-assembly"
+  discard-paths: no
+  files:
+    - "**/*"
+cache:
+  paths:
+    - '/root/.m2/**/*'

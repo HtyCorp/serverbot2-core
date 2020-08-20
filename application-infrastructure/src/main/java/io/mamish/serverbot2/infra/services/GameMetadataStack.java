@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -6,7 +6,6 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.dynamodb.*;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
@@ -15,8 +14,8 @@ import java.util.List;
 
 public class GameMetadataStack extends Stack {
 
-    public GameMetadataStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public GameMetadataStack(Construct parent, String id) {
+        super(parent, id);
 
         // DDB table
 

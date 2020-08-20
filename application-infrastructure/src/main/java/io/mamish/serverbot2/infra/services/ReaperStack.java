@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -6,7 +6,6 @@ import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
@@ -17,8 +16,8 @@ import java.util.List;
 
 public class ReaperStack extends Stack {
 
-    public ReaperStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public ReaperStack(Construct parent, String id) {
+        super(parent, id);
 
         Role functionRole = Util.standardLambdaRole(this, "ReaperFunctionRole", List.of(
                 Policies.SQS_FULL_ACCESS

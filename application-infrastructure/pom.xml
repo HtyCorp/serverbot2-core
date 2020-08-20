@@ -18,7 +18,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>io.mamish.serverbot2.infra.app.ServerbotFullApp</mainClass>
+                    <mainClass>io.mamish.serverbot2.infra.deploy.Main</mainClass>
                     <systemProperties>
                         <systemProperty>
                             <key>serverbot2.version</key>
@@ -57,9 +57,25 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Only required extra API access for build: get deployment manifest from SSM -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>ssm</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>cdk-pipelines</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>s3-assets</artifactId>
+            <version>${awscdk.version}</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
@@ -139,11 +155,6 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>s3</artifactId>
-            <version>${awscdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>software.amazon.awscdk</groupId>
-            <artifactId>cdk-app-delivery</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
         <dependency>

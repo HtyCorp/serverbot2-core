@@ -1,5 +1,7 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.customresource.S3Artifact;
+import io.mamish.serverbot2.infra.customresource.S3ArtifactProps;
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
@@ -7,24 +9,29 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
-import software.amazon.awscdk.services.s3.Bucket;
+import software.amazon.awscdk.services.s3.assets.Asset;
 
 import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public AppInstanceShareStack(Construct parent, String id, CommonStack commonStack) {
+        super(parent, id);
 
-        Bucket deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
+        // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer
+        // looking S3 bucket from the CDK asset staging bucket.
+
+        String appDaemonJarPath = Util.codeBuildPath( "gen", "app-daemon", "app-daemon.jar");
+        Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
+                .path(appDaemonJarPath)
                 .build();
-
-        Util.instantiateConfigSsmParameter(this, "ArtifactBucketNameParam",
-                AppInstanceConfig.ARTIFACT_BUCKET_NAME, deployedArtifactBucket.getBucketName());
+        S3Artifact appDaemonArtifact = new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
+                appDaemonJarAsset, commonStack.getDeployedArtifactBucket(), "app-daemon",
+                ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
+        ));
 
         // TODO: Need to come up with better permission scoping. This role is user-exposed so attack surface is
         // considerable. Needs to be scoped in both AWS and project service terms.

@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -7,7 +7,6 @@ import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
@@ -23,8 +22,8 @@ import java.util.List;
 
 public class RelayStack extends Stack {
 
-    public RelayStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
-        super(parent, id, props);
+    public RelayStack(Construct parent, String id, CommonStack commonStack) {
+        super(parent, id);
 
         // Data stores for relay
 
@@ -83,7 +82,7 @@ public class RelayStack extends Stack {
                 .streamPrefix("DiscordRelay")
                 .build());
 
-        String dockerDirPath = System.getenv("CODEBUILD_SRC_DIR") + "/relay-docker";
+        String dockerDirPath = Util.codeBuildPath("gen", "relay-docker");
         ContainerDefinition relayContainer = taskDefinition.addContainer("DiscordRelayContainer", ContainerDefinitionOptions.builder()
                 .essential(true)
                 .image(ContainerImage.fromAsset(dockerDirPath))

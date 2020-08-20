@@ -1,32 +1,41 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
+import software.amazon.awscdk.services.certificatemanager.CertificateValidation;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
-import software.amazon.awscdk.services.certificatemanager.ValidationMethod;
 import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.kms.Key;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.HostedZone;
-import software.amazon.awscdk.services.route53.HostedZoneProviderProps;
+import software.amazon.awscdk.services.route53.HostedZoneAttributes;
 import software.amazon.awscdk.services.route53.IHostedZone;
+import software.amazon.awscdk.services.s3.Bucket;
 
 import java.util.List;
 import java.util.Map;
 
 public class CommonStack extends Stack {
 
+    private final Bucket deployedArtifactBucket;
     private final Vpc serviceVpc;
     private final Vpc applicationVpc;
     private final IHostedZone apexHostedZone;
     private final DnsValidatedCertificate wildcardCertificate;
     private final Key netSecKmsKey;
+
+    public Bucket getDeployedArtifactBucket() {
+        return deployedArtifactBucket;
+    }
 
     public Vpc getServiceVpc() {
         return serviceVpc;
@@ -48,8 +57,34 @@ public class CommonStack extends Stack {
         return netSecKmsKey;
     }
 
-    public CommonStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public CommonStack(Construct parent, String id, ApplicationEnv env) {
+        super(parent, id);
+
+        SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretArn());
+        Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
+                DiscordConfig.API_TOKEN, discordApiTokenSource.toString());
+
+        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParam",
+                CommonConfig.HOSTED_ZONE_ID, env.getRoute53ZoneId());
+        Util.instantiateConfigSsmParameter(this, "DomainNameParam",
+                CommonConfig.ROOT_DOMAIN_NAME, env.getDomainName());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdWelcomeParam",
+                DiscordConfig.CHANNEL_ID_WELCOME, env.getDiscordRelayChannelIdWelcome());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdMainParam",
+                DiscordConfig.CHANNEL_ID_SERVERS, env.getDiscordRelayChannelIdMain());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdAdminParam",
+                DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
+        Util.instantiateConfigSsmParameter(this, "ChannelIdDebugParam",
+                DiscordConfig.CHANNEL_ID_DEBUG, env.getDiscordRelayChannelIdDebug());
+        Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
+                DiscordConfig.CHANNEL_ROLE_SERVERS, env.getDiscordRelayRoleIdMain());
+        Util.instantiateConfigSsmParameter(this, "RoleIdDebugParam",
+                DiscordConfig.CHANNEL_ROLE_DEBUG, env.getDiscordRelayRoleIdDebug());
+
+        deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
+                .bucketName(env.getArtifactBucketName())
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
 
         List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
                 .name("main")
@@ -86,23 +121,23 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
                         CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId());
 
-        HostedZoneProviderProps existingZoneLookup = HostedZoneProviderProps.builder()
-                .domainName(CommonConfig.ROOT_DOMAIN_NAME.getValue())
+        HostedZoneAttributes existingZoneAttributes = HostedZoneAttributes.builder()
+                .hostedZoneId(env.getRoute53ZoneId())
+                .zoneName(env.getDomainName())
                 .build();
-        apexHostedZone = HostedZone.fromLookup(this, "ApexHostedZone", existingZoneLookup);
-
-        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParameter",
-                CommonConfig.HOSTED_ZONE_ID, apexHostedZone.getHostedZoneId());
+        apexHostedZone = HostedZone.fromHostedZoneAttributes(this, "ApexHostedZoneImport",
+                existingZoneAttributes);
 
         wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
-                .validationMethod(ValidationMethod.DNS)
-                .domainName("*."+CommonConfig.ROOT_DOMAIN_NAME.getValue())
+                .validation(CertificateValidation.fromDns(apexHostedZone))
+                .domainName(IDUtils.dot("*", env.getDomainName()))
                 .hostedZone(apexHostedZone)
                 .build();
 
         netSecKmsKey = Key.Builder.create(this, "NetSecGeneralKey")
                 .trustAccountIdentities(true)
                 .alias(NetSecConfig.KMS_ALIAS)
+                .description("Used by NetSec service to encrypt user IDs and IP auth tokens")
                 .build();
 
     }

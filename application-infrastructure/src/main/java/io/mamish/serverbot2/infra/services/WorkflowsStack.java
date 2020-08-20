@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -9,7 +9,10 @@ import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.Machines;
 import io.mamish.serverbot2.workflow.model.Tasks;
-import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.Duration;
+import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
@@ -24,8 +27,8 @@ import java.util.Map;
 
 public class WorkflowsStack extends Stack {
 
-    public WorkflowsStack(Construct parent, String id, StackProps props) {
-        super(parent, id, props);
+    public WorkflowsStack(Construct parent, String id) {
+        super(parent, id);
 
         Role taskRole = Util.standardLambdaRole(this, "WorkflowFunctionRole", List.of(
                 Policies.EC2_FULL_ACCESS,

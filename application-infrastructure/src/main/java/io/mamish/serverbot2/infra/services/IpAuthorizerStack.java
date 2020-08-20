@@ -1,13 +1,13 @@
-package io.mamish.serverbot2.infra.core;
+package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.services.apigateway.DomainNameOptions;
 import software.amazon.awscdk.services.apigateway.EndpointConfiguration;
 import software.amazon.awscdk.services.apigateway.EndpointType;
@@ -22,8 +22,8 @@ import java.util.List;
 
 public class IpAuthorizerStack extends Stack {
 
-    public IpAuthorizerStack(Construct parent, String id, StackProps props, CommonStack commonStack) {
-        super(parent, id, props);
+    public IpAuthorizerStack(Construct parent, String id, CommonStack commonStack, ApplicationEnv env) {
+        super(parent, id);
 
         // Define function and associated role
 
@@ -51,7 +51,7 @@ public class IpAuthorizerStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(NetSecConfig.AUTH_SUBDOMAIN + "." + CommonConfig.ROOT_DOMAIN_NAME.getValue())
+                .domainName(IDUtils.dot(NetSecConfig.AUTH_SUBDOMAIN, env.getDomainName()))
                 .certificate(commonStack.getWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
