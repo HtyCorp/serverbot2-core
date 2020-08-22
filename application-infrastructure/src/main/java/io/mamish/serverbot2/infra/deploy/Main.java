@@ -32,9 +32,13 @@ public class Main {
                 String stageId = env.getName() + "Deployment";
                 Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageProps = StageProps.builder().env(stageEnv).build();
-                AddStageOptions stageOptions = AddStageOptions.builder().manualApprovals(env.requiresApproval()).build();
 
-                pipeline.addApplicationStage(new ApplicationStage(app, stageId, stageProps, env), stageOptions);
+                if (env.requiresApproval()) {
+                    // Not a fan of the built-in AddStageOptions approval setup (adds multiple approvals per stage),
+                    // so just add a new stage with a single approval.
+                    pipeline.addStage(env.getName()+"Approval").addManualApprovalAction();
+                }
+                pipeline.addApplicationStage(new ApplicationStage(app, stageId, stageProps, env));
             }
         }
 

@@ -5,6 +5,7 @@ import io.mamish.serverbot2.sharedconfig.Parameter;
 import io.mamish.serverbot2.sharedconfig.Secret;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.*;
+import software.amazon.awscdk.services.ecs.ContainerImage;
 import software.amazon.awscdk.services.iam.*;
 import software.amazon.awscdk.services.lambda.Code;
 import software.amazon.awscdk.services.lambda.Function;
@@ -16,11 +17,15 @@ import software.amazon.awscdk.services.ssm.StringParameter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Util {
+
+    private static final HashMap<String,Code> moduleNamesToArtifacts = new HashMap<>();
+    private static final HashMap<String,ContainerImage> dockerPathsToArtifacts = new HashMap<>();
 
     public static String codeBuildPath(String... path) {
         String codeBuildDir = System.getenv("CODEBUILD_SRC_DIR");
@@ -81,7 +86,7 @@ public class Util {
     public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler) {
         return Function.Builder.create(parent, id)
                 .runtime(Runtime.JAVA_11)
-                .code(mavenJarAsset(moduleName))
+                .code(getOrCreateMavenJarAsset(moduleName))
                 .handler(handler)
                 .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY)
                 .tracing(Tracing.ACTIVE)
@@ -92,15 +97,18 @@ public class Util {
         return standardJavaFunction(parent, id, moduleName, handler).role(role);
     }
 
-    public static Code mavenJarAsset(String moduleName) {
+    public static Code getOrCreateMavenJarAsset(String moduleName) {
         // Should make this refer to home or maybe current working directory if env not found
-        String rootPath = System.getenv("CODEBUILD_SRC_DIR");
         final String projectVersion = System.getProperty("serverbot2.version");
         final String assemblyDescriptor = "jar-with-dependencies";
         String baseFileName = IDUtils.kebab(moduleName, projectVersion, assemblyDescriptor);
         String fullFileName = baseFileName + ".jar";
-        String jarPath = IDUtils.slash( rootPath, moduleName, "target", fullFileName);
-        return Code.fromAsset(jarPath);
+        String jarPath = codeBuildPath(moduleName, "target", fullFileName);
+        return moduleNamesToArtifacts.computeIfAbsent(jarPath, Code::fromAsset);
+    }
+
+    public static ContainerImage getOrCreateContainerImageAsset(String dockerPath) {
+        return dockerPathsToArtifacts.computeIfAbsent(dockerPath, ContainerImage::fromAsset);
     }
 
     public static StringParameter instantiateConfigSsmParameter(Construct parent, String id, Parameter parameter, String value) {
