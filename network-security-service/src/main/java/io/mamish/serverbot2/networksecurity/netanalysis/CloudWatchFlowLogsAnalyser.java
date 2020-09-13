@@ -3,6 +3,8 @@ package io.mamish.serverbot2.networksecurity.netanalysis;
 import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
+import io.mamish.serverbot2.networksecurity.model.PortPermission;
+import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
@@ -30,9 +32,9 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
     private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
 
     @Override
-    public GetNetworkUsageResponse analyse(List<String> authorisedIps, String endpointVpcIp, int windowSeconds) {
+    public GetNetworkUsageResponse analyse(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds) {
 
-        String queryString = buildQueryString(authorisedIps, endpointVpcIp);
+        String queryString = buildQueryString(authorisedPorts, endpointVpcIp);
         logger.debug("Query string for flow logs analysis is:\n" + queryString);
 
         Instant now = Instant.now();
@@ -90,16 +92,23 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
         }
     }
 
-    private String buildQueryString(List<String> authorisedIps, String endpointVpcIp) {
+    private String buildQueryString(List<PortPermission> authorisedPorts, String endpointVpcIp) {
         // Available fields:
         // @timestamp, @logStream, @message, accountId, endTime, interfaceId, logStatus, startTime, version, action,
         // bytes, dstAddr, dstPort, packets, protocol, srcAddr, srcPort
-        String ipArrayString = authorisedIps.stream()
-                .map(ip -> "\"" + ip + "\"")
-                .collect(Collectors.joining(",","[","]"));
+        String portConditionString = authorisedPorts.stream()
+                .map(this::buildPortCondition)
+                .collect(Collectors.joining(" or ","(",")"));
         return "fields @timestamp, action, srcAddr, dstAddr"
-                + " | filter (action=\"ACCEPT\" and dstAddr=\"" + endpointVpcIp + "\" and srcAddr in " + ipArrayString + ")"
+                + " | filter (action=\"ACCEPT\" and dstAddr=\"" + endpointVpcIp + "\" and " + portConditionString + ")"
                 + " | stats latest(@timestamp) as latestTimeUnix";
+    }
+
+    private String buildPortCondition(PortPermission portPermission) {
+        return String.format("(protocol = %d and dstPort >= %d and dstPort <= %d)",
+                PortProtocol.toProtocolNumber(portPermission.getProtocol()),
+                portPermission.getPortRangeFrom(),
+                portPermission.getPortRangeTo());
     }
 
 }

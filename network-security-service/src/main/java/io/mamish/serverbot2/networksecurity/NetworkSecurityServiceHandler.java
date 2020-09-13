@@ -178,12 +178,9 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
             throw new RequestValidationException("Analysis window time cannot be negative");
         }
 
-        ManagedSecurityGroup referenceGroup = groupManager.describeGroup(NetSecConfig.REFERENCE_SG_NAME);
-        List<String> authorisedIps = referenceGroup.getAllowedUsers().stream()
-                .map(DiscordUserIp::getIpAddress)
-                .collect(Collectors.toList());
+        ManagedSecurityGroup group = groupManager.describeGroup(getNetworkUsageRequest.getTargetSecurityGroupName());
 
-        return networkAnalyser.analyse(authorisedIps, requestedEndpointIp, requestedWindowSeconds);
+        return networkAnalyser.analyse(group.getAllowedPorts(), requestedEndpointIp, requestedWindowSeconds);
     }
 
     private void validateRequestedGameName(String name, boolean allowReserved) {

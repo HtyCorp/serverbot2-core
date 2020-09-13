@@ -102,7 +102,9 @@ public class AppDaemon {
         // Note this ignores the response data if it's *older* than local; can happen if a user re-auths since
         // that overwrites the old IP and GetNetworkUsage only counts activity from currently whitelisted IPs.
         GetNetworkUsageResponse response = networkSecurityServiceClient.getNetworkUsage(new GetNetworkUsageRequest(
-                InstanceMetadata.fetch().getPrivateIp(), SHUTDOWN_TIME_SECONDS
+                InstanceMetadata.fetch().getPrivateIp(),
+                GameMetadataFetcher.initial().getGameName(), // app/game name matches security group name
+                SHUTDOWN_TIME_SECONDS
         ));
         logger.info("Idle check: NetSec latest activity response: hasActivity=" + response.hasAnyActivity()
                 + ", age=" + response.getLatestActivityAgeSeconds());
