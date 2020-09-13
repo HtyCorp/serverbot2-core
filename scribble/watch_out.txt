@@ -1,0 +1,6 @@
+General notes on things that *might* be problems later but aren't worth worrying about now, to check in case something
+does go wrong and is worse than expected.
+
+NetSec prefix list: setting data key has a race condition
+ * This is set permanently the first time the prefix list is ever read/written, so this only matters if there are
+   unlucky concurrent executions that first time.
