@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.networksecurity.securitygroups;
 
+import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
+import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 
@@ -7,17 +9,12 @@ import java.util.List;
 
 public interface IGroupManager {
 
-    void createGroup(String name);
-    void initialiseBaseGroup();
-    void copyBaseRuleIntoGroup(String name);
-
-    ManagedSecurityGroup describeGroup(String name);
+    void createGroup(String name) throws ResourceAlreadyExistsException;
+    ManagedSecurityGroup describeGroup(String name) throws NoSuchResourceException;
     List<ManagedSecurityGroup> listGroups();
+    void deleteGroup(String name) throws NoSuchResourceException;
 
-    void deleteGroup(String name);
+    void setUserIp(String userIpAddress, String userDiscordId);
 
-    void addUserToGroup(ManagedSecurityGroup group, String userIpAddress, String userId);
-    void removeUserFromGroup(ManagedSecurityGroup group, String userId);
-
-    void modifyPortsInGroup(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove);
+    void modifyGroupPorts(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove);
 }

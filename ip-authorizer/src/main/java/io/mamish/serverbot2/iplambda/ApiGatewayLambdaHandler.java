@@ -48,7 +48,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateError("Sorry, this request is invalid [missing token]", 400);
         }
 
-        String encryptedUserIdToken = queryParams.get("token");
+        String encryptedUserIdToken = queryParams.get(NetSecConfig.AUTH_PARAM_TOKEN);
         if (encryptedUserIdToken == null) {
             return generateError("Sorry, this request is invalid [missing token]", 400);
         }

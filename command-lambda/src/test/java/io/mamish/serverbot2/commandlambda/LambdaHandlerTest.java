@@ -21,6 +21,7 @@ public class LambdaHandlerTest {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
     private static final String DUMMY_USER_ID = "12345678901234567";
+    private static final String DUMMY_USER_NAME = "TestyMcTester#9876";
     private static final String DUMMY_MESSAGE_ID = "23456789012345678";
 
     private final Logger logger = Logger.getLogger("LambdaHandlerTest");
@@ -72,8 +73,9 @@ public class LambdaHandlerTest {
         ProcessUserCommandRequest request = new ProcessUserCommandRequest(
                 List.of(requestArgs),
                 MessageChannel.SERVERS,
+                DUMMY_MESSAGE_ID,
                 DUMMY_USER_ID,
-                DUMMY_MESSAGE_ID);
+                DUMMY_USER_NAME);
         ProcessUserCommandResponse response = localClient.processUserCommand(request);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));

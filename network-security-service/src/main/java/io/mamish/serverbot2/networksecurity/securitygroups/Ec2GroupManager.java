@@ -2,27 +2,26 @@ package io.mamish.serverbot2.networksecurity.securitygroups;
 
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
+import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
-import io.mamish.serverbot2.networksecurity.model.DiscordUserIp;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.ec2.Ec2Client;
-import software.amazon.awssdk.services.ec2.model.Filter;
-import software.amazon.awssdk.services.ec2.model.IpPermission;
-import software.amazon.awssdk.services.ec2.model.IpRange;
-import software.amazon.awssdk.services.ec2.model.SecurityGroup;
+import software.amazon.awssdk.services.ec2.model.*;
 
 import java.security.Key;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -34,6 +33,7 @@ public class Ec2GroupManager implements IGroupManager {
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
+    private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
     private final Crypto crypto;
 
     private final Logger logger = LogManager.getLogger(Ec2GroupManager.class);
@@ -44,54 +44,17 @@ public class Ec2GroupManager implements IGroupManager {
 
     @Override
     public void createGroup(String name) {
-        String dataKeyCiphertext = crypto.generateDataKey().b();
-        ec2Client.createSecurityGroup(r ->
-                r.vpcId(VPCID)
-                .groupName(prependSgPrefix(name))
-                .description(dataKeyCiphertext));
-    }
-
-    @Override
-    public void initialiseBaseGroup() {
-        ManagedSecurityGroup refGroup = describeGroup(NetSecConfig.REFERENCE_SG_NAME);
-
-        Key dataKey = crypto.decryptDataKey(refGroup.getEncryptedDataKey());
-        String markerPlaintext = "MARKER_DO_NOT_REMOVE";
-        String markerCiphertext = crypto.encryptLocal(SdkBytes.fromUtf8String(markerPlaintext), dataKey);
-
-        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(refGroup.getGroupId())
-                .ipPermissions(IpPermission.builder()
-                        .ipProtocol("icmp")
-                        .fromPort(-1)
-                        .toPort(-1)
-                        .ipRanges(IpRange.builder()
-                                .cidrIp("0.0.0.0/32")
-                                .description(markerCiphertext)
-                                .build())
-                        .build()));
-    }
-
-    @Override
-    public void copyBaseRuleIntoGroup(String name) {
-        ManagedSecurityGroup group = describeGroup(name);
-        // Copy placeholder rule from reference group
-        ManagedSecurityGroup refGroup = describeGroup(NetSecConfig.REFERENCE_SG_NAME);
-        // Will always be one and only one rule (barring manual tampering)
-        PortPermission referencePort = refGroup.getAllowedPorts().get(0);
-        Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
-
-        List<IpRange> newIpRanges = refGroup.getAllowedUsers().stream().map(user -> IpRange.builder()
-                .cidrIp(user.getIpAddress()+"/32")
-                .description(crypto.encryptLocal(SdkBytes.fromUtf8String(user.getDiscordId()), dataKey))
-                .build()
-        ).collect(Collectors.toList());
-
-        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(IpPermission.builder()
-                .ipProtocol(PortProtocol.toLowerCaseName(referencePort.getProtocol()))
-                .fromPort(referencePort.getPortRangeFrom())
-                .toPort(referencePort.getPortRangeTo())
-                .ipRanges(newIpRanges)
-                .build()));
+        try {
+            ec2Client.createSecurityGroup(r -> r.vpcId(VPCID)
+                    .groupName(prependSgPrefix(name))
+            );
+        } catch (Ec2Exception e) {
+            if (e.awsErrorDetails().errorCode().equals("InvalidGroup.Duplicate")) {
+                throw new ResourceAlreadyExistsException("Security group with this name already exists");
+            } else {
+                throw new RequestHandlingException("Unknown EC2 API exception while creating security group: " + e.getMessage(), e);
+            }
+        }
     }
 
     @Override
@@ -110,73 +73,74 @@ public class Ec2GroupManager implements IGroupManager {
     @Override
     public void deleteGroup(String name) {
         SecurityGroup group = findGroup(name);
-        ec2Client.deleteSecurityGroup(r -> r.groupId(group.groupId()));
-    }
-
-    @Override
-    public void addUserToGroup(ManagedSecurityGroup group, String userIpAddress, String userId) {
-        Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
-        String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userId), dataKey);
-
-        List<IpPermission> newPermissions = mapIpToGroupPorts(group, userIpAddress, encryptedUserId);
-        LogUtils.debugDump(logger, "Dumping new permissions for AuthorizeSecurityGroupIngress:", newPermissions);
-
-        ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(newPermissions));
-    }
-
-    @Override
-    public void removeUserFromGroup(ManagedSecurityGroup group, String userId) {
-        Optional<DiscordUserIp> optExistingUser = group.getAllowedUsers().stream()
-                .filter(u -> u.getDiscordId().equals(userId))
-                .findFirst();
-
-        if (optExistingUser.isEmpty()) {
-            logger.info("Can't remove IP address: no user " + userId + " found in group " + group.getName());
-            return;
+        try {
+            ec2Client.deleteSecurityGroup(r -> r.groupId(group.groupId()));
+        } catch (Ec2Exception e) {
+            if (e.awsErrorDetails().errorCode().equals("InvalidGroup.NotFound")) {
+                throw new NoSuchResourceException("No security group exists with this name");
+            } else {
+                throw new RequestHandlingException("Unknown EC2 API exception while deleting security group: " + e.getMessage(), e);
+            }
         }
-
-        String existingIp = optExistingUser.get().getIpAddress();
-        // Description not required when removing IP permissions
-        List<IpPermission> existingPermissions = mapIpToGroupPorts(group, existingIp, null);
-        LogUtils.debugDump(logger, "Dumping existing permissions for RevokeSecurityGroupIngress:", existingPermissions);
-
-        ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(existingPermissions));
-    }
-
-    private List<IpPermission> mapIpToGroupPorts(ManagedSecurityGroup group, String ipAddress, String description) {
-       return group.getAllowedPorts().stream().map(port -> IpPermission.builder()
-                .ipProtocol(PortProtocol.toLowerCaseName(port.getProtocol()))
-                .fromPort(port.getPortRangeFrom())
-                .toPort(port.getPortRangeTo())
-                .ipRanges(IpRange.builder().cidrIp(ipAddress+"/32").description(description).build())
-                .build()
-        ).collect(Collectors.toList());
     }
 
     @Override
-    public void modifyPortsInGroup(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove) {
-        String gid = group.getGroupId();
+    public void setUserIp(String newUserIpAddress, String userDiscordId) {
+        ManagedPrefixList userIpList = getUserIpList();
+        Key dataKey = getDataKeyFromPrefixListTags(userIpList);
+        String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userDiscordId), dataKey);
 
-        Key dataKey = crypto.decryptDataKey(group.getEncryptedDataKey());
+        Collection<RemovePrefixListEntry> removeEntries = new ArrayList<>();
+        Collection<AddPrefixListEntry> addEntries = new ArrayList<>();
 
-        List<IpRange> allRanges = group.getAllowedUsers().stream().map(u -> IpRange.builder()
-                .cidrIp(u.getIpAddress() + "/32")
-                .description(crypto.encryptLocal(SdkBytes.fromUtf8String(u.getIpAddress()), dataKey))
-                .build()
-        ).collect(Collectors.toList());
+        // If an entry with this user's ID already exists, add a removal entry for it
+        ec2Client.getManagedPrefixListEntries(r -> r.prefixListId(userIpList.prefixListId())).entries().stream()
+                .filter(e -> {
+                    SdkBytes decryptedUserIdBytes = crypto.decryptLocal(e.description(), dataKey);
+                    return decryptedUserIdBytes.asUtf8String().equals(userDiscordId);
+                }).findFirst()
+                .map(PrefixListEntry::cidr)
+                .ifPresent(existingUserCidr -> {
+                    logger.info("Found an existing prefix list entry for user ID {} with address {}",
+                            userDiscordId, existingUserCidr);
+                    removeEntries.add(RemovePrefixListEntry.builder()
+                            .cidr(existingUserCidr)
+                            .build());
+                });
+
+        // Add an entry for the user's new IP address
+        addEntries.add(AddPrefixListEntry.builder()
+                .cidr(newUserIpAddress+"/32")
+                .description(encryptedUserId)
+                .build());
+
+        ec2Client.modifyManagedPrefixList(r -> r.prefixListId(userIpList.prefixListId())
+                .currentVersion(userIpList.version()) // actually a required parameter
+                .removeEntries(removeEntries)
+                .addEntries(addEntries));
+    }
+
+    @Override
+    public void modifyGroupPorts(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove) {
+        ManagedPrefixList userIpList = getUserIpList();
+
+        PrefixListId prefixListAuthorisation = PrefixListId.builder()
+                .prefixListId(userIpList.prefixListId())
+                .description("Rule added by NetSec service")
+                .build();
 
         List<IpPermission> allPermissions = ports.stream().map(p -> IpPermission.builder()
                 .ipProtocol(PortProtocol.toLowerCaseName(p.getProtocol()))
                 .fromPort(p.getPortRangeFrom())
                 .toPort(p.getPortRangeTo())
-                .ipRanges(allRanges)
+                .prefixListIds(prefixListAuthorisation)
                 .build()
         ).collect(Collectors.toList());
 
         if (addNotRemove) {
-            ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(gid).ipPermissions(allPermissions));
+            ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
         } else {
-            ec2Client.revokeSecurityGroupIngress(r -> r.groupId(gid).ipPermissions(allPermissions));
+            ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
         }
     }
 
@@ -184,14 +148,11 @@ public class Ec2GroupManager implements IGroupManager {
         // Group name is prefixed with this standard prefix and a joiner, so +1 for length
         String name = realGroup.groupName().substring(NetSecConfig.SG_NAME_PREFIX.length()+1);
         String groupId = realGroup.groupId();
-        String encryptedDataKey = realGroup.description();
         List<IpPermission> permissions = realGroup.ipPermissions();
 
         List<PortPermission> ports;
-        List<DiscordUserIp> users;
         if (permissions.isEmpty()) {
             ports = List.of();
-            users = List.of();
         } else {
             ports = permissions.stream().map(p -> {
                 PortProtocol protocol;
@@ -202,16 +163,9 @@ public class Ec2GroupManager implements IGroupManager {
                     throw new RequestHandlingException("Unexpected protocol name '" + p.ipProtocol() + "' in EC2 permission", e);
                 }
             }).collect(Collectors.toList());
-
-            String dataKeyInDescription = realGroup.description();
-            Key dataKey = crypto.decryptDataKey(dataKeyInDescription);
-            users = permissions.get(0).ipRanges().stream().map(r -> new DiscordUserIp(
-                    crypto.decryptLocal(r.description(),dataKey).asUtf8String(),
-                    stripCidrMask(r.cidrIp()))
-            ).collect(Collectors.toList());
         }
 
-        return new ManagedSecurityGroup(name, groupId, encryptedDataKey, ports, users);
+        return new ManagedSecurityGroup(name, groupId, ports);
     }
 
     private SecurityGroup findGroup(String name) throws NoSuchResourceException {
@@ -229,6 +183,36 @@ public class Ec2GroupManager implements IGroupManager {
             throw new NoSuchResourceException("No such EC2 security group " + exactName);
         } else {
             return groups.get(0);
+        }
+    }
+
+    private ManagedPrefixList getUserIpList() {
+        Filter nameFilter = Filter.builder().name("prefix-list-name").values(NetSecConfig.USER_IP_PREFIX_LIST_NAME).build();
+        ManagedPrefixList userIpList =  ec2Client.describeManagedPrefixLists(r -> r.filters(nameFilter)).prefixLists().get(0);
+        putIpListDataKeyIfMissing(userIpList);
+        return userIpList;
+    }
+
+    private Key getDataKeyFromPrefixListTags(ManagedPrefixList userIpList) {
+        Optional<Tag> oTag = userIpList.tags().stream().filter(t -> t.key().equals(PREFIX_LIST_DATA_KEY_TAG_KEY)).findFirst();
+        // Create the key if it doesn't exist yet
+        Key dataKey;
+        if (oTag.isEmpty()) {
+            Pair<Key,String> keyPlaintextAndCipherText = crypto.generateDataKey();
+            dataKey = keyPlaintextAndCipherText.a();
+            Tag newTag = Tag.builder().key(PREFIX_LIST_DATA_KEY_TAG_KEY).value(keyPlaintextAndCipherText.b()).build();
+            ec2Client.createTags(r -> r.tags(newTag).resources(userIpList.prefixListId()));
+        } else {
+            dataKey = crypto.decryptDataKey(oTag.get().value());
+        }
+        return dataKey;
+    }
+
+    private void putIpListDataKeyIfMissing(ManagedPrefixList userIpList) {
+        if (userIpList.tags().stream().noneMatch(t -> t.key().equals(PREFIX_LIST_DATA_KEY_TAG_KEY))) {
+            String keyCiphertext = crypto.generateDataKey().b();
+            Tag newTag = Tag.builder().key(PREFIX_LIST_DATA_KEY_TAG_KEY).value(keyCiphertext).build();
+            ec2Client.createTags(r -> r.tags(newTag).resources(userIpList.prefixListId()));
         }
     }
 

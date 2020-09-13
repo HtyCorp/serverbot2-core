@@ -6,25 +6,19 @@ public class ManagedSecurityGroup {
 
     private String name;
     private String groupId;
-    private String encryptedDataKey;
     private List<PortPermission> allowedPorts;
-    private List<DiscordUserIp> allowedUsers;
 
     public ManagedSecurityGroup() { }
 
-    public ManagedSecurityGroup(String name, String groupId, String encryptedDataKey) {
+    public ManagedSecurityGroup(String name, String groupId) {
         this.name = name;
         this.groupId = groupId;
-        this.encryptedDataKey = encryptedDataKey;
     }
 
-    public ManagedSecurityGroup(String name, String groupId, String encryptedDataKey,
-                                List<PortPermission> allowedPorts, List<DiscordUserIp> allowedUsers) {
+    public ManagedSecurityGroup(String name, String groupId, List<PortPermission> allowedPorts) {
         this.name = name;
         this.groupId = groupId;
-        this.encryptedDataKey = encryptedDataKey;
         this.allowedPorts = allowedPorts;
-        this.allowedUsers = allowedUsers;
     }
 
     public String getName() {
@@ -35,15 +29,8 @@ public class ManagedSecurityGroup {
         return groupId;
     }
 
-    public String getEncryptedDataKey() {
-        return encryptedDataKey;
-    }
-
     public List<PortPermission> getAllowedPorts() {
         return allowedPorts;
     }
 
-    public List<DiscordUserIp> getAllowedUsers() {
-        return allowedUsers;
-    }
 }

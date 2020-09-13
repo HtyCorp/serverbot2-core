@@ -2,16 +2,15 @@ package io.mamish.serverbot2.networksecurity;
 
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.*;
 import io.mamish.serverbot2.networksecurity.netanalysis.CloudWatchFlowLogsAnalyser;
 import io.mamish.serverbot2.networksecurity.netanalysis.INetworkAnalyser;
 import io.mamish.serverbot2.networksecurity.securitygroups.Ec2GroupManager;
 import io.mamish.serverbot2.networksecurity.securitygroups.IGroupManager;
-import io.mamish.serverbot2.networksecurity.securitygroups.MockGroupManager;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
-import io.mamish.serverbot2.sharedutil.LogUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
@@ -21,7 +20,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class NetworkSecurityServiceHandler implements INetworkSecurity {
@@ -34,30 +32,17 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
     private final IGroupManager groupManager = chooseGroupManager();
     private final INetworkAnalyser networkAnalyser = chooseNetworkAnalyser();
 
-    public NetworkSecurityServiceHandler() {
-        // Create reference group if missing. Should optimise this later to make it once-only.
-        try {
-            groupManager.describeGroup(NetSecConfig.REFERENCE_SG_NAME);
-        } catch (NoSuchResourceException e) {
-            groupManager.createGroup(NetSecConfig.REFERENCE_SG_NAME);
-            groupManager.initialiseBaseGroup();
-        }
-    }
-
     @Override
     public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroupRequest request) {
 
         String name = request.getGameName();
         validateRequestedGameName(name, false);
-        try {
-            groupManager.describeGroup(name);
-            throw new RequestValidationException("A group with this name already exists");
-        } catch (NoSuchResourceException e) {
-            // Expected, carry on...
-        }
 
-        groupManager.createGroup(name);
-        groupManager.copyBaseRuleIntoGroup(name);
+        try {
+            groupManager.createGroup(name);
+        } catch (ResourceAlreadyExistsException e) {
+            throw new RequestValidationException("A group with this name already exists");
+        }
         ManagedSecurityGroup result = groupManager.describeGroup(name);
         return new CreateSecurityGroupResponse(result);
 
@@ -92,10 +77,10 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         }
 
         if (addPorts != null) {
-            groupManager.modifyPortsInGroup(group, addPorts, true);
+            groupManager.modifyGroupPorts(group, addPorts, true);
         }
         if (removePorts != null) {
-            groupManager.modifyPortsInGroup(group, removePorts, false);
+            groupManager.modifyGroupPorts(group, removePorts, false);
         }
 
         ManagedSecurityGroup modifiedGroup = groupManager.describeGroup(name);
@@ -110,7 +95,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
                 + "."
                 + CommonConfig.ROOT_DOMAIN_NAME.getValue()
                 + NetSecConfig.AUTH_PATH
-                + "?token="
+                + "?"+NetSecConfig.AUTH_PARAM_TOKEN+"="
                 + URLEncoder.encode(token, StandardCharsets.UTF_8);
         return new GenerateIpAuthUrlResponse(authUrl);
     }
@@ -138,15 +123,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
             }
         }
 
-        List<ManagedSecurityGroup> groups = groupManager.listGroups();
-
-        LogUtils.debugDump(logger, "All security groups from manager:", groups);
-
-        groups.forEach(g -> {
-            groupManager.removeUserFromGroup(g, userId);
-            groupManager.addUserToGroup(g, userAddress, userId);
-        });
-
+        groupManager.setUserIp(userAddress, userId);
         return new AuthorizeIpResponse();
 
     }
@@ -195,11 +172,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
     }
 
     private IGroupManager chooseGroupManager() {
-        if (CommonConfig.ENABLE_MOCK.notNull()) {
-            return new MockGroupManager(crypto);
-        } else {
-            return new Ec2GroupManager(crypto);
-        }
+        return new Ec2GroupManager(crypto);
     }
 
     private INetworkAnalyser chooseNetworkAnalyser() {

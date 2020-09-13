@@ -6,6 +6,7 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.services.ec2.CfnPrefixList;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 
@@ -15,6 +16,12 @@ public class NetSecStack extends Stack {
 
     public NetSecStack(Construct parent, String id, CommonStack commonStack) {
         super(parent, id);
+
+        CfnPrefixList.Builder.create(this, "UserPrefixList")
+                .addressFamily("IPv4")
+                .prefixListName(NetSecConfig.USER_IP_PREFIX_LIST_NAME)
+                .maxEntries(NetSecConfig.MAX_USER_IP_ADDRESSES)
+                .build();
 
         Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
                 Policies.EC2_FULL_ACCESS,
