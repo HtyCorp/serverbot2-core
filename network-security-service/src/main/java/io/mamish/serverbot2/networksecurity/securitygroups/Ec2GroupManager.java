@@ -90,35 +90,57 @@ public class Ec2GroupManager implements IGroupManager {
         ManagedPrefixList userIpList = getUserIpList();
         Key dataKey = getDataKeyFromPrefixListTags(userIpList);
         String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userDiscordId), dataKey);
+        String newUserCidr = newUserIpAddress + "/32";
 
-        Collection<RemovePrefixListEntry> removeEntries = new ArrayList<>();
-        Collection<AddPrefixListEntry> addEntries = new ArrayList<>();
-
-        // If an entry with this user's ID already exists, add a removal entry for it
-        ec2Client.getManagedPrefixListEntries(r -> r.prefixListId(userIpList.prefixListId())).entries().stream()
+        // Find the existing user CIDR in the prefix list if it exists
+        Optional<String> oExistingUserCidr = ec2Client
+                .getManagedPrefixListEntriesPaginator(r -> r.prefixListId(userIpList.prefixListId())).entries().stream()
                 .filter(e -> {
                     SdkBytes decryptedUserIdBytes = crypto.decryptLocal(e.description(), dataKey);
                     return decryptedUserIdBytes.asUtf8String().equals(userDiscordId);
                 }).findFirst()
-                .map(PrefixListEntry::cidr)
-                .ifPresent(existingUserCidr -> {
-                    logger.info("Found an existing prefix list entry for user ID {} with address {}",
-                            userDiscordId, existingUserCidr);
-                    removeEntries.add(RemovePrefixListEntry.builder()
-                            .cidr(existingUserCidr)
-                            .build());
-                });
+                .map(PrefixListEntry::cidr);
 
-        // Add an entry for the user's new IP address
-        addEntries.add(AddPrefixListEntry.builder()
-                .cidr(newUserIpAddress+"/32")
-                .description(encryptedUserId)
-                .build());
+        // Prefix list modify call fails if same CIDR is in Add and Remove entries simultaneously,
+        // so do nothing if requested CIDR already exists in prefix list.
+        // Note: this means we can't easily update descriptions on existing entries, unfortunately.
+        if (oExistingUserCidr.isPresent() && oExistingUserCidr.get().equals(newUserCidr)) {
 
-        ec2Client.modifyManagedPrefixList(r -> r.prefixListId(userIpList.prefixListId())
-                .currentVersion(userIpList.version()) // actually a required parameter
-                .removeEntries(removeEntries)
-                .addEntries(addEntries));
+            logger.info("User {} already has CIDR {} whitelisted, no changes required",
+                    userDiscordId, newUserCidr);
+
+        } else {
+
+            // Create the basic request to add the user's new CIDR
+            ModifyManagedPrefixListRequest baseAddCidrRequest = ModifyManagedPrefixListRequest.builder()
+                    .prefixListId(userIpList.prefixListId())
+                    .currentVersion(userIpList.version())
+                    .addEntries(AddPrefixListEntry.builder()
+                            .cidr(newUserCidr)
+                            .description(encryptedUserId)
+                            .build())
+                    .build();
+
+            // If there is an existing CIDR now, it must be different to the new one
+            if (oExistingUserCidr.isEmpty()) {
+
+                logger.info("User {} has no existing CIDR - adding {}",
+                        userDiscordId, newUserCidr);
+                ec2Client.modifyManagedPrefixList(baseAddCidrRequest);
+
+            } else {
+
+                logger.info("User {} has existing CIDR {} - removing it and adding {}",
+                        userDiscordId, oExistingUserCidr.get(), newUserCidr);
+                ec2Client.modifyManagedPrefixList(baseAddCidrRequest.toBuilder()
+                        .removeEntries(RemovePrefixListEntry.builder()
+                                .cidr(oExistingUserCidr.get())
+                                .build())
+                        .build());
+
+            }
+
+        }
     }
 
     @Override

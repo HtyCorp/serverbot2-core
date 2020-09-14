@@ -4,3 +4,6 @@ does go wrong and is worse than expected.
 NetSec prefix list: setting data key has a race condition
  * This is set permanently the first time the prefix list is ever read/written, so this only matters if there are
    unlucky concurrent executions that first time.
+
+NetSec prefix list: can't update entry descriptions in a single operation
+ * This makes use cases like updating/refreshing a temporary entry more difficult.
