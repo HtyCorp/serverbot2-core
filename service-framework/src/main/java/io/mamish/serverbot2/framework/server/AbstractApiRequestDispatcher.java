@@ -62,7 +62,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     private OutputType internalHandleRequest(RawInputType rawInput) throws ApiException {
 
         Pair<String, ParsedInputType> nameAndRemainingInput = parseNameKey(rawInput);
-        logger.debug("Parsed name key as: " + nameAndRemainingInput.a());
+        logger.trace("Parsed name key as: " + nameAndRemainingInput.a());
 
         String targetName = nameAndRemainingInput.a();
         ParsedInputType parsedInput = nameAndRemainingInput.b();
@@ -84,7 +84,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
 
         Object invokeResult;
         try {
-            logger.debug("Invoking method...");
+            logger.trace("Invoking method...");
             invokeResult = definition.getTargetMethod().invoke(handlerInstance, requestObject);
         } catch (IllegalAccessException e) {
             // Shouldn't ever happen since methods are from interface and therefore always public

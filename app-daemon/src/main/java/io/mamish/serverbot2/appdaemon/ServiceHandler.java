@@ -98,7 +98,7 @@ public class ServiceHandler implements IAppDaemon {
         if (config.getEnvironment() == null || config.getEnvironment().isEmpty()) {
             logger.info("runProcess: no environment specified, using unmodified inherited env");
         } else {
-            LogUtils.debugInfo(logger, "runProcess: inserting requested env values:", config.getEnvironment());
+            LogUtils.infoDump(logger, "runProcess: inserting requested env values:", config.getEnvironment());
             processBuilder.environment().putAll(config.getEnvironment());
         }
 

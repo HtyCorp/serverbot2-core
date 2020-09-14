@@ -87,7 +87,7 @@ public abstract class SqsApiServer<ModelType> {
             );
 
             while(true) {
-                logger.debug("Polling messages");
+                logger.trace("Polling messages");
                 ReceiveMessageResponse response = sqsClient.receiveMessage(r ->
                         r.queueUrl(receiveQueueUrl)
                         .messageAttributeNames(receiveAttributeNames)
@@ -95,7 +95,7 @@ public abstract class SqsApiServer<ModelType> {
                         .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
                 );
                 if (!response.hasMessages()) {
-                    logger.debug("No messages received");
+                    logger.trace("No messages received");
                 } else {
                     response.messages().forEach(message -> {
 
@@ -110,7 +110,7 @@ public abstract class SqsApiServer<ModelType> {
                         try {
 
                             if (!message.hasAttributes()) {
-                                logger.debug("Message does not have any message attributes.");
+                                logger.warn("Received message does not have any attributes.");
                                 return;
                             }
 
@@ -125,15 +125,16 @@ public abstract class SqsApiServer<ModelType> {
                                 return;
                             }
 
-                            LogUtils.debugDump(logger, "Dumping message:", message);
-                            LogUtils.debugDump(logger, "Dumping message attrs:", message.messageAttributes());
-                            LogUtils.debugDump(logger, "Dumping message system attrs:", message.attributes());
+                            LogUtils.infoDump(logger, "Message attributes:", message.messageAttributes());
+                            LogUtils.infoDump(logger, "Request payload:", message.body());
 
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
                             AWSXRay.beginSubsegment("DispatchRequest");
                             String responseString = jsonApiHandler.handleRequest(message.body());
                             AWSXRay.endSubsegment();
+
+                            LogUtils.infoDump(logger, "Response payload:", responseString);
 
                             Map<String,MessageAttributeValue> sqsAttrMap = Map.of(
                                     ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId)

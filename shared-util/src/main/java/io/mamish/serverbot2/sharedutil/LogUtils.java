@@ -9,7 +9,7 @@ public class LogUtils {
 
     private LogUtils() {}
 
-    public static void debugInfo(Logger logger, String msg, Object data) {
+    public static void infoDump(Logger logger, String msg, Object data) {
         logger.info(() -> msg + "\n" + gson.toJson(data));
     }
 
