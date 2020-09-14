@@ -47,6 +47,7 @@ public class Ec2GroupManager implements IGroupManager {
         try {
             ec2Client.createSecurityGroup(r -> r.vpcId(VPCID)
                     .groupName(prependSgPrefix(name))
+                    .description("Automatically created security group for application " + name)
             );
         } catch (Ec2Exception e) {
             if (e.awsErrorDetails().errorCode().equals("InvalidGroup.Duplicate")) {
