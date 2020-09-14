@@ -126,7 +126,7 @@ public abstract class SqsApiServer<ModelType> {
                             }
 
                             LogUtils.infoDump(logger, "Message attributes:", message.messageAttributes());
-                            LogUtils.infoDump(logger, "Request payload:", message.body());
+                            logger.info("Request payload:\n" + message.body());
 
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
@@ -134,7 +134,7 @@ public abstract class SqsApiServer<ModelType> {
                             String responseString = jsonApiHandler.handleRequest(message.body());
                             AWSXRay.endSubsegment();
 
-                            LogUtils.infoDump(logger, "Response payload:", responseString);
+                            logger.info("Response payload:\n" + responseString);
 
                             Map<String,MessageAttributeValue> sqsAttrMap = Map.of(
                                     ApiConfig.JSON_REQUEST_ID_KEY, stringAttribute(requestId)
