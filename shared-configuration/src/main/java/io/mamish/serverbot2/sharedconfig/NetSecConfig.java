@@ -13,7 +13,7 @@ public class NetSecConfig {
      * Prod account has rules-per-group limit increased to 250, so list size 80 allows 3 rules per group referencing the
      * list plus 10 left over as spare.
      */
-    public static final String USER_IP_PREFIX_LIST_NAME = "DiscordUserIpList20200915";
+    public static final String USER_IP_PREFIX_LIST_NAME = "DiscordUserIpList";
     public static final int MAX_USER_IP_ADDRESSES = 80;
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";

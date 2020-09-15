@@ -17,7 +17,7 @@ public class NetSecStack extends Stack {
     public NetSecStack(Construct parent, String id, CommonStack commonStack) {
         super(parent, id);
 
-        CfnPrefixList.Builder.create(this, "UserPrefixList")
+        CfnPrefixList.Builder.create(this, "DiscordUserIpPrefixList")
                 .addressFamily("IPv4")
                 .prefixListName(NetSecConfig.USER_IP_PREFIX_LIST_NAME)
                 .maxEntries(NetSecConfig.MAX_USER_IP_ADDRESSES)
