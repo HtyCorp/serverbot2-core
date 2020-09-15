@@ -3,6 +3,7 @@ package io.mamish.serverbot2.networksecurity.securitygroups;
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
+import io.mamish.serverbot2.framework.exception.server.ServiceLimitException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
@@ -160,8 +161,17 @@ public class Ec2GroupManager implements IGroupManager {
                 .build()
         ).collect(Collectors.toList());
 
+        // Adding ingress rules can cause limit errors, removing rules cannot.
         if (addNotRemove) {
-            ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
+            try {
+                ec2Client.authorizeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
+            } catch (Ec2Exception e) {
+                if (e.awsErrorDetails().errorCode().equals("RulesPerSecurityGroupLimitExceeded")) {
+                    throw new ServiceLimitException("Cannot add any more ingress rules to security group", e);
+                } else {
+                    throw new RequestHandlingException("Unknown EC2 API error while adding SG ingress rules: " + e.getMessage(), e);
+                }
+            }
         } else {
             ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
         }

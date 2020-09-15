@@ -9,6 +9,7 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.server.ServiceLimitException;
 import io.mamish.serverbot2.gamemetadata.model.*;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ModifyPortsRequest;
@@ -203,6 +204,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                     addNotRemove ? permission : null,
                     addNotRemove ? null : permission
             ));
+        } catch (ServiceLimitException e) {
+            e.printStackTrace();
+            throw new RequestHandlingException("Unable to add more ports due to account limits.");
         } catch (ApiServerException e) {
             e.printStackTrace();
             throw new RequestHandlingException("Unable to change ports as requested.");

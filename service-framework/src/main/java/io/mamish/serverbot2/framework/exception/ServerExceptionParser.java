@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class ServerExceptionParser {
 
-    private static List<Class<? extends ApiServerException>> exceptionClassList = List.of(
+    private static final List<Class<? extends ApiServerException>> exceptionClassList = List.of(
             FrameworkInternalException.class,
             NoSuchResourceException.class,
             RequestHandlingException.class,
@@ -18,10 +18,11 @@ public class ServerExceptionParser {
             RequestValidationException.class,
             ResourceAlreadyExistsException.class,
             SerializationException.class,
+            ServiceLimitException.class,
             UnknownRequestException.class,
             UnparsableInputException.class
     );
-    private static Map<String, Function<String,? extends ApiServerException>> generatorMap = exceptionClassList.stream()
+    private static final Map<String, Function<String,? extends ApiServerException>> generatorMap = exceptionClassList.stream()
         .collect(Collectors.toMap(Class::getSimpleName, ServerExceptionParser::makeGenerator));
 
     public static ApiServerException fromName(String typeSimpleName, String message) {

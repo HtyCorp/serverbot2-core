@@ -10,12 +10,11 @@ public class NetSecConfig {
      * prefix lists equals the same number of security group rules."
      * https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html#vpc-limits-security-groups
      *
-     * Because NetSec uses prefix lists in rules and default rules limit is 60, very limited. Using 2*30 for now, and
-     * will increase these later (currently have a service limit increase pending in prod).
+     * Prod account has rules-per-group limit increased to 250, so list size 80 allows 3 rules per group referencing the
+     * list plus 10 left over as spare.
      */
-    public static final int MAX_SECURITY_GROUP_RULES = 2;
-    public static final int MAX_USER_IP_ADDRESSES = 30;
     public static final String USER_IP_PREFIX_LIST_NAME = "DiscordUserIpList";
+    public static final int MAX_USER_IP_ADDRESSES = 80;
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 
