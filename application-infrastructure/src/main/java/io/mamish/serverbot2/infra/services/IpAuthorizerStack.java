@@ -51,8 +51,8 @@ public class IpAuthorizerStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(IDUtils.dot(NetSecConfig.AUTH_SUBDOMAIN, env.getDomainName()))
-                .certificate(commonStack.getWildcardCertificate())
+                .domainName(IDUtils.dot(NetSecConfig.AUTH_SUBDOMAIN, env.getSystemRootDomainName()))
+                .certificate(commonStack.getSystemWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
 
@@ -61,7 +61,7 @@ public class IpAuthorizerStack extends Stack {
         // Add R53 record for this custom domain.
 
         ARecord apiAliasRecord = ARecord.Builder.create(this, "IpApiAliasRecord")
-                .zone(commonStack.getApexHostedZone())
+                .zone(commonStack.getSystemRootHostedZone())
                 .recordName(NetSecConfig.AUTH_SUBDOMAIN)
                 .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
                 .ttl(Duration.minutes(5))

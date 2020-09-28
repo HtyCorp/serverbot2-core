@@ -13,8 +13,10 @@ public class ApplicationEnv {
 
     private String artifactBucketName;
 
-    private String domainName;
-    private String route53ZoneId;
+    private String systemRootDomainName;
+    private String systemRootDomainZoneId;
+    private String appRootDomainName;
+    private String appRootDomainZoneId;
 
     private String discordRelayChannelIdWelcome;
     private String discordRelayChannelIdMain;
@@ -52,12 +54,20 @@ public class ApplicationEnv {
         return artifactBucketName;
     }
 
-    public String getDomainName() {
-        return domainName;
+    public String getSystemRootDomainName() {
+        return systemRootDomainName;
     }
 
-    public String getRoute53ZoneId() {
-        return route53ZoneId;
+    public String getSystemRootDomainZoneId() {
+        return systemRootDomainZoneId;
+    }
+
+    public String getAppRootDomainName() {
+        return appRootDomainName;
+    }
+
+    public String getAppRootDomainZoneId() {
+        return appRootDomainZoneId;
     }
 
     public String getDiscordRelayChannelIdWelcome() {

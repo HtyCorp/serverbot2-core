@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.route53.model.*;
 
 public class AppDnsRecordManager {
 
-    private static final String HOSTED_ZONE_ID = CommonConfig.HOSTED_ZONE_ID.getValue();
+    private static final String HOSTED_ZONE_ID = CommonConfig.APP_ROOT_DOMAIN_ZONE_ID.getValue();
 
     private final Route53Client route53Client = Route53Client.builder()
             .region(Region.AWS_GLOBAL)
@@ -72,7 +72,7 @@ public class AppDnsRecordManager {
     }
 
     private String makeFqdn(String appName) {
-        return appName + "." + CommonConfig.ROOT_DOMAIN_NAME.getValue() + ".";
+        return appName + "." + CommonConfig.APP_ROOT_DOMAIN_NAME.getValue() + ".";
     }
 
 }

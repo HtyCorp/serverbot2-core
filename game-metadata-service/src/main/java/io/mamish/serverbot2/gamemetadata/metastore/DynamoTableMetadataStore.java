@@ -15,13 +15,13 @@ import java.util.stream.Stream;
 
 public class DynamoTableMetadataStore implements IMetadataStore {
 
-    DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
+    private DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(DynamoDbClient.builder()
                     .httpClient(UrlConnectionHttpClient.create())
                     .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
                     .build()
             ).build();
-    DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
+    private DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
             TableSchema.fromBean(GameMetadataBean.class));
 
     @Override

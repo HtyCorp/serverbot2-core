@@ -29,8 +29,10 @@ public class CommonStack extends Stack {
     private final Bucket deployedArtifactBucket;
     private final Vpc serviceVpc;
     private final Vpc applicationVpc;
-    private final IHostedZone apexHostedZone;
-    private final DnsValidatedCertificate wildcardCertificate;
+    private final IHostedZone systemRootHostedZone;
+    private final IHostedZone appRootHostedZone;
+    private final DnsValidatedCertificate systemWildcardCertificate;
+    private final DnsValidatedCertificate appWildcardCertificate;
     private final Key netSecKmsKey;
 
     public Bucket getDeployedArtifactBucket() {
@@ -45,12 +47,20 @@ public class CommonStack extends Stack {
         return applicationVpc;
     }
 
-    public IHostedZone getApexHostedZone() {
-        return apexHostedZone;
+    public IHostedZone getSystemRootHostedZone() {
+        return systemRootHostedZone;
     }
 
-    public DnsValidatedCertificate getWildcardCertificate() {
-        return wildcardCertificate;
+    public IHostedZone getAppRootHostedZone() {
+        return appRootHostedZone;
+    }
+
+    public DnsValidatedCertificate getSystemWildcardCertificate() {
+        return systemWildcardCertificate;
+    }
+
+    public DnsValidatedCertificate getAppWildcardCertificate() {
+        return appWildcardCertificate;
     }
 
     public Key getNetSecKmsKey() {
@@ -64,10 +74,14 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
                 DiscordConfig.API_TOKEN, discordApiTokenSource.toString());
 
-        Util.instantiateConfigSsmParameter(this, "HostedZoneIdParam",
-                CommonConfig.HOSTED_ZONE_ID, env.getRoute53ZoneId());
-        Util.instantiateConfigSsmParameter(this, "DomainNameParam",
-                CommonConfig.ROOT_DOMAIN_NAME, env.getDomainName());
+        Util.instantiateConfigSsmParameter(this, "SystemRootDomainNameParam",
+                CommonConfig.SYSTEM_ROOT_DOMAIN_NAME, env.getSystemRootDomainName());
+        Util.instantiateConfigSsmParameter(this, "SystemRootDomainZoneIdParam",
+                CommonConfig.SYSTEM_ROOT_DOMAIN_ZONE_ID, env.getSystemRootDomainZoneId());
+        Util.instantiateConfigSsmParameter(this, "AppRootDomainNameParam",
+                CommonConfig.APP_ROOT_DOMAIN_NAME, env.getAppRootDomainName());
+        Util.instantiateConfigSsmParameter(this, "AppRootDomainZoneIdParam",
+                CommonConfig.APP_ROOT_DOMAIN_ZONE_ID, env.getAppRootDomainZoneId());
         Util.instantiateConfigSsmParameter(this, "ChannelIdWelcomeParam",
                 DiscordConfig.CHANNEL_ID_WELCOME, env.getDiscordRelayChannelIdWelcome());
         Util.instantiateConfigSsmParameter(this, "ChannelIdMainParam",
@@ -121,17 +135,30 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
                         CommonConfig.APPLICATION_VPC_ID, applicationVpc.getVpcId());
 
-        HostedZoneAttributes existingZoneAttributes = HostedZoneAttributes.builder()
-                .hostedZoneId(env.getRoute53ZoneId())
-                .zoneName(env.getDomainName())
+        HostedZoneAttributes existingSystemZoneAttributes = HostedZoneAttributes.builder()
+                .hostedZoneId(env.getSystemRootDomainZoneId())
+                .zoneName(env.getSystemRootDomainName())
                 .build();
-        apexHostedZone = HostedZone.fromHostedZoneAttributes(this, "ApexHostedZoneImport",
-                existingZoneAttributes);
+        systemRootHostedZone = HostedZone.fromHostedZoneAttributes(this, "SystemRootZoneImport",
+                existingSystemZoneAttributes);
 
-        wildcardCertificate = DnsValidatedCertificate.Builder.create(this, "DomainWildcardCertificate")
-                .validation(CertificateValidation.fromDns(apexHostedZone))
-                .domainName(IDUtils.dot("*", env.getDomainName()))
-                .hostedZone(apexHostedZone)
+        HostedZoneAttributes existingAppZoneAttributes = HostedZoneAttributes.builder()
+                .hostedZoneId(env.getAppRootDomainZoneId())
+                .zoneName(env.getAppRootDomainName())
+                .build();
+        appRootHostedZone = HostedZone.fromHostedZoneAttributes(this, "AppRootZoneImport",
+                existingAppZoneAttributes);
+
+        systemWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "SystemDomainWildcardCertificate")
+                .validation(CertificateValidation.fromDns(systemRootHostedZone))
+                .domainName(IDUtils.dot("*", env.getSystemRootDomainName()))
+                .hostedZone(systemRootHostedZone)
+                .build();
+
+        appWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "AppDomainWildcardCertificate")
+                .validation(CertificateValidation.fromDns(appRootHostedZone))
+                .domainName(IDUtils.dot("*", env.getAppRootDomainName()))
+                .hostedZone(appRootHostedZone)
                 .build();
 
         netSecKmsKey = Key.Builder.create(this, "NetSecGeneralKey")
