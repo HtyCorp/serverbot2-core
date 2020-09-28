@@ -93,10 +93,10 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         String authUrl = "https://"
                 + NetSecConfig.AUTH_SUBDOMAIN
                 + "."
-                + CommonConfig.ROOT_DOMAIN_NAME.getValue()
+                + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
                 + NetSecConfig.AUTH_PATH
                 + "?"+NetSecConfig.AUTH_PARAM_TOKEN+"="
-                + URLEncoder.encode(token, StandardCharsets.UTF_8);
+                + token; // crypto.encrypt() is already URL-safe
         return new GenerateIpAuthUrlResponse(authUrl);
     }
 

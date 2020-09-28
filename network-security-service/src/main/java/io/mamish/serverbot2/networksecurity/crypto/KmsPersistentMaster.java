@@ -23,8 +23,8 @@ public class KmsPersistentMaster implements ICryptoMaster {
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
             .build();
     private final String KEYID = "alias/"+ NetSecConfig.KMS_ALIAS;
-    private final Base64.Encoder b64Encoder = Base64.getEncoder();
-    private final Base64.Decoder b64Decoder = Base64.getDecoder();
+    private final Base64.Encoder b64Encoder = Base64.getUrlEncoder();
+    private final Base64.Decoder b64Decoder = Base64.getUrlDecoder();
 
     @Override
     public String encrypt(SdkBytes plaintext) {
