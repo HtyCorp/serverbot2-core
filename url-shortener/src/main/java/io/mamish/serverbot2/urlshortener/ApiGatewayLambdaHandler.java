@@ -69,6 +69,10 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     private APIGatewayProxyResponseEvent handleAdminRequest(APIGatewayProxyRequestEvent request, Context context,
                                                             String[] subpathSegments) {
 
+        // Important: should check that we are IAM-authorised just in case.
+        // APIGW config should guarantee this and pass the principal ARN in request context.
+        // This API will only be called by other services, not users (they won't have permission).
+
         try {
             String userArn = request.getRequestContext().getIdentity().getUserArn();
             Objects.requireNonNull(userArn);
@@ -116,7 +120,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateHttpRawError("Provided TTL parameter is out of range", 400);
         }
 
-        // Now actually process the thing
+        // With validation finished, actually generate a user token and a persistent storage item for V1
 
         Pair<String,V1UrlInfoBean> tokenAndBean;
         try {
@@ -126,13 +130,16 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateHttpRawError("Unknown error while generating URL", 500);
         }
 
+        // Store the V1 URL info in DDB
+
         v1table.putItem(r -> r.item(tokenAndBean.b()));
 
-        // This should already be URL-safe but encode it anyway
+        // Use the returned token to generate a shortened URL and send it back
+
+        // Note: this should already be URL-safe but encode it anyway in case the underlying encoding is changed
         String encodedToken = URLEncoder.encode(tokenAndBean.a(), StandardCharsets.UTF_8);
         String shortUrl = "https://" + UrlShortenerConfig.SUBDOMAIN + "." + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME
                 + "/1/" + encodedToken;
-
         return generateHttpOkay(shortUrl);
 
     }
@@ -164,7 +171,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             logger.error("No DDB item found with schema version 1 and ID {}", id);
             return generateHttpError("Sorry, this URL does not exist. It may be invalid or may have been deleted."
                     + " Try getting a new link from wherever you got this one.",
-                    "null table lookup on id="+id, 400);
+                    "null table lookup on id="+id, 404);
         }
 
         String fullUrl;
@@ -184,7 +191,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         if (!isUrlValid(fullUrl)) {
             logger.error("Stored URL is somehow invalid. Should never occur due to validation on store ('{}')", fullUrl);
             return generateHttpError("Sorry, this URL has been revoked."
-                    + "Try getting a new link from wherever you got this one.",
+                    + " Try getting a new link from wherever you got this one.",
                     "bad apex domain for id="+id, 500);
         }
 

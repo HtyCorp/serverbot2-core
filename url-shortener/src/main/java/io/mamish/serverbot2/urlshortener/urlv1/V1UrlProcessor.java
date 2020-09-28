@@ -23,6 +23,11 @@ public class V1UrlProcessor implements IUrlProcessor<V1UrlInfoBean> {
 
     /*
      * Token format: urlsafeb64(ID[8] | KEY[16]))
+     *
+     * 'ID' is used (after conversion to unsigned long for readability) as sort key for DDB lookup.
+     * 'KEY' is the AES128 data key used to encrypt the URL in DDB; without the token the DDB data is unreadable.
+     *
+     * See V1UrlInfoBean for table storage details.
      */
 
     private final Base64.Encoder b64encoder = Base64.getUrlEncoder();

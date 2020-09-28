@@ -6,6 +6,13 @@ import java.nio.ByteBuffer;
 
 public class V1UrlInfoBean extends BaseUrlInfoBean {
 
+    /*
+     * This bean stores an encrypted version of the requested URL. The data key used for this is encoded in the user
+     * token forming the shortened URL. So, even with access to this table, the URLs are inaccessible with their tokens.
+     *
+     * See V1UrlProcessor for token details.
+     */
+
     private long expiresAtEpochSeconds;
     private ByteBuffer urlIv;
     private ByteBuffer urlCiphertext;
