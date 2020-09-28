@@ -97,6 +97,7 @@
         <module>workflow-service</module>
         <module>workflow-service-model</module>
         <module>test-utilities</module>
+        <module>url-shortener</module>
     </modules>
 
     <dependencyManagement>
