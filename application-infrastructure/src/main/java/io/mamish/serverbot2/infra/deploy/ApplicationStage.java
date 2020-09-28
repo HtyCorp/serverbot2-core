@@ -12,6 +12,7 @@ public class ApplicationStage extends Stage {
     public final CommonStack commonStack;
     public final GameMetadataStack gameMetadataStack;
     public final IpAuthorizerStack ipAuthorizerStack;
+    public final UrlShortenerStack urlShortenerStack;
     public final NetSecStack netSecStack;
     public final ReaperStack reaperStack;
     public final RelayStack relayStack;
@@ -22,6 +23,7 @@ public class ApplicationStage extends Stage {
 
         commonStack = new CommonStack(this, "CommonResources", env);
         ipAuthorizerStack = new IpAuthorizerStack(this, "IpAuthorizerApi", commonStack, env);
+        urlShortenerStack = new UrlShortenerStack(this, "UrlShortenerApi", commonStack, env);
         relayStack = new RelayStack(this, "DiscordRelay", commonStack);
         appInstanceShareStack = new AppInstanceShareStack(this, "AppInstanceResources", commonStack);
         commandStack = new CommandStack(this, "CommandService");
