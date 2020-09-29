@@ -4,11 +4,13 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.urlshortener.tokenv1.V1UrlInfoBean;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1TokenProcessor;
+import io.mamish.serverbot2.urlshortener.tokenv1.V1UrlInfoBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -21,7 +23,10 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -46,9 +51,16 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             + ".*");
 
     @Override
-    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayProxyRequestEvent, Context context) {
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
+        logger.info("Proxy request:\n" + request);
+        APIGatewayProxyResponseEvent response = enact(request, context);
+        logger.info("Proxy response:\n" + response);
+        return response;
+    }
 
-        String[] pathSegments = apiGatewayProxyRequestEvent.getPath().split("/");
+    private APIGatewayProxyResponseEvent enact(APIGatewayProxyRequestEvent request, Context context) {
+
+        String[] pathSegments = request.getPath().split("/");
         if (pathSegments.length < 2) {
             logger.error("Got less than 2 path segments, path={}", Arrays.toString(pathSegments));
             return generateHttpRawError("Resource not found", 404);
@@ -56,22 +68,22 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         String baseResource = pathSegments[1]; // not [0]: there is a leading "/" so [0] is just empty
         String[] subResources = Arrays.copyOfRange(pathSegments, 2, pathSegments.length);
 
-        if (baseResource.equals(UrlShortenerConfig.URI_ADMIN_PATH)) {
-            return handleAdminRequest(apiGatewayProxyRequestEvent, context, subResources);
+        if (baseResource.equals(UrlShortenerConfig.URL_ADMIN_PATH)) {
+            return enactAdminRequest(request, context, subResources);
         } else if (baseResource.equals("1")) {
-            return handleV1RedirectRequest(apiGatewayProxyRequestEvent, context, subResources);
+            return enactV1RedirectRequest(request, context, subResources);
         } else {
             return generateHttpRawError("Page not found", 404);
         }
 
     }
 
-    private APIGatewayProxyResponseEvent handleAdminRequest(APIGatewayProxyRequestEvent request, Context context,
-                                                            String[] subpathSegments) {
+    private APIGatewayProxyResponseEvent enactAdminRequest(APIGatewayProxyRequestEvent request, Context context,
+                                                           String[] subpathSegments) {
 
         // Important: should check that we are IAM-authorised just in case.
         // APIGW config should guarantee this and pass the principal ARN in request context.
-        // This API will only be called by other services, not users (they won't have permission).
+        // This API will only be called by other services, not app users (they won't have permission).
 
         try {
             String userArn = request.getRequestContext().getIdentity().getUserArn();
@@ -94,22 +106,24 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateHttpRawError("Method not allowed", 405);
         }
 
-        if (request.getQueryStringParameters() == null) {
-            logger.error("No query string parameters supplied");
-            return generateHttpRawError("Missing required parameters", 400);
+        if (request.getBody() == null) {
+            logger.error("No body data supplied, expecting JSON");
+            return generateHttpRawError("Missing required body data", 400);
         }
 
-        String paramUrl = request.getQueryStringParameters().get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_PARAM_URL);
-        String paramTtlSeconds = request.getQueryStringParameters().get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_PARAM_TTLSECONDS);
-        if (paramUrl == null || paramTtlSeconds == null) {
-            logger.error("Missing required query string params, have requestedUrl='{}' requestedTtlSeconds='{}'",
-                    paramUrl, paramTtlSeconds);
-            return generateHttpRawError("Missing required parameters", 400);
+        String urlParam, ttlParam;
+        try {
+            JsonObject bodyJson = JsonParser.parseString(request.getBody()).getAsJsonObject();
+            urlParam = bodyJson.get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_JSONKEY_URL).getAsString();
+            ttlParam = bodyJson.get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_JSONKEY_TTLSECONDS).getAsString();
+        } catch (RuntimeException e) {
+            logger.error("Missing required body data, body='{}'", request.getBody(), e);
+            return generateHttpRawError("Missing required body data", 400);
         }
 
         long numTtlSeconds;
         try {
-            numTtlSeconds = Long.parseLong(paramTtlSeconds);
+            numTtlSeconds = Long.parseLong(ttlParam);
         } catch (NumberFormatException e) {
             logger.error("Couldn't parse provided TTL parameter", e);
             return generateHttpRawError("Provided TTL parameter is not an integer", 400);
@@ -124,11 +138,12 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
         Pair<String,V1UrlInfoBean> tokenAndBean;
         try {
-            tokenAndBean = v1Processor.generateTokenAndBean(paramUrl, numTtlSeconds);
+            tokenAndBean = v1Processor.generateTokenAndBean(urlParam, numTtlSeconds);
         } catch (RuntimeException e) {
             logger.error("Exception occurred while generating URL token", e);
             return generateHttpRawError("Unknown error while generating URL", 500);
         }
+        logger.info("Generated new V1 token '{}' for URL info bean:\n{}", tokenAndBean.a(), tokenAndBean.b());
 
         // Store the V1 URL info in DDB
 
@@ -144,8 +159,8 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     }
 
-    private APIGatewayProxyResponseEvent handleV1RedirectRequest(APIGatewayProxyRequestEvent request, Context context,
-                                                                 String[] subpathSegments) {
+    private APIGatewayProxyResponseEvent enactV1RedirectRequest(APIGatewayProxyRequestEvent request, Context context,
+                                                                String[] subpathSegments) {
 
         if (!request.getHttpMethod().equals("GET")) {
             return generateHttpRawError("This resource only accepts GET requests", 405);
@@ -173,6 +188,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
                     + " Try getting a new link from wherever you got this one.",
                     "null table lookup on id="+id, 404);
         }
+        logger.info("Retrieved URL info bean for id={}:\n{}", id, urlInfoBean);
 
         String fullUrl;
         try {
@@ -187,6 +203,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
                     + " Try getting a new link from wherever you got this one.",
                     "revocation on id="+id+": "+e.getMessage(), 403);
         }
+        logger.info("ID '{}' URL is '{}'", id, fullUrl);
 
         if (!isUrlValid(fullUrl)) {
             logger.error("Stored URL is somehow invalid. Should never occur due to validation on store ('{}')", fullUrl);

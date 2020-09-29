@@ -63,4 +63,16 @@ public class V1UrlInfoBean extends BaseUrlInfoBean {
     public void setUrlSha256(SdkBytes urlSha256) {
         this.urlSha256 = urlSha256;
     }
+
+    @Override
+    public String toString() {
+        return "V1UrlInfoBean{" +
+                "expiresAtEpochSeconds=" + expiresAtEpochSeconds +
+                ", urlIv=" + urlIv +
+                ", urlCiphertext=" + urlCiphertext +
+                ", urlSha256=" + urlSha256 +
+                ", schemaVersion=" + schemaVersion +
+                ", id='" + id + '\'' +
+                '}';
+    }
 }

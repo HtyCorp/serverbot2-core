@@ -47,7 +47,7 @@ public class UrlShortenerStack extends Stack {
         // "/admin/{proxy+}", with IAM auth (note "/admin" must also exist but has no methods)
         // "/{proxy+}", no auth, for everything else
 
-        Resource adminResource = restApi.getRoot().addResource(UrlShortenerConfig.URI_ADMIN_PATH);
+        Resource adminResource = restApi.getRoot().addResource(UrlShortenerConfig.URL_ADMIN_PATH);
         MethodOptions iamAuthOptions = MethodOptions.builder().authorizationType(AuthorizationType.IAM).build();
         Resource adminProxyResource = adminResource.addProxy(ProxyResourceOptions.builder()
                 .defaultMethodOptions(iamAuthOptions)
