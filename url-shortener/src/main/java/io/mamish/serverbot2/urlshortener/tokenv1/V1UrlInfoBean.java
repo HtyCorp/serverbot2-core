@@ -1,9 +1,11 @@
 package io.mamish.serverbot2.urlshortener.tokenv1;
 
 import io.mamish.serverbot2.urlshortener.BaseUrlInfoBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
 import java.nio.ByteBuffer;
 
+@DynamoDbBean
 public class V1UrlInfoBean extends BaseUrlInfoBean {
 
     /*
