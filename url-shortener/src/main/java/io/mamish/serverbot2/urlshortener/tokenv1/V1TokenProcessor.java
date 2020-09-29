@@ -4,6 +4,7 @@ import io.mamish.serverbot2.sharedutil.Pair;
 import io.mamish.serverbot2.urlshortener.ITokenProcessor;
 import io.mamish.serverbot2.urlshortener.InvalidTokenException;
 import io.mamish.serverbot2.urlshortener.UrlRevokedException;
+import software.amazon.awssdk.core.SdkBytes;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -77,9 +78,10 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
         V1UrlInfoBean newInfoBean = new V1UrlInfoBean(1,
                 Long.toUnsignedString(newId),
                 expiresAtEpochSeconds,
-                ByteBuffer.wrap(urlIvBytes),
-                ByteBuffer.wrap(urlCiphertextBytes),
-                ByteBuffer.wrap(urlPlaintextDigestBytes));
+                SdkBytes.fromByteArray(urlIvBytes),
+                SdkBytes.fromByteArray(urlCiphertextBytes),
+                SdkBytes.fromByteArray(urlPlaintextDigestBytes)
+        );
         return new Pair<>(newToken, newInfoBean);
 
     }
@@ -113,6 +115,16 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
 
     @Override
     public String extractFullUrlFromTokenAndBean(String token, V1UrlInfoBean details) {
+
+        // Validate bean is still valid
+
+        if (Instant.now().isAfter(Instant.ofEpochSecond(details.getExpiresAtEpochSeconds()))) {
+            throw new UrlRevokedException("URL expired");
+        }
+
+        // Get decryption inputs: IV from storage and key from user-supplied token
+
+        IvParameterSpec aesIv = new IvParameterSpec(details.getUrlIv().asByteArray());
         Key dataKey;
         try {
             dataKey = extractDataKey(token);
@@ -120,23 +132,21 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
             throw new InvalidTokenException("key extract failure", e);
         }
 
-        if (Instant.now().isAfter(Instant.ofEpochSecond(details.getExpiresAtEpochSeconds()))) {
-            throw new UrlRevokedException("URL expired");
-        }
-
-        // Decrypt ciphertext and calculate SHA256 digest of plaintext
+        // Decrypt full URL ciphertext
 
         byte[] urlPlaintextBytes;
         try {
-            cipher.init(Cipher.DECRYPT_MODE, dataKey, new IvParameterSpec(details.getUrlIv().array()));
-            urlPlaintextBytes = cipher.doFinal(details.getUrlCiphertext().array());
+            cipher.init(Cipher.DECRYPT_MODE, dataKey, aesIv);
+            urlPlaintextBytes = cipher.doFinal(details.getUrlCiphertext().asByteArray());
         } catch (GeneralSecurityException e) {
             throw new InvalidTokenException("url decrypt failure", e);
         }
 
+        // Calculate SHA256 of decrypted URL and compare to stored digest
+
         digest.reset();
         byte[] actualPlaintextSha256Bytes = digest.digest(urlPlaintextBytes);
-        if (!Arrays.equals(actualPlaintextSha256Bytes, details.getUrlSha256().array())) {
+        if (!Arrays.equals(actualPlaintextSha256Bytes, details.getUrlSha256().asByteArray())) {
             throw new InvalidTokenException("digest mismatch");
         }
 
