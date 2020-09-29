@@ -1,7 +1,7 @@
-package io.mamish.serverbot2.urlshortener.urlv1;
+package io.mamish.serverbot2.urlshortener.tokenv1;
 
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.urlshortener.IUrlProcessor;
+import io.mamish.serverbot2.urlshortener.ITokenProcessor;
 import io.mamish.serverbot2.urlshortener.InvalidTokenException;
 import io.mamish.serverbot2.urlshortener.UrlRevokedException;
 
@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 
-public class V1UrlProcessor implements IUrlProcessor<V1UrlInfoBean> {
+public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
 
     /*
      * Token format: urlsafeb64(ID[8] | KEY[16]))
@@ -36,7 +36,7 @@ public class V1UrlProcessor implements IUrlProcessor<V1UrlInfoBean> {
     private final Cipher cipher;
     private final MessageDigest digest;
 
-    public V1UrlProcessor() {
+    public V1TokenProcessor() {
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             digest = MessageDigest.getInstance("SHA-256");

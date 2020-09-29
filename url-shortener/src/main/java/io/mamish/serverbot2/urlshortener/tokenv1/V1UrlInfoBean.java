@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.urlshortener.urlv1;
+package io.mamish.serverbot2.urlshortener.tokenv1;
 
 import io.mamish.serverbot2.urlshortener.BaseUrlInfoBean;
 

@@ -7,8 +7,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.urlshortener.urlv1.V1UrlInfoBean;
-import io.mamish.serverbot2.urlshortener.urlv1.V1UrlProcessor;
+import io.mamish.serverbot2.urlshortener.tokenv1.V1UrlInfoBean;
+import io.mamish.serverbot2.urlshortener.tokenv1.V1TokenProcessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -39,7 +39,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
             TableSchema.fromBean(V1UrlInfoBean.class));
-    private final V1UrlProcessor v1Processor = new V1UrlProcessor();
+    private final V1TokenProcessor v1Processor = new V1TokenProcessor();
 
     private final Pattern basicValidUrlPattern = Pattern.compile("(?<schema>[a-z]+)://"
             + "(?<domain>[a-zA-Z0-9-.]+)"
