@@ -153,8 +153,12 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
         // Note: this should already be URL-safe but encode it anyway in case the underlying encoding is changed
         String encodedToken = URLEncoder.encode(tokenAndBean.a(), StandardCharsets.UTF_8);
-        String shortUrl = "https://" + UrlShortenerConfig.SUBDOMAIN + "." + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME
-                + "/1/" + encodedToken;
+        String shortUrl = "https://"
+                + UrlShortenerConfig.SUBDOMAIN
+                + "."
+                + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
+                + "/1/"
+                + encodedToken;
         return generateHttpOkay(shortUrl);
 
     }

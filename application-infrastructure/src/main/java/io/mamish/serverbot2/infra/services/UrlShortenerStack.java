@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
@@ -50,6 +51,8 @@ public class UrlShortenerStack extends Stack {
         Role lambdaRole = Util.standardLambdaRole(this, "HandlerFunctionRole", List.of(
                 Policies.DYNAMODB_FULL_ACCESS
         )).build();
+
+        Util.addConfigPathReadPermissionToRole(this, lambdaRole, CommonConfig.PATH);
 
         Function handlerFunction = Util.standardJavaFunction(this, "HandlerFunction", "url-shortener",
                 "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler", lambdaRole).build();
