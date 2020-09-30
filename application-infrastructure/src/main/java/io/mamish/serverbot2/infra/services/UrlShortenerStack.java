@@ -31,7 +31,7 @@ public class UrlShortenerStack extends Stack {
 
         Attribute partitionKey = Attribute.builder()
                 .name(UrlShortenerConfig.TABLE_PARTITION_KEY)
-                .type(AttributeType.STRING)
+                .type(AttributeType.NUMBER)
                 .build();
         Attribute sortKey = Attribute.builder()
                 .name(UrlShortenerConfig.TABLE_SORT_KEY)
