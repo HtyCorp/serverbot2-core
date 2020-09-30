@@ -13,8 +13,8 @@ public class UrlShortenerConfig {
     public static final String URL_ADMIN_SUBPATH_NEW_JSONKEY_URL = "url";
     public static final String URL_ADMIN_SUBPATH_NEW_JSONKEY_TTLSECONDS = "ttlSeconds";
 
-    public static final String DYNAMO_TABLE_NAME = "UrlShortenerFullUrlStore";
-    public static final String TABLE_PARTITION_KEY = "id";
-    public static final String TABLE_SORT_KEY = "schemaVersion";
+    public static final String DYNAMO_TABLE_NAME = "UrlShortenerFullUrlTable";
+    public static final String TABLE_PARTITION_KEY = "schemaVersion";
+    public static final String TABLE_SORT_KEY = "id";
 
 }

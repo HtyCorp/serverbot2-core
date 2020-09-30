@@ -7,8 +7,13 @@ import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.apigateway.*;
+import software.amazon.awscdk.services.dynamodb.Attribute;
+import software.amazon.awscdk.services.dynamodb.AttributeType;
+import software.amazon.awscdk.services.dynamodb.BillingMode;
+import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.route53.ARecord;
@@ -21,6 +26,24 @@ public class UrlShortenerStack extends Stack {
 
     public UrlShortenerStack(Construct parent, String id, CommonStack commonStack, ApplicationEnv env) {
         super(parent, id);
+
+        // Configure the DDB table to store URL information
+
+        Attribute partitionKey = Attribute.builder()
+                .name(UrlShortenerConfig.TABLE_PARTITION_KEY)
+                .type(AttributeType.STRING)
+                .build();
+        Attribute sortKey = Attribute.builder()
+                .name(UrlShortenerConfig.TABLE_SORT_KEY)
+                .type(AttributeType.STRING)
+                .build();
+        Table urlTable = Table.Builder.create(this, "UrlInfoTable")
+                .tableName(UrlShortenerConfig.DYNAMO_TABLE_NAME)
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .partitionKey(partitionKey)
+                .sortKey(sortKey)
+                .build();
 
         // Configure the Lambda handler role
 
