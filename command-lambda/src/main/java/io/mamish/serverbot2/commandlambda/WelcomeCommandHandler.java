@@ -24,12 +24,15 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     private final IDiscordService discordServiceClient;
     private final INetworkSecurity networkSecurityClient;
+    private final UrlShortenerClient urlShortenerClient;
 
     public WelcomeCommandHandler() {
         logger.trace("Building DiscordRelay client");
         discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
         logger.trace("Building NetworkSecurity client");
         networkSecurityClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+        logger.trace("Building UrlShortenerClient");
+        urlShortenerClient = new UrlShortenerClient();
         logger.trace("Constructor finished");
     }
 
@@ -80,23 +83,25 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
     @Override
     public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
         String userId = commandAddIp.getContext().getSenderId();
-        String authUrl = networkSecurityClient.generateIpAuthUrl(
+        String fullAuthUrl = networkSecurityClient.generateIpAuthUrl(
                 new GenerateIpAuthUrlRequest(userId)
         ).getIpAuthUrl();
 
+        String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_TTL.getSeconds());
+
         // Send a message to the user privately before returning the standard channel message.
 
-        String welcomeMessage = "Thanks for using serverbot2. To whitelist your IP to join servers, use this link.\n";
+        String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getName();
+        String welcomeMessage = "To whitelist your IP to join "+friendlyDomain+" servers, use this link.\n";
         String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it"
                 + " replaces your last IP.\n\n";
 
         String cmdName = CommonConfig.COMMAND_SIGIL_CHARACTER + "addip";
-        String why = "(You're seeing this message because you used " + cmdName + " in a Serverbot2 channel. Exposing"
-                + " these servers publicly is a security risk, so only whitelisted IPs are allowed from now on.)";
+        String why = "(You're seeing this message because you used " + cmdName + " in a serverbot2 channel.)";
 
         String messageContent = welcomeMessage + reassurance + why;
 
-        SimpleEmbed authLinkEmbed = new SimpleEmbed(authUrl,
+        SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl,
                 "Serverbot2 IP whitelist link",
                 "Click this link to automatically detect your IP address and whitelist it.");
 

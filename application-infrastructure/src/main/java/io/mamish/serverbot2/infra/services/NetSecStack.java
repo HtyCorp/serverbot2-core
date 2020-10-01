@@ -29,6 +29,7 @@ public class NetSecStack extends Stack {
         )).build();
 
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
+        Util.addFullExecuteApiPermissionToRole(this, functionRole);
 
         commonStack.getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 

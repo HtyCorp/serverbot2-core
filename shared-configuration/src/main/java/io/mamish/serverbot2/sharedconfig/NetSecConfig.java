@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.sharedconfig;
 
+import java.time.Duration;
+
 public class NetSecConfig {
 
     public static final String FUNCTION_NAME = "NetworkSecurityService";
@@ -21,5 +23,8 @@ public class NetSecConfig {
     public static final String AUTH_SUBDOMAIN = "ipauth";
     public static final String AUTH_PATH = "/authorize";
     public static final String AUTH_PARAM_TOKEN = "token";
+
+    // Note: this isn't implemented on NetSec side yet, but is used for the shortened URLs requested by CommandService
+    public static final Duration AUTH_URL_TTL = Duration.ofDays(90);
 
 }

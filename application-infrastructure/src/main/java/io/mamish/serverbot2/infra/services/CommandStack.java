@@ -61,8 +61,8 @@ public class CommandStack extends Stack {
         Util.addLambdaInvokePermissionToRole(this, functionRole,
                 GameMetadataConfig.FUNCTION_NAME,
                 NetSecConfig.FUNCTION_NAME);
-
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommandLambdaConfig.PATH);
+        Util.addFullExecuteApiPermissionToRole(this, functionRole);
 
         Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
                 "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole)

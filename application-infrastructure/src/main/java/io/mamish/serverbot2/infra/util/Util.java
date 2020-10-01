@@ -78,6 +78,16 @@ public class Util {
                 .build());
     }
 
+    // This is tricky to make better since the ARN uses the APIGW ID rather than any friendly/predictable ID.
+    public static void addFullExecuteApiPermissionToRole(Stack stack, IRole role) {
+        String wildcardArnApisInAccountAndRegion = arn(stack, null, null, "execute-api", "*");
+        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("execute-api:Invoke"))
+                .resources(List.of(wildcardArnApisInAccountAndRegion))
+                .build());
+    }
+
     public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler) {
         return Function.Builder.create(parent, id)
                 .runtime(Runtime.JAVA_11)

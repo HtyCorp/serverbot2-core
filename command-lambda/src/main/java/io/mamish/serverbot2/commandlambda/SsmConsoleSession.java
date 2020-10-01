@@ -60,7 +60,7 @@ public class SsmConsoleSession {
 
         logger.debug("Dumping session policy JSON:\n" + singleInstanceSessionPolicy);
 
-        final int sessionDurationSeconds = (int) Duration.ofHours(CommandLambdaConfig.TERMINAL_SESSION_DURATION_HOURS).getSeconds();
+        final int sessionDurationSeconds = (int) CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds();
 
         // I would probably prefer a role here but console federation fails when the Lambda role is used to chain into
         // any other target role for sessions. IAM user is required.

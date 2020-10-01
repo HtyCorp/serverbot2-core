@@ -15,16 +15,14 @@ import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ModifyPortsRequest;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
-import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedconfig.*;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +34,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final INetworkSecurity networkSecurityServiceClient;
     private final IGameMetadataService gameMetadataServiceClient;
     private final IDiscordService discordServiceClient;
+    private final UrlShortenerClient urlShortenerClient;
     private final Pattern portRangePattern;
 
     private final SfnRunner sfnRunner = new SfnRunner();
@@ -45,8 +44,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
         logger.trace("Initialising GameMetadata client");
         gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Initialising port regex");
+        logger.trace("Initialising DiscordRelay client");
         discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
+        logger.trace("Initialising URLShortener client");
+        urlShortenerClient = new UrlShortenerClient();
         logger.trace("Initialising port regex");
         portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
         logger.trace("Finished constructor");
@@ -160,10 +161,12 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                 makeSessionName(commandTerminal.getContext().getSenderId(), gameName));
 
         try {
-            String terminalUrl = session.getSessionUrl();
+            String fullTerminalUrl = session.getSessionUrl();
+            String shortTerminalUrl = urlShortenerClient.getShortenedUrl(fullTerminalUrl,
+                    CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds());
 
             String messageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
-            SimpleEmbed terminalUrlEmbed = new SimpleEmbed(terminalUrl,
+            SimpleEmbed terminalUrlEmbed = new SimpleEmbed(shortTerminalUrl,
                     "Terminal login link",
                     "Opens a terminal session for the server running " + gameName);
 

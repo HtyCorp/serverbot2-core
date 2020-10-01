@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.sharedconfig;
 
+import java.time.Duration;
+
 /**
  * Configuration values used by command handling Lambda function and shared to other packages.
  */
@@ -15,6 +17,6 @@ public class CommandLambdaConfig {
 
     public static final Secret TERMINAL_FEDERATION_ACCESS_KEY = new Secret(PATH_PRIVATE,
             "terminal-federation-access-key");
-    public static final int TERMINAL_SESSION_DURATION_HOURS = 8;
+    public static final Duration TERMINAL_SESSION_DURATION = Duration.ofHours(8);
 
 }
