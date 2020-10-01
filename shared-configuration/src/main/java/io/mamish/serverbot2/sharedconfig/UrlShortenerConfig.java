@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.sharedconfig;
 
+import java.util.List;
+
 public class UrlShortenerConfig {
 
     private UrlShortenerConfig() {}
@@ -16,5 +18,10 @@ public class UrlShortenerConfig {
     public static final String DYNAMO_TABLE_NAME = "UrlShortenerFullUrlTable";
     public static final String TABLE_PARTITION_KEY = "schemaVersion";
     public static final String TABLE_SORT_KEY = "id";
+
+    // Primary system and app domains (from CommonConfig) are already allowed
+    public static final List<String> ADDITIONAL_ALLOWED_DOMAINS = List.of(
+            "signin.aws.amazon.com" // For federated console access for Session Manager
+    );
 
 }

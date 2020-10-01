@@ -23,13 +23,9 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
@@ -243,17 +239,21 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return false;
         }
 
-        Stream<String> allowedApexDomains = Stream.of(
-                CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue(),
-                CommonConfig.APP_ROOT_DOMAIN_NAME.getValue()
-        );
-        if (allowedApexDomains.noneMatch(allowedDomain -> domain.endsWith("."+allowedDomain) || domain.equals(allowedDomain))) {
+        if (getAllowedApexDomains().stream().noneMatch(allowedDomain ->
+                domain.endsWith("."+allowedDomain) || domain.equals(allowedDomain))) {
             logger.warn("URL validation failure: not an allowed apex domain");
             return false;
         }
 
         return true;
 
+    }
+
+    private List<String> getAllowedApexDomains() {
+        List<String> allowedDomains = new ArrayList<>(UrlShortenerConfig.ADDITIONAL_ALLOWED_DOMAINS);
+        allowedDomains.add(CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue());
+        allowedDomains.add(CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());
+        return allowedDomains;
     }
 
     private APIGatewayProxyResponseEvent generateHttpOkay(String message) {
