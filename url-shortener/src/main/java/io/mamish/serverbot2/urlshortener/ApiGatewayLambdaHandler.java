@@ -91,7 +91,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             logger.info("Admin request authorised by principal {}", userArn);
         } catch (NullPointerException e) {
             logger.error("Admin request not signed by an authorised IAM principal");
-            return generateHttpRawError("Forbidden", 403);
+            return generateHttpRawError("Unauthorized", 401);
         }
 
         // Request validation
@@ -111,25 +111,23 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateHttpRawError("Missing required body data", 400);
         }
 
-        String urlParam, ttlParam;
+        String urlParam;
+        long ttlParam;
         try {
             JsonObject bodyJson = JsonParser.parseString(request.getBody()).getAsJsonObject();
             urlParam = bodyJson.get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_JSONKEY_URL).getAsString();
-            ttlParam = bodyJson.get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_JSONKEY_TTLSECONDS).getAsString();
+            ttlParam = bodyJson.get(UrlShortenerConfig.URL_ADMIN_SUBPATH_NEW_JSONKEY_TTLSECONDS).getAsLong();
         } catch (RuntimeException e) {
-            logger.error("Missing required body data, body='{}'", request.getBody(), e);
-            return generateHttpRawError("Missing required body data", 400);
+            logger.error("Body params are missing or of wrong type, body='{}'", request.getBody(), e);
+            return generateHttpRawError("Body params are missing or invalid", 400);
         }
 
-        long numTtlSeconds;
-        try {
-            numTtlSeconds = Long.parseLong(ttlParam);
-        } catch (NumberFormatException e) {
-            logger.error("Couldn't parse provided TTL parameter", e);
-            return generateHttpRawError("Provided TTL parameter is not an integer", 400);
+        if (!isUrlValid(urlParam)) {
+            logger.error("URL requested for storage is not valid/allowed");
+            return generateHttpRawError("Provided URL is invalid or not allowed", 400);
         }
 
-        if (numTtlSeconds <= 0 || numTtlSeconds > UrlShortenerConfig.MAX_TTL_SECONDS) {
+        if (ttlParam <= 0 || ttlParam > UrlShortenerConfig.MAX_TTL_SECONDS) {
             logger.error("TTL parameter out of range");
             return generateHttpRawError("Provided TTL parameter is out of range", 400);
         }
@@ -138,7 +136,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
         Pair<String,V1UrlInfoBean> tokenAndBean;
         try {
-            tokenAndBean = v1Processor.generateTokenAndBean(urlParam, numTtlSeconds);
+            tokenAndBean = v1Processor.generateTokenAndBean(urlParam, ttlParam);
         } catch (RuntimeException e) {
             logger.error("Exception occurred while generating URL token", e);
             return generateHttpRawError("Unknown error while generating URL", 500);
@@ -167,10 +165,12 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
                                                                 String[] subpathSegments) {
 
         if (!request.getHttpMethod().equals("GET")) {
+            logger.error("Got bad HTTP method, expecting GET");
             return generateHttpRawError("This resource only accepts GET requests", 405);
         }
 
         if (subpathSegments.length == 0) {
+            logger.error("No subpath params provided for V1 redirect path");
             return generateHttpError("Sorry, this URL is invalid. Ensure you are using the correct link.",
                     "missing token path param", 400);
         }

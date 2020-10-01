@@ -52,19 +52,18 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
         byte[] plaintextUrlBytes = url.getBytes(StandardCharsets.UTF_8);
         long expiresAtEpochSeconds = Instant.now().plusSeconds(ttlSeconds).toEpochMilli() / 1000;
 
-        // Generate a random ID and data key, and encode them as the token
+        // Generate a random ID and data key, and encode them as a token
 
         long newId = secureRandom.nextLong();
-        Pair<Key,byte[]> dataKey = generateDataKey();
+        byte[] dataKey = new byte[16]; secureRandom.nextBytes(dataKey);
 
-        String newToken = encodeIdAndKey(newId, dataKey.b());
+        String newToken = encodeIdAndKey(newId, dataKey);
 
         // Calculate the URL ciphertext and SHA256 digest
 
         byte[] urlIvBytes, urlCiphertextBytes, urlPlaintextDigestBytes;
-
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, dataKey.a());
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(dataKey, "AES"));
             urlIvBytes = cipher.getIV();
             urlCiphertextBytes = cipher.doFinal(plaintextUrlBytes);
             digest.reset();
@@ -73,7 +72,7 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
             throw new RuntimeException("token encryption failure", e);
         }
 
-        // Generate storage details and return with the encoded token
+        // Generate storage item and return it with the encoded token
 
         V1UrlInfoBean newInfoBean = new V1UrlInfoBean(1,
                 Long.toUnsignedString(newId),
@@ -84,13 +83,6 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
         );
         return new Pair<>(newToken, newInfoBean);
 
-    }
-
-    private Pair<Key,byte[]> generateDataKey() {
-        byte[] dataKeyBytes = new byte[16];
-        secureRandom.nextBytes(dataKeyBytes);
-        Key key = new SecretKeySpec(dataKeyBytes, "AES");
-        return new Pair<>(key, dataKeyBytes);
     }
 
     private String encodeIdAndKey(long newId, byte[] keyBytes) {
