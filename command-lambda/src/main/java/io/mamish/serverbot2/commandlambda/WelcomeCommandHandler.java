@@ -82,9 +82,8 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     @Override
     public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        String userId = commandAddIp.getContext().getSenderId();
         String fullAuthUrl = networkSecurityClient.generateIpAuthUrl(
-                new GenerateIpAuthUrlRequest(userId)
+                new GenerateIpAuthUrlRequest(commandAddIp.getContext().getSenderId())
         ).getIpAuthUrl();
 
         String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_TTL.getSeconds());
@@ -92,26 +91,26 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
         // Send a message to the user privately before returning the standard channel message.
 
         String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
-        String summaryMessage = "To whitelist your IP to join "+friendlyDomain+" servers, use this link.\n";
-        String detailMessage = "This will detect your IP and add it to the firewall. If you've done this before, it"
-                + " replaces your last whitelisted IP.\n\n";
 
-        String cmdName = CommonConfig.COMMAND_SIGIL_CHARACTER + "addip";
-        String reassureMessage = "(You're seeing this message because you used " + cmdName + " in a serverbot2 channel."
-                + " Security concerns? Feel free to message Mamish#7674, or view this bot's code/infrastructure at"
-                + " https://github.com/HtyCorp/serverbot2-core.)";
+        String summaryMessage = "To whitelist your IP to join **"+friendlyDomain+"** servers, use this link.\n";
+        String detailMessage = "This will detect your IP and add it to the firewall. If you've done this before, it"
+                + " replaces your last whitelisted IP.\n";
+        String reassureMessage = "For any security concerns, message Mamish#7674 or view this bot's code at"
+                + " https://github.com/HtyCorp/serverbot2-core)";
 
         String messageContent = summaryMessage + detailMessage + reassureMessage;
 
-        SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl,
-                "IP whitelist link for " + commandAddIp.getContext().getSenderName(),
-                "Personal link to detect and whitelist your IP address");
+        SimpleEmbed authLinkEmbed = new SimpleEmbed(
+                shortAuthUrl,
+                "Whitelist IP for " + commandAddIp.getContext().getSenderName(),
+                "Personal link to detect and whitelist your IP address for " + friendlyDomain
+        );
 
         discordServiceClient.newMessage(new NewMessageRequest(
                 messageContent,
                 null,
                 null,
-                userId,
+                commandAddIp.getContext().getSenderId(),
                 authLinkEmbed
         ));
 
