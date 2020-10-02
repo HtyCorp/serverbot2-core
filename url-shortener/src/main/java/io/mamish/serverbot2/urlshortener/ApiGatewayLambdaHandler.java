@@ -217,6 +217,13 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     }
 
     private boolean isUrlValid(String url) {
+
+        if (url.length() > UrlShortenerConfig.MAX_URL_LENGTH) {
+            logger.warn("URL size ({}) exceeds shortener limit of {}",
+                    url.length(), UrlShortenerConfig.MAX_URL_LENGTH);
+            return false;
+        }
+
         Matcher m = basicValidUrlPattern.matcher(url);
         if (!m.matches()) {
             logger.warn("URL does not match regex ({})", url);

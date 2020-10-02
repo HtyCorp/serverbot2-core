@@ -24,4 +24,8 @@ public class UrlShortenerConfig {
             "signin.aws.amazon.com" // For federated console access for Session Manager
     );
 
+    // There is no defined maximum length of a URL (per any RFCs):
+    // Common practice is "about 2K" so we do twice that to be on the safe side.
+    public static final int MAX_URL_LENGTH = 4096;
+
 }
