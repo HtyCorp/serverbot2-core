@@ -91,19 +91,21 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
         // Send a message to the user privately before returning the standard channel message.
 
-        String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getName();
-        String welcomeMessage = "To whitelist your IP to join "+friendlyDomain+" servers, use this link.\n";
-        String reassurance = "This will detect your IP and add it to the firewall. If you've done this before, it"
-                + " replaces your last IP.\n\n";
+        String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
+        String summaryMessage = "To whitelist your IP to join "+friendlyDomain+" servers, use this link.\n";
+        String detailMessage = "This will detect your IP and add it to the firewall. If you've done this before, it"
+                + " replaces your last whitelisted IP.\n\n";
 
         String cmdName = CommonConfig.COMMAND_SIGIL_CHARACTER + "addip";
-        String why = "(You're seeing this message because you used " + cmdName + " in a serverbot2 channel.)";
+        String reassureMessage = "(You're seeing this message because you used " + cmdName + " in a serverbot2 channel."
+                + " Security concerns? Feel free to message Mamish#7674, or view this bot's code/infrastructure at"
+                + " https://github.com/HtyCorp/serverbot2-core.)";
 
-        String messageContent = welcomeMessage + reassurance + why;
+        String messageContent = summaryMessage + detailMessage + reassureMessage;
 
         SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl,
-                "Serverbot2 IP whitelist link",
-                "Click this link to automatically detect your IP address and whitelist it.");
+                "IP whitelist link for " + commandAddIp.getContext().getSenderName(),
+                "Personal link to detect and whitelist your IP address");
 
         discordServiceClient.newMessage(new NewMessageRequest(
                 messageContent,
