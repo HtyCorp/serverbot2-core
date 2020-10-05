@@ -52,7 +52,7 @@ public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler
 
         String inputString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
-        if (inputString.equals(LambdaWarmerConfig.LAMBDA_WARMER_PING_STRING)) {
+        if (inputString.equals(LambdaWarmerConfig.WARMER_PING_PAYLOAD_JSON_STRING)) {
             logger.info("Warmer ping request");
             return;
         }

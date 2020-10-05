@@ -7,7 +7,8 @@ public class LambdaWarmerConfig {
     private LambdaWarmerConfig() {}
 
     // Special payload submitted by the Lambda warmer to indicate a request that shouldn't be actioned
-    public static final String LAMBDA_WARMER_PING_STRING = "special:WarmerPing";
+    // Lambda payloads must be a JSON type, so this is a quoted JSON string
+    public static final String WARMER_PING_PAYLOAD_JSON_STRING = "\"special:WarmerPing\"";
 
     public static final int WARMER_PING_INTERVAL_SECONDS = 10 * 60;
 

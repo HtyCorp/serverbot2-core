@@ -34,7 +34,7 @@ public class ScheduledLambdaHandler implements RequestHandler<ScheduledEvent,Str
         for (String functionName: LambdaWarmerConfig.FUNCTION_NAMES_TO_WARM) {
 
             String aliasName = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
-            SdkBytes pingPayload = SdkBytes.fromUtf8String(LambdaWarmerConfig.LAMBDA_WARMER_PING_STRING);
+            SdkBytes pingPayload = SdkBytes.fromUtf8String(LambdaWarmerConfig.WARMER_PING_PAYLOAD_JSON_STRING);
             try {
                 Instant invokeStartTime = Instant.now();
                 lambdaClient.invoke(r -> r.functionName(aliasName).payload(pingPayload));
