@@ -62,8 +62,8 @@ public class CommandStack extends Stack {
                 CommonConfig.PATH);
         Util.addFullExecuteApiPermissionToRole(this, functionRole);
 
-        Util.provisionedJavaFunction(this, "CommandService", "command-lambda",
-                "io.mamish.serverbot2.commandlambda.LambdaHandler", 1,
+        Util.highMemJavaFunction(this, "CommandService", "command-lambda",
+                "io.mamish.serverbot2.commandlambda.LambdaHandler",
                 b -> b.functionName(CommandLambdaConfig.FUNCTION_NAME).role(functionRole));
 
     }

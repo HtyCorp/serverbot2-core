@@ -34,8 +34,8 @@ public class IpAuthorizerStack extends Stack {
 
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
-        Alias proxyFunctionAlias = Util.provisionedJavaFunction(this, "IpProxyFunction", "ip-authorizer",
-                "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler", 1,
+        Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
+                "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler",
                 b-> b.role(functionRole));
 
         // Domain REST API backed by function

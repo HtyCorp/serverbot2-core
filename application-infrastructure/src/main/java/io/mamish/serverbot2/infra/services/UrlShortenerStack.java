@@ -54,8 +54,8 @@ public class UrlShortenerStack extends Stack {
 
         Util.addConfigPathReadPermissionToRole(this, lambdaRole, CommonConfig.PATH);
 
-        Alias proxyFunctionAlias = Util.provisionedJavaFunction(this, "HandlerFunction", "url-shortener",
-                "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler", 1,
+        Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "HandlerFunction", "url-shortener",
+                "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler",
                 b -> b.role(lambdaRole));
 
         // Configure the Lambda-backed REST API with APIGW

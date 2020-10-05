@@ -46,8 +46,8 @@ public class GameMetadataStack extends Stack {
                 Policies.DYNAMODB_FULL_ACCESS
         )).build();
 
-        Util.provisionedJavaFunction(this, "ServiceFunction", "game-metadata-service",
-                "io.mamish.serverbot2.gamemetadata.LambdaHandler", 1,
+        Util.highMemJavaFunction(this, "ServiceFunction", "game-metadata-service",
+                "io.mamish.serverbot2.gamemetadata.LambdaHandler",
                 b -> b.functionName(GameMetadataConfig.FUNCTION_NAME).role(functionRole));
 
     }

@@ -32,8 +32,8 @@ public class NetSecStack extends Stack {
 
         commonStack.getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
-        Util.provisionedJavaFunction(this, "NetSecService", "network-security-service",
-                "io.mamish.serverbot2.networksecurity.LambdaHandler", 1,
+        Util.highMemJavaFunction(this, "NetSecService", "network-security-service",
+                "io.mamish.serverbot2.networksecurity.LambdaHandler",
                 b -> b.functionName(NetSecConfig.FUNCTION_NAME).role(functionRole));
 
     }
