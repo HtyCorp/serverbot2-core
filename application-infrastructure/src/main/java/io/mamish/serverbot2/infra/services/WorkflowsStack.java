@@ -144,7 +144,7 @@ public class WorkflowsStack extends Stack {
 
     private LambdaInvoke makeCallbackTask(Machines machine, IFunction function, Tasks task, Duration heartbeat) {
         Map<String,Object> payloadMap = new HashMap<>(basePayloadMap(task));
-        payloadMap.put("taskToken", Context.getTaskToken());
+        payloadMap.put("taskToken", JsonPath.getTaskToken());
         TaskInput payload = TaskInput.fromObject(payloadMap);
 
         String scopedId = IDUtils.kebab(machine, "Task", task);
@@ -159,10 +159,10 @@ public class WorkflowsStack extends Stack {
 
     private Map<String,Object> basePayloadMap(Tasks task) {
         return Map.of(
-                "requesterDiscordId", Data.stringAt("$.requesterDiscordId"),
-                "gameName", Data.stringAt("$.gameName"),
-                "initialMessageUuid", Data.stringAt("$.initialMessageUuid"),
-                "laterMessageUuid", Data.stringAt("$.laterMessageUuid"),
+                "requesterDiscordId", JsonPath.stringAt("$.requesterDiscordId"),
+                "gameName", JsonPath.stringAt("$.gameName"),
+                "initialMessageUuid", JsonPath.stringAt("$.initialMessageUuid"),
+                "laterMessageUuid", JsonPath.stringAt("$.laterMessageUuid"),
                 "taskName", task.toString()
         );
     }
