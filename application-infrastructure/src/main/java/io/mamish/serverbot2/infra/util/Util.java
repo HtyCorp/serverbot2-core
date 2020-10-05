@@ -68,7 +68,8 @@ public class Util {
 
     public static void addLambdaInvokePermissionToRole(Stack stack, IRole role, String... functionNames) {
         List<String> lambdaArns = Arrays.stream(functionNames)
-                .map(name -> arn(stack, null, null, "lambda", "function:"+name))
+                .map(name -> IDUtils.colon("function", name, CommonConfig.LAMBDA_LIVE_ALIAS_NAME))
+                .map(resource -> arn(stack, null, null, "lambda", resource))
                 .collect(Collectors.toList());
 
         role.addToPrincipalPolicy(PolicyStatement.Builder.create()
