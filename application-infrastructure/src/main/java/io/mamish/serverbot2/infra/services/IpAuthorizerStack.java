@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.Policies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.IpAuthConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
@@ -36,7 +37,7 @@ public class IpAuthorizerStack extends Stack {
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler",
-                b-> b.role(functionRole));
+                b-> b.functionName(IpAuthConfig.FUNCTION_NAME).role(functionRole));
 
         // Domain REST API backed by function
 

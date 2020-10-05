@@ -20,10 +20,8 @@ public class SigV4HttpClient {
     public SigV4HttpResponse post(String uri, String body, String serviceName, Region signingRegion, AwsCredentials credentials)
             throws IOException {
 
-        ContentStreamProvider bodyProvider = () -> {
-            String bodyOrEmpty = Optional.ofNullable(body).orElse("");
-            return SdkBytes.fromUtf8String(bodyOrEmpty).asInputStream();
-        };
+        String bodyOrEmpty = Optional.ofNullable(body).orElse("");
+        ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
                 .uri(URI.create(uri))

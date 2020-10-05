@@ -98,6 +98,7 @@
         <module>workflow-service-model</module>
         <module>test-utilities</module>
         <module>url-shortener</module>
+        <module>lambda-warmer</module>
     </modules>
 
     <dependencyManagement>

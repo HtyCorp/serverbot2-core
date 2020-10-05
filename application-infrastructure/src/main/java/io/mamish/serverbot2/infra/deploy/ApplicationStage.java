@@ -17,6 +17,7 @@ public class ApplicationStage extends Stage {
     public final ReaperStack reaperStack;
     public final RelayStack relayStack;
     public final WorkflowsStack workflowsStack;
+    public final LambdaWarmerStack lambdaWarmerStack;
 
     public ApplicationStage(Construct parent, String id, StageProps props, ApplicationEnv env) {
         super(parent, id, props);
@@ -31,6 +32,7 @@ public class ApplicationStage extends Stage {
         gameMetadataStack = new GameMetadataStack(this, "GameMetadataService");
         netSecStack = new NetSecStack(this, "NetworkSecurityService", commonStack);
         reaperStack = new ReaperStack(this, "ResourceReaper");
+        lambdaWarmerStack = new LambdaWarmerStack(this, "LambdaWarmer");
 
     }
 

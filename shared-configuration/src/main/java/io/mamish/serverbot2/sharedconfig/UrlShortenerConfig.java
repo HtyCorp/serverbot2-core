@@ -6,6 +6,8 @@ public class UrlShortenerConfig {
 
     private UrlShortenerConfig() {}
 
+    public static final String FUNCTION_NAME = "UrlShortenerServiceProxy";
+
     public static final String SUBDOMAIN = "go";
 
     public static final int MAX_TTL_SECONDS = 60*60*24*90; // 90 days

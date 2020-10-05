@@ -29,9 +29,8 @@ public class ReaperStack extends Stack {
 
         Rule rateRule = Rule.Builder.create(this, "ReaperScheduleRule")
                 .schedule(Schedule.rate(Duration.seconds(ReaperConfig.EXECUTION_INTERVAL_SECONDS)))
+                .targets(List.of(new LambdaFunction(scheduledFunctionAlias)))
                 .build();
-
-        rateRule.addTarget(new LambdaFunction(scheduledFunctionAlias));
 
     }
 

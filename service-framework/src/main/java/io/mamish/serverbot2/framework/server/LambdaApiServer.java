@@ -2,6 +2,7 @@ package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,8 +51,13 @@ public abstract class LambdaApiServer<ModelType> implements RequestStreamHandler
         // (which passes a null context at the moment).
 
         String inputString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-        logger.info("Request payload:\n" + inputString);
 
+        if (inputString.equals(LambdaWarmerConfig.LAMBDA_WARMER_PING_STRING)) {
+            logger.info("Warmer ping request");
+            return;
+        }
+
+        logger.info("Request payload:\n" + inputString);
         String outputString = jsonApiHandler.handleRequest(inputString);
         logger.info("Response payload:\n" + outputString);
 
