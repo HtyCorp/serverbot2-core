@@ -14,6 +14,7 @@ import io.mamish.serverbot2.framework.exception.client.ApiClientException;
 import io.mamish.serverbot2.framework.exception.server.SerializationException;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awssdk.core.SdkBytes;
@@ -45,8 +46,9 @@ public final class ApiClient {
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
         return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
             SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.a());
+            String functionLiveAlias = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
-                    .functionName(functionName));
+                    .functionName(functionLiveAlias));
             return response.payload().asUtf8String();
         });
     }

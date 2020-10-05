@@ -6,7 +6,6 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Fn;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.*;
-import software.amazon.awscdk.services.lambda.Function;
 
 import java.util.List;
 
@@ -63,9 +62,9 @@ public class CommandStack extends Stack {
                 CommonConfig.PATH);
         Util.addFullExecuteApiPermissionToRole(this, functionRole);
 
-        Function serviceFunction = Util.standardJavaFunction(this, "CommandService", "command-lambda",
-                "io.mamish.serverbot2.commandlambda.LambdaHandler", functionRole)
-                .functionName(CommandLambdaConfig.FUNCTION_NAME).build();
+        Util.provisionedJavaFunction(this, "CommandService", "command-lambda",
+                "io.mamish.serverbot2.commandlambda.LambdaHandler", 1,
+                b -> b.functionName(CommandLambdaConfig.FUNCTION_NAME).role(functionRole));
 
     }
 }

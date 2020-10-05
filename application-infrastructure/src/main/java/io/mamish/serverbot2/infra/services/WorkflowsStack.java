@@ -15,7 +15,7 @@ import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
+import software.amazon.awscdk.services.lambda.Alias;
 import software.amazon.awscdk.services.lambda.IFunction;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.stepfunctions.*;
@@ -48,15 +48,14 @@ public class WorkflowsStack extends Stack {
                 .conditions(Map.of("StringEquals", Map.of("iam:PassedToService", "ec2.amazonaws.com")))
                 .build());
 
-        Function taskFunction = Util.standardJavaFunction(this, "WorkflowFunction",
-                "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler", taskRole)
-                .timeout(Duration.seconds(WorkflowsConfig.STEP_LAMBDA_TIMEOUT_SECONDS))
-                .build();
+        Alias taskFunctionAlias = Util.highMemJavaFunction(this, "WorkflowFunction",
+                "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler",
+                b -> b.timeout(Duration.seconds(WorkflowsConfig.STEP_LAMBDA_TIMEOUT_SECONDS)).role(taskRole));
 
         final long TIMEOUT_READY = WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS;
         final long TIMEOUT_STOP = WorkflowsConfig.DAEMON_HEARTBEAT_TIMEOUT_SECONDS;
 
-        StateMachine createGame = new StateMachineSteps(Machines.CreateGame, taskFunction)
+        StateMachine createGame = new StateMachineSteps(Machines.CreateGame, taskFunctionAlias)
                 .sync(Tasks.CreateGameMetadata)
                 .sync(Tasks.CreateGameResources)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
@@ -65,7 +64,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.StopInstance)
                 .endSuccess();
 
-        StateMachine runGame = new StateMachineSteps(Machines.RunGame, taskFunction)
+        StateMachine runGame = new StateMachineSteps(Machines.RunGame, taskFunctionAlias)
                 .sync(Tasks.LockGame)
                 .sync(Tasks.StartInstance)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
@@ -74,7 +73,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.StopInstance)
                 .endSuccess();
 
-        StateMachine editGame = new StateMachineSteps(Machines.EditGame, taskFunction)
+        StateMachine editGame = new StateMachineSteps(Machines.EditGame, taskFunctionAlias)
                 .sync(Tasks.LockGame)
                 .sync(Tasks.StartInstance)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
@@ -82,7 +81,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.StopInstance)
                 .endSuccess();
 
-        StateMachine deleteGame = new StateMachineSteps(Machines.DeleteGame, taskFunction)
+        StateMachine deleteGame = new StateMachineSteps(Machines.DeleteGame, taskFunctionAlias)
                 .sync(Tasks.LockGame)
                 .sync(Tasks.DeleteGameResources)
                 .endSuccess();

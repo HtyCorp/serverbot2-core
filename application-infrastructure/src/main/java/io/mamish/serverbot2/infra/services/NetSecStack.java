@@ -8,7 +8,6 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.ec2.CfnPrefixList;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
 
 import java.util.List;
 
@@ -33,9 +32,9 @@ public class NetSecStack extends Stack {
 
         commonStack.getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
-        Function serviceFunction = Util.standardJavaFunction(this, "NetSecService", "network-security-service",
-                "io.mamish.serverbot2.networksecurity.LambdaHandler", functionRole)
-                .functionName(NetSecConfig.FUNCTION_NAME).build();
+        Util.provisionedJavaFunction(this, "NetSecService", "network-security-service",
+                "io.mamish.serverbot2.networksecurity.LambdaHandler", 1,
+                b -> b.functionName(NetSecConfig.FUNCTION_NAME).role(functionRole));
 
     }
 

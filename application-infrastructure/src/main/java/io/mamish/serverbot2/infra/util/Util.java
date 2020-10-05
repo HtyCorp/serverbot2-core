@@ -6,10 +6,8 @@ import io.mamish.serverbot2.sharedconfig.Secret;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.services.iam.*;
-import software.amazon.awscdk.services.lambda.Code;
-import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
-import software.amazon.awscdk.services.lambda.Tracing;
+import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.secretsmanager.CfnSecret;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
@@ -17,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,18 +87,40 @@ public class Util {
                 .build());
     }
 
-    public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler) {
-        return Function.Builder.create(parent, id)
-                .runtime(Runtime.JAVA_11)
-                .code(mavenJarAsset(moduleName))
-                .handler(handler)
-                .memorySize(CommonConfig.STANDARD_LAMBDA_MEMORY)
-                .tracing(Tracing.ACTIVE)
-                .timeout(Duration.seconds(CommonConfig.STANDARD_LAMBDA_TIMEOUT));
+    public static Alias highMemJavaFunction(Construct parent, String id, String moduleName, String handler,
+                                            Consumer<Function.Builder> editFunction) {
+        return baseJavaFunction(parent, id, moduleName, handler, CommonConfig.LAMBDA_MEMORY_MB_FOR_STANDARD,
+                editFunction, null);
     }
 
-    public static Function.Builder standardJavaFunction(Construct parent, String id, String moduleName, String handler, IRole role) {
-        return standardJavaFunction(parent, id, moduleName, handler).role(role);
+    public static Alias provisionedJavaFunction(Construct parent, String id, String moduleName, String handler,
+                                                int provisionedConcurrency, Consumer<Function.Builder> editFunction) {
+        return baseJavaFunction(parent, id, moduleName, handler, CommonConfig.LAMBDA_MEMORY_MB_FOR_PROVISIONED,
+                editFunction, b -> b.provisionedConcurrentExecutions(provisionedConcurrency));
+    }
+
+    private static Alias baseJavaFunction(Construct parent, String id, String moduleName, String handler, int memory,
+                                             Consumer<Function.Builder> functionEditor, Consumer<Alias.Builder> aliasEditor) {
+        Function.Builder functionBuilder = Function.Builder.create(parent, id)
+                .runtime(Runtime.JAVA_11)
+                .code(mavenJarAsset(moduleName))
+                .memorySize(memory)
+                .handler(handler)
+                .tracing(Tracing.ACTIVE)
+                .timeout(Duration.seconds(CommonConfig.STANDARD_LAMBDA_TIMEOUT));
+        if (functionEditor != null) {
+            functionEditor.accept(functionBuilder);
+        }
+        Function function = functionBuilder.build();
+
+        Alias.Builder aliasBuilder = Alias.Builder.create(parent, id+"Alias")
+                .version(function.getCurrentVersion())
+                .aliasName(CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
+        if (aliasEditor != null) {
+            aliasEditor.accept(aliasBuilder);
+        }
+        return aliasBuilder.build();
+
     }
 
     public static Code mavenJarAsset(String moduleName) {

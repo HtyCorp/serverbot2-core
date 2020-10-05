@@ -16,7 +16,7 @@ import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
 import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
+import software.amazon.awscdk.services.lambda.Alias;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGateway;
@@ -54,8 +54,9 @@ public class UrlShortenerStack extends Stack {
 
         Util.addConfigPathReadPermissionToRole(this, lambdaRole, CommonConfig.PATH);
 
-        Function handlerFunction = Util.standardJavaFunction(this, "HandlerFunction", "url-shortener",
-                "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler", lambdaRole).build();
+        Alias proxyFunctionAlias = Util.provisionedJavaFunction(this, "HandlerFunction", "url-shortener",
+                "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler", 1,
+                b -> b.role(lambdaRole));
 
         // Configure the Lambda-backed REST API with APIGW
 
@@ -64,7 +65,7 @@ public class UrlShortenerStack extends Stack {
                 .build();
 
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "UrlRestApi")
-                .handler(handlerFunction)
+                .handler(proxyFunctionAlias)
                 .endpointConfiguration(regionalEndpoint)
                 .proxy(false)
                 .build();

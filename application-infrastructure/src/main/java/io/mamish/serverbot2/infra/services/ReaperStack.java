@@ -10,7 +10,7 @@ import software.amazon.awscdk.services.events.Rule;
 import software.amazon.awscdk.services.events.Schedule;
 import software.amazon.awscdk.services.events.targets.LambdaFunction;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
+import software.amazon.awscdk.services.lambda.Alias;
 
 import java.util.List;
 
@@ -23,15 +23,15 @@ public class ReaperStack extends Stack {
                 Policies.SQS_FULL_ACCESS
         )).build();
 
-        Function scheduledFunction = Util.standardJavaFunction(this, "ReaperFunction", "resource-reaper",
-                "io.mamish.serverbot2.resourcereaper.ScheduledLambdaHandler", functionRole)
-                .build();
+        Alias scheduledFunctionAlias = Util.highMemJavaFunction(this, "ReaperFunction", "resource-reaper",
+                "io.mamish.serverbot2.resourcereaper.ScheduledLambdaHandler",
+                b -> b.role(functionRole));
 
         Rule rateRule = Rule.Builder.create(this, "ReaperScheduleRule")
                 .schedule(Schedule.rate(Duration.seconds(ReaperConfig.EXECUTION_INTERVAL_SECONDS)))
                 .build();
 
-        rateRule.addTarget(new LambdaFunction(scheduledFunction));
+        rateRule.addTarget(new LambdaFunction(scheduledFunctionAlias));
 
     }
 

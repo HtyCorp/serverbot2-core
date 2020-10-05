@@ -13,7 +13,7 @@ import software.amazon.awscdk.services.apigateway.EndpointConfiguration;
 import software.amazon.awscdk.services.apigateway.EndpointType;
 import software.amazon.awscdk.services.apigateway.LambdaRestApi;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
+import software.amazon.awscdk.services.lambda.Alias;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGateway;
@@ -34,9 +34,9 @@ public class IpAuthorizerStack extends Stack {
 
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
-        Function proxyFunction = Util.standardJavaFunction(this, "IpProxyFunction", "ip-authorizer",
-                "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler", functionRole)
-                .build();
+        Alias proxyFunctionAlias = Util.provisionedJavaFunction(this, "IpProxyFunction", "ip-authorizer",
+                "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler", 1,
+                b-> b.role(functionRole));
 
         // Domain REST API backed by function
 
@@ -44,7 +44,7 @@ public class IpAuthorizerStack extends Stack {
                 .types(List.of(EndpointType.REGIONAL))
                 .build();
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "IpRestApi")
-                .handler(proxyFunction)
+                .handler(proxyFunctionAlias)
                 .endpointConfiguration(regionalEndpoint)
                 .build();
 

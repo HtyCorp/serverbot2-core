@@ -8,7 +8,6 @@ import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.dynamodb.*;
 import software.amazon.awscdk.services.iam.Role;
-import software.amazon.awscdk.services.lambda.Function;
 
 import java.util.List;
 
@@ -47,10 +46,9 @@ public class GameMetadataStack extends Stack {
                 Policies.DYNAMODB_FULL_ACCESS
         )).build();
 
-        Function function = Util.standardJavaFunction(this, "ServiceFunction", "game-metadata-service",
-                "io.mamish.serverbot2.gamemetadata.LambdaHandler", functionRole)
-                .functionName(GameMetadataConfig.FUNCTION_NAME)
-                .build();
+        Util.provisionedJavaFunction(this, "ServiceFunction", "game-metadata-service",
+                "io.mamish.serverbot2.gamemetadata.LambdaHandler", 1,
+                b -> b.functionName(GameMetadataConfig.FUNCTION_NAME).role(functionRole));
 
     }
 
