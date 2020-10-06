@@ -17,6 +17,7 @@ import software.amazon.awscdk.services.dynamodb.BillingMode;
 import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Alias;
+import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGateway;
@@ -58,6 +59,20 @@ public class UrlShortenerStack extends Stack {
                 "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler",
                 b -> b.functionName(UrlShortenerConfig.FUNCTION_NAME).role(lambdaRole));
 
+        // Logging for API deployment
+
+        LogGroup accessLogs = LogGroup.Builder.create(this, "ApiAccessLogs")
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+        LogGroupLogDestination logDestination = new LogGroupLogDestination(accessLogs);
+        StageOptions deployOptions = StageOptions.builder()
+                .accessLogDestination(logDestination)
+                .tracingEnabled(true)
+                .metricsEnabled(true)
+                .dataTraceEnabled(true)
+                .build();
+
+
         // Configure the Lambda-backed REST API with APIGW
 
         EndpointConfiguration regionalEndpoint = EndpointConfiguration.builder()
@@ -67,6 +82,7 @@ public class UrlShortenerStack extends Stack {
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "UrlRestApi")
                 .handler(proxyFunctionAlias)
                 .endpointConfiguration(regionalEndpoint)
+                .deployOptions(deployOptions)
                 .proxy(false)
                 .build();
 

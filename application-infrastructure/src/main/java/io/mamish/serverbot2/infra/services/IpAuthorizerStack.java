@@ -8,13 +8,12 @@ import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.services.apigateway.DomainNameOptions;
-import software.amazon.awscdk.services.apigateway.EndpointConfiguration;
-import software.amazon.awscdk.services.apigateway.EndpointType;
-import software.amazon.awscdk.services.apigateway.LambdaRestApi;
+import software.amazon.awscdk.services.apigateway.*;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Alias;
+import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGateway;
@@ -39,6 +38,19 @@ public class IpAuthorizerStack extends Stack {
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler",
                 b-> b.functionName(IpAuthConfig.FUNCTION_NAME).role(functionRole));
 
+        // Logging for API deployment
+
+        LogGroup accessLogs = LogGroup.Builder.create(this, "ApiAccessLogs")
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+        LogGroupLogDestination logDestination = new LogGroupLogDestination(accessLogs);
+        StageOptions deployOptions = StageOptions.builder()
+                .accessLogDestination(logDestination)
+                .tracingEnabled(true)
+                .metricsEnabled(true)
+                .dataTraceEnabled(true)
+                .build();
+
         // Domain REST API backed by function
 
         EndpointConfiguration regionalEndpoint = EndpointConfiguration.builder()
@@ -47,6 +59,7 @@ public class IpAuthorizerStack extends Stack {
         LambdaRestApi restApi = LambdaRestApi.Builder.create(this, "IpRestApi")
                 .handler(proxyFunctionAlias)
                 .endpointConfiguration(regionalEndpoint)
+                .deployOptions(deployOptions)
                 .build();
 
         // DNS stuff: Create APIGW custom domain for this API

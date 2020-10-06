@@ -10,9 +10,15 @@ import software.amazon.awssdk.regions.Region;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class SigV4HttpClient {
+
+    private static final String XRAY_LAMBDA_ENV_TRACE_ID_KEY = "_X_AMZN_TRACE_ID";
+    private static final String XRAY_TRACE_ID_HEADER_NAME = "X-Amzn-Trace-Id";
 
     private final SdkHttpClient httpClient = UrlConnectionHttpClient.create();
     private final Aws4Signer requestSigner = Aws4Signer.create();
@@ -23,9 +29,16 @@ public class SigV4HttpClient {
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
         ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
 
+        Map<String, List<String>> extraHeaders = new HashMap<>();
+        String traceIdFromLambda = System.getenv(XRAY_LAMBDA_ENV_TRACE_ID_KEY);
+        if (traceIdFromLambda != null) {
+            extraHeaders.put(XRAY_TRACE_ID_HEADER_NAME, List.of(traceIdFromLambda));
+        }
+
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
                 .uri(URI.create(uri))
                 .method(SdkHttpMethod.POST)
+                .headers(extraHeaders)
                 .contentStreamProvider(bodyProvider)
                 .build();
 
@@ -37,11 +50,6 @@ public class SigV4HttpClient {
                 .build();
 
         SdkHttpFullRequest signedRequest = requestSigner.sign(baseRequest, signerParams);
-
-        HttpExecuteRequest executeRequest = HttpExecuteRequest.builder()
-                .request(signedRequest)
-                .contentStreamProvider(bodyProvider)
-                .build();
 
         HttpExecuteResponse response = httpClient.prepareRequest(HttpExecuteRequest.builder()
                 .request(signedRequest)
@@ -56,8 +64,6 @@ public class SigV4HttpClient {
         );
 
     }
-
-
 
 
 }
