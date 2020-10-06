@@ -1,6 +1,7 @@
 package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
@@ -20,8 +21,10 @@ public class LambdaWarmerStack extends Stack {
 
         Role lambdaFunctionRole = Util.standardLambdaRole(this, "WarmerFunctionRole", List.of()).build();
 
+        Util.addConfigPathReadPermissionToRole(this, lambdaFunctionRole,CommonConfig.PATH);
         Util.addLambdaInvokePermissionToRole(this, lambdaFunctionRole,
                 LambdaWarmerConfig.FUNCTION_NAMES_TO_WARM.toArray(String[]::new));
+        Util.addFullExecuteApiPermissionToRole(this, lambdaFunctionRole);
 
         Alias warmerFunctionAlias = Util.highMemJavaFunction(this, "WarmerFunction", "lambda-warmer",
                 "io.mamish.serverbot2.lambdawarmer.ScheduledLambdaHandler",

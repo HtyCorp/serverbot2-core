@@ -10,6 +10,7 @@ import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.networksecurity.model.AuthorizeIpRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
+import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,12 +27,17 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
 
-        logger.info("Dumping request object:\n" + gson.toJson(request));
-        logger.info("Dumping context:\n" + gson.toJson(context));
-
+        String path = request.getPath();
         String sourceIp = request.getRequestContext().getIdentity().getSourceIp();
 
-        String path = request.getPath();
+        // Check if this a ping request from the warmer and exit early if so
+        if (path.equals(LambdaWarmerConfig.WARMER_PING_API_PATH)) {
+            logger.info("Warmer ping request");
+            return generateSuccess("Ping okay");
+        }
+
+        logger.info("Dumping request object:\n" + gson.toJson(request));
+
         if (!path.equals(NetSecConfig.AUTH_PATH)) {
             return generateError("Sorry, this request is invalid [bad path '" + path + "']", 400);
         }

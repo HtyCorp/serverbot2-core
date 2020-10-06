@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.Pair;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1TokenProcessor;
@@ -56,12 +57,18 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     private APIGatewayProxyResponseEvent enact(APIGatewayProxyRequestEvent request, Context context) {
 
+        if (request.getPath().equals(LambdaWarmerConfig.WARMER_PING_API_PATH)) {
+            logger.info("Warmer ping request");
+            return generateHttpOkay("Ping okay");
+        }
+
         String[] pathSegments = request.getPath().split("/");
-        if (pathSegments.length < 2) {
-            logger.error("Got less than 2 path segments, path={}", Arrays.toString(pathSegments));
+        // Note path has a leading '/' so segment 0 is just empty string: length is 1 higher than the actual amount
+        if (pathSegments.length < 3) {
+            logger.error("Expecting at least 2 path segments, path={}", Arrays.toString(pathSegments));
             return generateHttpRawError("Resource not found", 404);
         }
-        String baseResource = pathSegments[1]; // not [0]: there is a leading "/" so [0] is just empty
+        String baseResource = pathSegments[1];
         String[] subResources = Arrays.copyOfRange(pathSegments, 2, pathSegments.length);
 
         if (baseResource.equals(UrlShortenerConfig.URL_ADMIN_PATH)) {
