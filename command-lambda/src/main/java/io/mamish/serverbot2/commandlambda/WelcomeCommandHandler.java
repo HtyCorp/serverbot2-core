@@ -95,7 +95,7 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
         String summaryMessage = "To whitelist your IP to join **"+friendlyDomain+"** servers, use this link.\n";
         String detailMessage = "This will detect your IP and add it to the firewall. If you've done this before, it"
                 + " replaces your last whitelisted IP.\n";
-        String reassureMessage = "For any security concerns, message Mamish#7674 or view this bot's code at"
+        String reassureMessage = "For any questions, message Mamish#7674 or view this bot's code at"
                 + " https://github.com/HtyCorp/serverbot2-core";
 
         String messageContent = summaryMessage + detailMessage + reassureMessage;
