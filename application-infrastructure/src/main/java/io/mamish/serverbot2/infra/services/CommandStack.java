@@ -51,7 +51,6 @@ public class CommandStack extends Stack {
         // Service function
 
         Role functionRole = Util.standardLambdaRole(this, "CommandFunctionExecutionRole", List.of(
-                ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess"),
                 ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
                 ManagedPolicies.SQS_FULL_ACCESS,
                 ManagedPolicies.EC2_READ_ONLY_ACCESS
