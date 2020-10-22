@@ -2,7 +2,7 @@ package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.customresource.S3Artifact;
 import io.mamish.serverbot2.infra.customresource.S3ArtifactProps;
-import io.mamish.serverbot2.infra.util.Policies;
+import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
@@ -39,11 +39,11 @@ public class AppInstanceShareStack extends Stack {
         Role commonRole = Role.Builder.create(this, "AppInstanceCommonRole")
                 .assumedBy(new ServicePrincipal("ec2.amazonaws.com"))
                 .managedPolicies(List.of(
-                        Policies.LOGS_FULL_ACCESS,
-                        Policies.SQS_FULL_ACCESS,
-                        Policies.S3_READ_ONLY_ACCESS,
-                        Policies.SSM_MANAGED_INSTANCE_CORE,
-                        Policies.STEP_FUNCTIONS_FULL_ACCESS
+                        ManagedPolicies.LOGS_FULL_ACCESS,
+                        ManagedPolicies.SQS_FULL_ACCESS,
+                        ManagedPolicies.S3_READ_ONLY_ACCESS,
+                        ManagedPolicies.SSM_MANAGED_INSTANCE_CORE,
+                        ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS
                 )).build();
 
         Util.addConfigPathReadPermissionToRole(this, commonRole, AppInstanceConfig.PATH_ALL);

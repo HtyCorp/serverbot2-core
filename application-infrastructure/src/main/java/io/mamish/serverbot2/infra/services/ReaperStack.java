@@ -1,6 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.util.Policies;
+import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import software.amazon.awscdk.core.Construct;
@@ -20,7 +20,7 @@ public class ReaperStack extends Stack {
         super(parent, id);
 
         Role functionRole = Util.standardLambdaRole(this, "ReaperFunctionRole", List.of(
-                Policies.SQS_FULL_ACCESS
+                ManagedPolicies.SQS_FULL_ACCESS
         )).build();
 
         Alias scheduledFunctionAlias = Util.highMemJavaFunction(this, "ReaperFunction", "resource-reaper",

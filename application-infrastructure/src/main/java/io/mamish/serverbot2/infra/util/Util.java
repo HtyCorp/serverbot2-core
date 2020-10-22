@@ -42,8 +42,8 @@ public class Util {
     public static Role.Builder standardLambdaRole(Construct parent, String id, List<IManagedPolicy> managedPolicies) {
 
         List<IManagedPolicy> combinedPolicies = new ArrayList<>();
-        combinedPolicies.add(Policies.BASIC_LAMBDA_EXECUTION);
-        combinedPolicies.add(Policies.XRAY_DAEMON_WRITE_ACCESS);
+        combinedPolicies.add(ManagedPolicies.BASIC_LAMBDA_EXECUTION);
+        combinedPolicies.add(ManagedPolicies.XRAY_DAEMON_WRITE_ACCESS);
         combinedPolicies.addAll(managedPolicies);
 
         return Role.Builder.create(parent, id)

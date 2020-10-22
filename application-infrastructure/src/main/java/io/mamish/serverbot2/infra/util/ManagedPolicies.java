@@ -3,7 +3,7 @@ package io.mamish.serverbot2.infra.util;
 import software.amazon.awscdk.services.iam.IManagedPolicy;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
 
-public class Policies {
+public class ManagedPolicies {
     public static final IManagedPolicy BASIC_LAMBDA_EXECUTION = ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole");
     public static final IManagedPolicy STEP_FUNCTIONS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess");
     public static final IManagedPolicy SQS_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess");
@@ -16,4 +16,5 @@ public class Policies {
     public static final IManagedPolicy XRAY_FULL_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXrayFullAccess");
     public static final IManagedPolicy XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
     public static final IManagedPolicy SSM_MANAGED_INSTANCE_CORE = ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore");
+    public static final IManagedPolicy EC2_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ReadOnlyAccess");
 }

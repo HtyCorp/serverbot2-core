@@ -1,6 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.util.Policies;
+import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
@@ -31,9 +31,9 @@ public class WorkflowsStack extends Stack {
         super(parent, id);
 
         Role taskRole = Util.standardLambdaRole(this, "WorkflowFunctionRole", List.of(
-                Policies.EC2_FULL_ACCESS,
-                Policies.SQS_FULL_ACCESS,
-                Policies.ROUTE_53_FULL_ACCESS
+                ManagedPolicies.EC2_FULL_ACCESS,
+                ManagedPolicies.SQS_FULL_ACCESS,
+                ManagedPolicies.ROUTE_53_FULL_ACCESS
         )).build();
 
         Util.addConfigPathReadPermissionToRole(this, taskRole, CommonConfig.PATH);

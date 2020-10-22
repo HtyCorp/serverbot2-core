@@ -1,7 +1,7 @@
 package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
-import io.mamish.serverbot2.infra.util.Policies;
+import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.IpAuthConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -28,8 +28,8 @@ public class IpAuthorizerStack extends Stack {
         // Define function and associated role
 
         Role functionRole = Util.standardLambdaRole(this, "IpLambdaRole", List.of(
-                Policies.STEP_FUNCTIONS_FULL_ACCESS,
-                Policies.SQS_FULL_ACCESS
+                ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
+                ManagedPolicies.SQS_FULL_ACCESS
         )).build();
 
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);

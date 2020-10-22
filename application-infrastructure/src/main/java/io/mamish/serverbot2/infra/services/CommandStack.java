@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.*;
 import software.amazon.awscdk.core.Construct;
@@ -51,7 +52,9 @@ public class CommandStack extends Stack {
 
         Role functionRole = Util.standardLambdaRole(this, "CommandFunctionExecutionRole", List.of(
                 ManagedPolicy.fromAwsManagedPolicyName("AWSStepFunctionsFullAccess"),
-                ManagedPolicy.fromAwsManagedPolicyName("AmazonSQSFullAccess")
+                ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
+                ManagedPolicies.SQS_FULL_ACCESS,
+                ManagedPolicies.EC2_READ_ONLY_ACCESS
         )).build();
 
         Util.addLambdaInvokePermissionToRole(this, functionRole,
