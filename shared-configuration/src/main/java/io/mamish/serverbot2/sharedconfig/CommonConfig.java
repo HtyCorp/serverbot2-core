@@ -33,10 +33,10 @@ public class CommonConfig {
     public static final int LAMBDA_MEMORY_MB_FOR_STANDARD = 2048;
     public static final int STANDARD_LAMBDA_TIMEOUT = 20;
 
-    public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z][a-z0-9]{1,31}");
+    public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z0-9]{2,32}");
     public static final List<String> RESERVED_APP_NAMES = List.of(
-            // Subdomain reserved for ipauth: a game with the same name would overwrite its DNS record
-            NetSecConfig.AUTH_SUBDOMAIN
+            // Empty: this is currently unused since there are now separate 'app' and 'system' domain names,
+            // so DNS name collisions will not occur like they did with the combined domain name space.
     );
 
     public static SystemProperty ENABLE_MOCK = new SystemProperty("serverbot2.mock");
