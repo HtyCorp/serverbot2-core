@@ -9,5 +9,6 @@ public interface IWelcomeCommandHandler {
     ProcessUserCommandResponse onCommandJoin(CommandJoin commandJoin);
     ProcessUserCommandResponse onCommandLeave(CommandLeave commandLeave);
     ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp);
+    ProcessUserCommandResponse onCommandIp(CommandIp commandIp);
 
 }

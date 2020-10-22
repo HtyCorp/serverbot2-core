@@ -1,32 +1,53 @@
 package io.mamish.serverbot2.commandlambda;
 
-import io.mamish.serverbot2.commandlambda.commands.welcome.CommandAddIp;
-import io.mamish.serverbot2.commandlambda.commands.welcome.CommandJoin;
-import io.mamish.serverbot2.commandlambda.commands.welcome.CommandLeave;
-import io.mamish.serverbot2.commandlambda.commands.welcome.IWelcomeCommandHandler;
+import io.mamish.serverbot2.commandlambda.commands.welcome.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.*;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
+import io.mamish.serverbot2.gamemetadata.model.GameMetadata;
+import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
+import io.mamish.serverbot2.gamemetadata.model.ListGamesRequest;
 import io.mamish.serverbot2.networksecurity.model.GenerateIpAuthUrlRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.Instance;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeCommandHandler> implements IWelcomeCommandHandler {
 
     private final Logger logger = LogManager.getLogger(WelcomeCommandHandler.class);
 
+    private final IGameMetadataService gameMetadataServiceClient;
     private final IDiscordService discordServiceClient;
     private final INetworkSecurity networkSecurityClient;
     private final UrlShortenerClient urlShortenerClient;
 
+    private final Ec2Client ec2Client = Ec2Client.builder()
+            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+            .httpClient(UrlConnectionHttpClient.create())
+            .region(new SystemSettingsRegionProvider().getRegion())
+            .build();
+
     public WelcomeCommandHandler() {
+        logger.trace("Builder GameMetadataService client");
+        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
         logger.trace("Building DiscordRelay client");
         discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
         logger.trace("Building NetworkSecurity client");
@@ -119,4 +140,40 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
         );
     }
 
+    @Override
+    public ProcessUserCommandResponse onCommandIp(CommandIp commandIp) {
+
+        List<GameMetadata> gameMetadataList = gameMetadataServiceClient.listGames(new ListGamesRequest()).getGames();
+
+        Map<String,String> runningInstanceIdsToGameNames = gameMetadataList.stream()
+                .filter(game -> game.getInstanceId() != null)
+                .filter(game -> Utils.equalsAny(game.getGameReadyState(), GameReadyState.STARTING, GameReadyState.RUNNING))
+                .collect(Collectors.toMap(GameMetadata::getInstanceId, GameMetadata::getGameName));
+
+        if (runningInstanceIdsToGameNames.isEmpty()) {
+            return new ProcessUserCommandResponse("There are no games running right now.");
+        }
+
+        Map<String,String> runningGameNamesToIps = ec2Client.describeInstancesPaginator(r -> r.instanceIds(runningInstanceIdsToGameNames.keySet()))
+                .reservations().stream()
+                .flatMap(reservation -> reservation.instances().stream())
+                .collect(Collectors.toMap(i -> runningInstanceIdsToGameNames.get(i.instanceId()), Instance::publicIpAddress));
+
+        StringBuilder outputBuilder = new StringBuilder();
+        runningGameNamesToIps.forEach((name, ip) -> {
+            outputBuilder.append(name).append(": ");
+            if (ip == null) {
+                outputBuilder.append("server is still starting up");
+            } else {
+                String dnsName = IDUtils.dot(name, CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());
+                outputBuilder.append(ip).append(" (").append(dnsName).append(")");
+            }
+            outputBuilder.append("\n");
+        });
+
+        outputBuilder.append("\nNote: your IP address must be whitelisted (use !addip) to connect to these.");
+
+        return new ProcessUserCommandResponse(outputBuilder.toString());
+
+    }
 }
