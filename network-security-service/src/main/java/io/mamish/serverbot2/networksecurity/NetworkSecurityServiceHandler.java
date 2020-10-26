@@ -1,14 +1,19 @@
 package io.mamish.serverbot2.networksecurity;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
 import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
+import io.mamish.serverbot2.framework.exception.server.ResourceExpiredException;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
+import io.mamish.serverbot2.networksecurity.firewall.DiscordUserAuthInfo;
+import io.mamish.serverbot2.networksecurity.firewall.DiscordUserAuthType;
+import io.mamish.serverbot2.networksecurity.firewall.Ec2GroupManager;
+import io.mamish.serverbot2.networksecurity.firewall.IGroupManager;
 import io.mamish.serverbot2.networksecurity.model.*;
 import io.mamish.serverbot2.networksecurity.netanalysis.CloudWatchFlowLogsAnalyser;
 import io.mamish.serverbot2.networksecurity.netanalysis.INetworkAnalyser;
-import io.mamish.serverbot2.networksecurity.securitygroups.Ec2GroupManager;
-import io.mamish.serverbot2.networksecurity.securitygroups.IGroupManager;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import org.apache.logging.log4j.LogManager;
@@ -16,8 +21,7 @@ import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.model.KmsException;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -26,11 +30,12 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     private static final Pattern BASIC_IP_REGEX = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
 
-    private final Logger logger = LogManager.getLogger(NetworkSecurityServiceHandler.class);
-
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
     private final Crypto crypto = new Crypto();
     private final IGroupManager groupManager = chooseGroupManager();
     private final INetworkAnalyser networkAnalyser = chooseNetworkAnalyser();
+
+    private final Logger logger = LogManager.getLogger(NetworkSecurityServiceHandler.class);
 
     @Override
     public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroupRequest request) {
@@ -89,7 +94,18 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     @Override
     public GenerateIpAuthUrlResponse generateIpAuthUrl(GenerateIpAuthUrlRequest request) {
-        String token = crypto.encrypt(SdkBytes.fromUtf8String(request.getUserId()));
+
+        DiscordUserAuthInfo newAuthInfo = new DiscordUserAuthInfo(
+                2,
+                request.getReservationId(),
+                Instant.now().getEpochSecond(),
+                request.getUserId() == null ? DiscordUserAuthType.GUEST : DiscordUserAuthType.MEMBER,
+                request.getUserId()
+        );
+
+        String authInfoJson = gson.toJson(newAuthInfo);
+        String token = crypto.encrypt(SdkBytes.fromUtf8String(authInfoJson));
+
         String authUrl = "https://"
                 + NetSecConfig.AUTH_SUBDOMAIN
                 + "."
@@ -102,28 +118,23 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     @Override
     public AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request) {
+
         String userAddress = request.getUserIpAddress();
 
-        if (request.getEncryptedUserId() == null && request.getUserId() == null) {
-            throw new RequestValidationException("Must specify either encryptedUserId or userId");
+        String authInfoJson;
+        try {
+            authInfoJson = crypto.decrypt(request.getUserAuthToken()).asUtf8String();
+        } catch (KmsException e) {
+            throw new RequestValidationException("Provided token is invalid", e);
         }
-        if (request.getEncryptedUserId() != null && request.getUserId() != null) {
-            throw new RequestValidationException("Must specify only one of encryptedUserId or userId");
+        DiscordUserAuthInfo authInfo = gson.fromJson(authInfoJson, DiscordUserAuthInfo.class);
+
+        Instant tokenAuthInstant = Instant.ofEpochSecond(authInfo.getAuthTimeEpochSeconds());
+        if (tokenAuthInstant.isAfter(Instant.now())) {
+            throw new ResourceExpiredException("Token has expired");
         }
 
-        final String userId;
-        if (request.getUserId() != null) {
-            userId = request.getUserId();
-        } else {
-            try {
-                userId = crypto.decrypt(request.getEncryptedUserId()).asUtf8String();
-            } catch (KmsException e) {
-                e.printStackTrace();
-                throw new RequestValidationException("Provided token is invalid", e);
-            }
-        }
-
-        groupManager.setUserIp(userAddress, userId);
+        groupManager.setUserIp(userAddress, authInfo);
         return new AuthorizeIpResponse();
 
     }

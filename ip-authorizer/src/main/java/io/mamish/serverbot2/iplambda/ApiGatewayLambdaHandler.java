@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
+import io.mamish.serverbot2.framework.exception.server.ResourceExpiredException;
 import io.mamish.serverbot2.networksecurity.model.AuthorizeIpRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
@@ -54,19 +55,22 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateError("Sorry, this request is invalid [missing token]", 400);
         }
 
-        String encryptedUserIdToken = queryParams.get(NetSecConfig.AUTH_PARAM_TOKEN);
-        if (encryptedUserIdToken == null) {
+        String encryptedAuthToken = queryParams.get(NetSecConfig.AUTH_PARAM_TOKEN);
+        if (encryptedAuthToken == null) {
             return generateError("Sorry, this request is invalid [missing token]", 400);
         }
 
         try {
-            AuthorizeIpRequest authRequest = new AuthorizeIpRequest(sourceIp, encryptedUserIdToken, null);
+            AuthorizeIpRequest authRequest = new AuthorizeIpRequest(sourceIp, encryptedAuthToken);
             networkSecurityClient.authorizeIp(authRequest);
         } catch (RequestValidationException e) {
-            logger.error("AuthorizeIp validation failed", e);
+            logger.error("NetSec AuthorizeIp validation failed", e);
             return generateError("Invalid token. Check that you've used the exact URL sent in Discord.", 400);
+        } catch (ResourceExpiredException e) {
+            logger.error("NetSec AuthorizeIp failed due to token expiration", e);
+            return generateError("Sorry, this link has expired. Try getting a new one from wherever you got this link", 403);
         } catch (ApiServerException e) {
-            logger.error("AuthorizeIp general error", e);
+            logger.error("NetSec AuthorizeIp general error", e);
             return generateError("Sorry, something went wrong.", 500);
         }
 

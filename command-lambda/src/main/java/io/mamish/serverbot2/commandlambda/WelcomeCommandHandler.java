@@ -103,9 +103,10 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     @Override
     public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        String fullAuthUrl = networkSecurityClient.generateIpAuthUrl(
-                new GenerateIpAuthUrlRequest(commandAddIp.getContext().getSenderId())
-        ).getIpAuthUrl();
+        String fullAuthUrl = networkSecurityClient.generateIpAuthUrl(new GenerateIpAuthUrlRequest(
+                commandAddIp.getContext().getMessageId(),
+                commandAddIp.getContext().getSenderId()
+        )).getIpAuthUrl();
 
         String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_TTL.getSeconds());
 

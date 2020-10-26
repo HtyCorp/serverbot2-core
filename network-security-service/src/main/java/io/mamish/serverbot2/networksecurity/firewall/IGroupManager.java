@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.networksecurity.securitygroups;
+package io.mamish.serverbot2.networksecurity.firewall;
 
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
@@ -14,7 +14,7 @@ public interface IGroupManager {
     List<ManagedSecurityGroup> listGroups();
     void deleteGroup(String name) throws NoSuchResourceException;
 
-    void setUserIp(String userIpAddress, String userDiscordId);
+    void setUserIp(String userIpAddress, DiscordUserAuthInfo userInfo);
 
     void modifyGroupPorts(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove);
 }
