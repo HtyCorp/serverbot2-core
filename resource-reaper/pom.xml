@@ -30,6 +30,11 @@
             <artifactId>shared-configuration</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>network-security-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

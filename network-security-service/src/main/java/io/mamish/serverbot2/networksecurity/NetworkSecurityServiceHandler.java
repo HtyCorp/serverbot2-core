@@ -2,10 +2,7 @@ package io.mamish.serverbot2.networksecurity;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
-import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
-import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
-import io.mamish.serverbot2.framework.exception.server.ResourceExpiredException;
+import io.mamish.serverbot2.framework.exception.server.*;
 import io.mamish.serverbot2.networksecurity.crypto.Crypto;
 import io.mamish.serverbot2.networksecurity.firewall.DiscordUserAuthInfo;
 import io.mamish.serverbot2.networksecurity.firewall.DiscordUserAuthType;
@@ -129,8 +126,19 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         }
         DiscordUserAuthInfo authInfo = gson.fromJson(authInfoJson, DiscordUserAuthInfo.class);
 
-        Instant tokenAuthInstant = Instant.ofEpochSecond(authInfo.getAuthTimeEpochSeconds());
-        if (tokenAuthInstant.isAfter(Instant.now())) {
+        Instant tokenAuthIssueInstant = Instant.ofEpochSecond(authInfo.getAuthTimeEpochSeconds());
+        Instant tokenAuthExpireTime;
+        switch(authInfo.getAuthType()) {
+            case MEMBER:
+                tokenAuthExpireTime = tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_MEMBER_TTL); break;
+            case GUEST:
+                tokenAuthExpireTime = tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_GUEST_TTL); break;
+            default:
+                logger.error("Unexpected IP auth type {}", authInfo.getAuthType());
+                throw new RequestHandlingException("Unexpected data in auth token");
+        }
+
+        if (Instant.now().isAfter(tokenAuthExpireTime)) {
             throw new ResourceExpiredException("Token has expired");
         }
 
@@ -169,6 +177,12 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         ManagedSecurityGroup group = groupManager.describeGroup(getNetworkUsageRequest.getTargetSecurityGroupName());
 
         return networkAnalyser.analyse(group.getAllowedPorts(), requestedEndpointIp, requestedWindowSeconds);
+    }
+
+    @Override
+    public RevokeExpiredIpsResponse revokeExpiredIps(RevokeExpiredIpsRequest revokeExpiredIpsRequest) {
+        groupManager.revokeExpiredIps();
+        return new RevokeExpiredIpsResponse();
     }
 
     private void validateRequestedGameName(String name, boolean allowReserved) {

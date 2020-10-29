@@ -14,7 +14,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
-import io.mamish.serverbot2.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -24,9 +23,9 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
-import software.amazon.awssdk.utils.internal.SystemSettingUtils;
 
 import java.security.Key;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -223,6 +222,41 @@ public class Ec2GroupManager implements IGroupManager {
             }
         } else {
             ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
+        }
+    }
+
+    @Override
+    public void revokeExpiredIps() {
+        DecryptedPrefixList userList = getDecryptedUserList();
+        Instant now = Instant.now();
+
+        List<RemovePrefixListEntry> cidrsToRemove = userList.getEntries().stream()
+                .filter(e -> {
+                    Instant authTime = Instant.ofEpochSecond(e.getUserInfo().getAuthTimeEpochSeconds());
+                    Instant expireTime;
+                    switch(e.getUserInfo().getAuthType()) {
+                        case MEMBER:
+                            expireTime = authTime.plus(NetSecConfig.AUTH_URL_MEMBER_TTL); break;
+                        case GUEST:
+                            expireTime = authTime.plus(NetSecConfig.AUTH_URL_GUEST_TTL); break;
+                        default:
+                            logger.error("Unexpected IP auth type {}", e.getUserInfo().getAuthType());
+                            throw new RequestHandlingException("Unexpected data in auth token");
+                    }
+                    return now.isAfter(expireTime);
+                }).map(e -> RemovePrefixListEntry.builder().cidr(e.getCidr()).build())
+                .collect(Collectors.toList());
+
+        logger.info("Got {} expired auth entries to remove", cidrsToRemove.size());
+
+        if (cidrsToRemove.isEmpty()) {
+            logger.info("Nothing to do");
+        } else {
+            ManagedPrefixList newListVersion = ec2Client.modifyManagedPrefixList(r -> r.prefixListId(userList.getId())
+                    .currentVersion(userList.getVersion())
+                    .removeEntries(cidrsToRemove))
+                    .prefixList();
+            logger.info("Successfully removed entries to create new list version {}", newListVersion.version());
         }
     }
 

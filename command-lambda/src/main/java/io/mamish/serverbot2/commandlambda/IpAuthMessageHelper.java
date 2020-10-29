@@ -73,7 +73,7 @@ public class IpAuthMessageHelper {
                 String embedDescription) {
         
         String fullAuthUrl = networkSecurityServiceClient.generateIpAuthUrl(generateUrlRequest).getIpAuthUrl();
-        String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_TTL.getSeconds());
+        String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_MEMBER_TTL.getSeconds());
 
         // Send a message to the user privately before returning the standard channel message.
         SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl, embedTitle, embedDescription);

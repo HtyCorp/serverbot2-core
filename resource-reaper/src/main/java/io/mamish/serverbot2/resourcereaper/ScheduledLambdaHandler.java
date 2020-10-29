@@ -3,7 +3,11 @@ package io.mamish.serverbot2.resourcereaper;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent;
+import io.mamish.serverbot2.framework.client.ApiClient;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
+import io.mamish.serverbot2.networksecurity.model.RevokeExpiredIpsRequest;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
@@ -14,12 +18,14 @@ public class ScheduledLambdaHandler implements RequestHandler<ScheduledEvent,Str
     private static final String TAGKEY = ReaperConfig.HEARTBEAT_TAG_NAME;
 
     private final SqsClient sqs = SqsClient.create();
+    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
 
     @Override
     public String handleRequest(ScheduledEvent scheduledEvent, Context context) {
         long epochTime = Instant.now().getEpochSecond();
 
         cleanUpTempApiSqsQueues(epochTime);
+        invokeNetSecExpiredIpsRevoke();
 
         return "Done!";
     }
@@ -43,6 +49,10 @@ public class ScheduledLambdaHandler implements RequestHandler<ScheduledEvent,Str
                     }
                 })
                 .forEach(url -> sqs.deleteQueue(r -> r.queueUrl(url)));
+    }
+
+    private void invokeNetSecExpiredIpsRevoke() {
+        networkSecurityServiceClient.revokeExpiredIps(new RevokeExpiredIpsRequest());
     }
 
 }

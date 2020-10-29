@@ -16,5 +16,8 @@ public interface IGroupManager {
 
     void setUserIp(String userIpAddress, DiscordUserAuthInfo userInfo);
 
+    void revokeExpiredIps();
+
     void modifyGroupPorts(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove);
+
 }
