@@ -1,10 +1,7 @@
 package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.commands.AbstractCommandDto;
-import io.mamish.serverbot2.commandlambda.commands.servers.CommandGames;
-import io.mamish.serverbot2.commandlambda.commands.servers.CommandStart;
-import io.mamish.serverbot2.commandlambda.commands.servers.CommandStop;
-import io.mamish.serverbot2.commandlambda.commands.servers.IServersCommandHandler;
+import io.mamish.serverbot2.commandlambda.commands.servers.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
@@ -23,13 +20,13 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
     private final Logger logger = LogManager.getLogger(ServersCommandHandler.class);
 
     private final IGameMetadataService gameMetadataServiceClient;
+    private final IpAuthMessageHelper ipAuthMessageHelper;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public ServersCommandHandler() {
-        logger.trace("Building GMS client");
-        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Finished constructor");
+    public ServersCommandHandler(IGameMetadataService gameMetadataServiceClient, IpAuthMessageHelper ipAuthMessageHelper) {
+        this.gameMetadataServiceClient = gameMetadataServiceClient;
+        this.ipAuthMessageHelper = ipAuthMessageHelper;
     }
 
     @Override
@@ -115,6 +112,11 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         } else {
             throw makeUnknownGameException(name);
         }
+    }
+
+    @Override
+    public ProcessUserCommandResponse onCommandAddGuestIp(CommandAddGuestIp commandAddGuestIp) {
+        return ipAuthMessageHelper.handleGuestIpAuthRequest(commandAddGuestIp);
     }
 
     private String makeGameDescriptor(GameMetadata metadata) {

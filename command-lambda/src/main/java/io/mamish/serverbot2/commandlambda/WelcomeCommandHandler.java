@@ -36,8 +36,7 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     private final IGameMetadataService gameMetadataServiceClient;
     private final IDiscordService discordServiceClient;
-    private final INetworkSecurity networkSecurityClient;
-    private final UrlShortenerClient urlShortenerClient;
+    private final IpAuthMessageHelper ipAuthMessageHelper;
 
     private final Ec2Client ec2Client = Ec2Client.builder()
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
@@ -45,16 +44,11 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
             .region(new SystemSettingsRegionProvider().getRegion())
             .build();
 
-    public WelcomeCommandHandler() {
-        logger.trace("Builder GameMetadataService client");
-        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Building DiscordRelay client");
-        discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
-        logger.trace("Building NetworkSecurity client");
-        networkSecurityClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-        logger.trace("Building UrlShortenerClient");
-        urlShortenerClient = new UrlShortenerClient();
-        logger.trace("Constructor finished");
+    public WelcomeCommandHandler(IGameMetadataService gameMetadataServiceClient, IDiscordService discordServiceClient,
+                                 IpAuthMessageHelper ipAuthMessageHelper) {
+        this.gameMetadataServiceClient = gameMetadataServiceClient;
+        this.discordServiceClient = discordServiceClient;
+        this.ipAuthMessageHelper = ipAuthMessageHelper;
     }
 
     @Override
@@ -103,41 +97,7 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     @Override
     public ProcessUserCommandResponse onCommandAddIp(CommandAddIp commandAddIp) {
-        String fullAuthUrl = networkSecurityClient.generateIpAuthUrl(
-                new GenerateIpAuthUrlRequest(commandAddIp.getContext().getSenderId())
-        ).getIpAuthUrl();
-
-        String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_TTL.getSeconds());
-
-        // Send a message to the user privately before returning the standard channel message.
-
-        String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
-
-        String summaryMessage = "To whitelist your IP to join **"+friendlyDomain+"** servers, use this link.\n";
-        String detailMessage = "This will detect your IP and add it to the firewall. If you've done this before, it"
-                + " replaces your last whitelisted IP.\n";
-        String reassureMessage = "For any questions, message Mamish#7674 or view this bot's code at"
-                + " https://github.com/HtyCorp/serverbot2-core";
-
-        String messageContent = summaryMessage + detailMessage + reassureMessage;
-
-        SimpleEmbed authLinkEmbed = new SimpleEmbed(
-                shortAuthUrl,
-                "Whitelist IP for " + commandAddIp.getContext().getSenderName(),
-                "Personal link to detect and whitelist your IP address for " + friendlyDomain
-        );
-
-        discordServiceClient.newMessage(new NewMessageRequest(
-                messageContent,
-                null,
-                null,
-                commandAddIp.getContext().getSenderId(),
-                authLinkEmbed
-        ));
-
-        return new ProcessUserCommandResponse(
-                "A whitelist link has been sent to your private messages."
-        );
+        return ipAuthMessageHelper.handleMemberIpAuthRequest(commandAddIp);
     }
 
     @Override

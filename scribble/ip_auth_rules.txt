@@ -1,0 +1,16 @@
+Overall rules:
+ * Determine if a new IP needs to be added at all.
+ * No member vs. guest partitioning: if list has space, just add the new IP.
+ * If no space, find one to evict. LRU removal on guest, then LRU on members if no guests.
+
+Pseudocode:
+
+if ip exists:
+    just update existing auth info
+if member auth and user exists:
+    just remove old IP and add new IP/info
+    # note these IPs must be different due to first condition
+if list full:
+    remove lru entry and add new
+otherwise:
+    add new

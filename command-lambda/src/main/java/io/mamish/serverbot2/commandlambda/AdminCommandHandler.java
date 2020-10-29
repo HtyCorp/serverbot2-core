@@ -31,26 +31,21 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
     private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
 
-    private final INetworkSecurity networkSecurityServiceClient;
     private final IGameMetadataService gameMetadataServiceClient;
+    private final INetworkSecurity networkSecurityServiceClient;
     private final IDiscordService discordServiceClient;
     private final UrlShortenerClient urlShortenerClient;
     private final Pattern portRangePattern;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public AdminCommandHandler() {
-        logger.trace("Initialising NetSec client");
-        networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-        logger.trace("Initialising GameMetadata client");
-        gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Initialising DiscordRelay client");
-        discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
-        logger.trace("Initialising URLShortener client");
-        urlShortenerClient = new UrlShortenerClient();
-        logger.trace("Initialising port regex");
-        portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
-        logger.trace("Finished constructor");
+    public AdminCommandHandler(IGameMetadataService gameMetadataServiceClient, INetworkSecurity networkSecurityServiceClient,
+                               IDiscordService discordServiceClient, UrlShortenerClient urlShortenerClient) {
+        this.gameMetadataServiceClient = gameMetadataServiceClient;
+        this.networkSecurityServiceClient = networkSecurityServiceClient;
+        this.discordServiceClient = discordServiceClient;
+        this.urlShortenerClient = urlShortenerClient;
+        this.portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
     }
 
     @Override

@@ -1,5 +1,7 @@
-package io.mamish.serverbot2.networksecurity.securitygroups;
+package io.mamish.serverbot2.networksecurity.firewall;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.mamish.serverbot2.framework.exception.server.NoSuchResourceException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.ResourceAlreadyExistsException;
@@ -15,14 +17,16 @@ import io.mamish.serverbot2.sharedutil.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,10 +36,13 @@ public class Ec2GroupManager implements IGroupManager {
     private final Ec2Client ec2Client = Ec2Client.builder()
             .httpClient(UrlConnectionHttpClient.create())
             .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+            .region(new SystemSettingsRegionProvider().getRegion())
             .build();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
+
     private final Crypto crypto;
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     private final Logger logger = LogManager.getLogger(Ec2GroupManager.class);
 
@@ -87,69 +94,110 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     @Override
-    public void setUserIp(String newUserIpAddress, String userDiscordId) {
-        ManagedPrefixList userIpList = getUserIpList();
-        Key dataKey = getDataKeyFromPrefixListTags(userIpList);
-        String encryptedUserId = crypto.encryptLocal(SdkBytes.fromUtf8String(userDiscordId), dataKey);
+    public void setUserIp(String userIpAddress, DiscordUserAuthInfo userInfo) {
+        ModifyManagedPrefixListRequest modifyRequest = buildRequestForSetUserIp(userIpAddress, userInfo);
+        try {
+            ec2Client.modifyManagedPrefixList(modifyRequest);
+        } catch (Ec2Exception e) {
+            AwsErrorDetails details = e.awsErrorDetails();
+            logger.error("Error making PL modify list call, code='{}', message='{}'", details.errorCode(), details.errorMessage(), e);
+            throw new RequestHandlingException("Unexpected error when modifying prefix list", e);
+        }
+    }
+
+    private ModifyManagedPrefixListRequest buildRequestForSetUserIp(String newUserIpAddress, DiscordUserAuthInfo userInfo) {
+        DecryptedPrefixList userList = getDecryptedUserList();
+        String encryptedUserInfo = encryptUserInfo(userInfo, userList.getDataKey());
         String newUserCidr = newUserIpAddress + "/32";
 
-        // Find the existing user CIDR in the prefix list if it exists
-        Optional<String> oExistingUserCidr = ec2Client
-                .getManagedPrefixListEntriesPaginator(r -> r.prefixListId(userIpList.prefixListId())).entries().stream()
-                .filter(e -> {
-                    SdkBytes decryptedUserIdBytes = crypto.decryptLocal(e.description(), dataKey);
-                    return decryptedUserIdBytes.asUtf8String().equals(userDiscordId);
-                }).findFirst()
-                .map(PrefixListEntry::cidr);
-
-        // Prefix list modify call fails if same CIDR is in Add and Remove entries simultaneously,
-        // so do nothing if requested CIDR already exists in prefix list.
-        // Note: this means we can't easily update descriptions on existing entries, unfortunately.
-        if (oExistingUserCidr.isPresent() && oExistingUserCidr.get().equals(newUserCidr)) {
-
-            logger.info("User {} already has CIDR {} whitelisted, no changes required",
-                    userDiscordId, newUserCidr);
-
-        } else {
-
-            // Create the basic request to add the user's new CIDR
-            ModifyManagedPrefixListRequest baseAddCidrRequest = ModifyManagedPrefixListRequest.builder()
-                    .prefixListId(userIpList.prefixListId())
-                    .currentVersion(userIpList.version())
-                    .addEntries(AddPrefixListEntry.builder()
-                            .cidr(newUserCidr)
-                            .description(encryptedUserId)
-                            .build())
-                    .build();
-
-            // If there is an existing CIDR now, it must be different to the new one
-            if (oExistingUserCidr.isEmpty()) {
-
-                logger.info("User {} has no existing CIDR - adding {}",
-                        userDiscordId, newUserCidr);
-                ec2Client.modifyManagedPrefixList(baseAddCidrRequest);
-
-            } else {
-
-                logger.info("User {} has existing CIDR {} - removing it and adding {}",
-                        userDiscordId, oExistingUserCidr.get(), newUserCidr);
-                ec2Client.modifyManagedPrefixList(baseAddCidrRequest.toBuilder()
-                        .removeEntries(RemovePrefixListEntry.builder()
-                                .cidr(oExistingUserCidr.get())
-                                .build())
-                        .build());
-
-            }
-
+        if (cidrExistsInList(userList, newUserCidr)) {
+            logger.info("CIDR already exists in list - updating existing entry");
+            return buildListModifyRequest(userList, newUserCidr, encryptedUserInfo, null);
         }
+
+        if (userInfo.getAuthType().equals(DiscordUserAuthType.MEMBER)) {
+            Optional<String> existingUserCidr = findExistingUserCidr(userList, userInfo.getUserId());
+            if (existingUserCidr.isPresent()) {
+                logger.info("CIDR {} already exists in list for this user - removing old CIDR and adding new", existingUserCidr.get());
+                return buildListModifyRequest(userList, newUserCidr, encryptedUserInfo, existingUserCidr.get());
+            }
+        }
+
+        if (listIsFull(userList)) {
+            String cidrToRemove = getRemovalCandidateCidr(userList);
+            logger.info("List is full - removing LRU CIDR {} and adding new", cidrToRemove);
+            return buildListModifyRequest(userList, newUserCidr, encryptedUserInfo, cidrToRemove);
+        }
+
+        logger.info("Adding new entry without removing any existing ones");
+        return buildListModifyRequest(userList, newUserCidr, encryptedUserInfo, null);
+
+    }
+
+    private boolean cidrExistsInList(DecryptedPrefixList userList, String userCidr) {
+        return userList.getEntries().stream().anyMatch(e -> e.getCidr().equals(userCidr));
+    }
+
+    private Optional<String> findExistingUserCidr(DecryptedPrefixList userList, String userId) {
+        return userList.getEntries().stream()
+                .filter(e -> e.getUserInfo().getUserId().equals(userId))
+                .findFirst()
+                .map(DecryptedPrefixListEntry::getCidr);
+    }
+
+    private boolean listIsFull(DecryptedPrefixList userList) {
+        return userList.getEntries().size() >= NetSecConfig.MAX_USER_IP_ADDRESSES;
+    }
+
+    private String getRemovalCandidateCidr(DecryptedPrefixList userList) {
+
+        Optional<String> oldestCidr = userList.getEntries().stream()
+                .min(Comparator.comparing(e -> e.getUserInfo().getAuthTimeEpochSeconds()))
+                .map(DecryptedPrefixListEntry::getCidr);
+
+        if (oldestCidr.isPresent()) {
+            return oldestCidr.get();
+        } else {
+            throw new IllegalStateException("Can't get removal candidate from an empty prefix list");
+        }
+
+    }
+
+    private ModifyManagedPrefixListRequest buildListModifyRequest(DecryptedPrefixList userList, String cidrToAdd,
+                                                                  String descriptionToAdd, String cidrToRemove) {
+        List<AddPrefixListEntry> addEntries = List.of(AddPrefixListEntry.builder()
+                .cidr(cidrToAdd)
+                .description(descriptionToAdd)
+                .build());
+        List<RemovePrefixListEntry> removeEntries = Optional.ofNullable(cidrToRemove)
+                .map(cidr -> List.of(RemovePrefixListEntry.builder().cidr(cidr).build()))
+                .orElse(null);
+        return ModifyManagedPrefixListRequest.builder()
+                .prefixListId(userList.getId())
+                .currentVersion(userList.getVersion())
+                .addEntries(addEntries)
+                .removeEntries(removeEntries)
+                .build();
+    }
+
+    private String encryptUserInfo(DiscordUserAuthInfo userInfo, Key dataKey) {
+        String userInfoJson = gson.toJson(userInfo);
+        SdkBytes userInfoBytes = SdkBytes.fromUtf8String(userInfoJson);
+        return crypto.encryptLocal(userInfoBytes, dataKey);
+    }
+
+    private DiscordUserAuthInfo decryptUserInfo(String userInfoCiphertext, Key dataKey) {
+        SdkBytes plaintextInfoBytes = crypto.decryptLocal(userInfoCiphertext, dataKey);
+        String plaintextInfoJson = plaintextInfoBytes.asUtf8String();
+        return gson.fromJson(plaintextInfoJson, DiscordUserAuthInfo.class);
     }
 
     @Override
     public void modifyGroupPorts(ManagedSecurityGroup group, List<PortPermission> ports, boolean addNotRemove) {
-        ManagedPrefixList userIpList = getUserIpList();
+        DecryptedPrefixList userIpList = getDecryptedUserList();
 
         PrefixListId prefixListAuthorisation = PrefixListId.builder()
-                .prefixListId(userIpList.prefixListId())
+                .prefixListId(userIpList.getId())
                 .description("Rule added by NetSec service")
                 .build();
 
@@ -174,6 +222,41 @@ public class Ec2GroupManager implements IGroupManager {
             }
         } else {
             ec2Client.revokeSecurityGroupIngress(r -> r.groupId(group.getGroupId()).ipPermissions(allPermissions));
+        }
+    }
+
+    @Override
+    public void revokeExpiredIps() {
+        DecryptedPrefixList userList = getDecryptedUserList();
+        Instant now = Instant.now();
+
+        List<RemovePrefixListEntry> cidrsToRemove = userList.getEntries().stream()
+                .filter(e -> {
+                    Instant authTime = Instant.ofEpochSecond(e.getUserInfo().getAuthTimeEpochSeconds());
+                    Instant expireTime;
+                    switch(e.getUserInfo().getAuthType()) {
+                        case MEMBER:
+                            expireTime = authTime.plus(NetSecConfig.AUTH_URL_MEMBER_TTL); break;
+                        case GUEST:
+                            expireTime = authTime.plus(NetSecConfig.AUTH_URL_GUEST_TTL); break;
+                        default:
+                            logger.error("Unexpected IP auth type {}", e.getUserInfo().getAuthType());
+                            throw new RequestHandlingException("Unexpected data in auth token");
+                    }
+                    return now.isAfter(expireTime);
+                }).map(e -> RemovePrefixListEntry.builder().cidr(e.getCidr()).build())
+                .collect(Collectors.toList());
+
+        logger.info("Got {} expired auth entries to remove", cidrsToRemove.size());
+
+        if (cidrsToRemove.isEmpty()) {
+            logger.info("Nothing to do");
+        } else {
+            ManagedPrefixList newListVersion = ec2Client.modifyManagedPrefixList(r -> r.prefixListId(userList.getId())
+                    .currentVersion(userList.getVersion())
+                    .removeEntries(cidrsToRemove))
+                    .prefixList();
+            logger.info("Successfully removed entries to create new list version {}", newListVersion.version());
         }
     }
 
@@ -219,11 +302,18 @@ public class Ec2GroupManager implements IGroupManager {
         }
     }
 
-    private ManagedPrefixList getUserIpList() {
+    private DecryptedPrefixList getDecryptedUserList() {
         Filter nameFilter = Filter.builder().name("prefix-list-name").values(NetSecConfig.USER_IP_PREFIX_LIST_NAME).build();
-        ManagedPrefixList userIpList =  ec2Client.describeManagedPrefixLists(r -> r.filters(nameFilter)).prefixLists().get(0);
-        putIpListDataKeyIfMissing(userIpList);
-        return userIpList;
+        ManagedPrefixList ec2List =  ec2Client.describeManagedPrefixLists(r -> r.filters(nameFilter)).prefixLists().get(0);
+
+        Key dataKey = getDataKeyFromPrefixListTags(ec2List);
+
+        List<DecryptedPrefixListEntry> decryptedEntries = ec2Client.getManagedPrefixListEntriesPaginator(r -> r.prefixListId(ec2List.prefixListId()))
+                .entries().stream()
+                .map(e -> new DecryptedPrefixListEntry(e.cidr(), decryptUserInfo(e.description(), dataKey)))
+                .collect(Collectors.toList());
+
+        return new DecryptedPrefixList(ec2List.prefixListId(), ec2List.version(), dataKey, decryptedEntries);
     }
 
     private Key getDataKeyFromPrefixListTags(ManagedPrefixList userIpList) {
@@ -231,7 +321,7 @@ public class Ec2GroupManager implements IGroupManager {
         // Create the key if it doesn't exist yet
         Key dataKey;
         if (oTag.isEmpty()) {
-            Pair<Key,String> keyPlaintextAndCipherText = crypto.generateDataKey();
+            Pair<Key, String> keyPlaintextAndCipherText = crypto.generateDataKey();
             dataKey = keyPlaintextAndCipherText.a();
             Tag newTag = Tag.builder().key(PREFIX_LIST_DATA_KEY_TAG_KEY).value(keyPlaintextAndCipherText.b()).build();
             ec2Client.createTags(r -> r.tags(newTag).resources(userIpList.prefixListId()));
@@ -241,20 +331,8 @@ public class Ec2GroupManager implements IGroupManager {
         return dataKey;
     }
 
-    private void putIpListDataKeyIfMissing(ManagedPrefixList userIpList) {
-        if (userIpList.tags().stream().noneMatch(t -> t.key().equals(PREFIX_LIST_DATA_KEY_TAG_KEY))) {
-            String keyCiphertext = crypto.generateDataKey().b();
-            Tag newTag = Tag.builder().key(PREFIX_LIST_DATA_KEY_TAG_KEY).value(keyCiphertext).build();
-            ec2Client.createTags(r -> r.tags(newTag).resources(userIpList.prefixListId()));
-        }
-    }
-
     private String prependSgPrefix(String name) {
         return IDUtils.kebab(NetSecConfig.SG_NAME_PREFIX, name);
-    }
-
-    private String stripCidrMask(String cidr) {
-        return cidr.substring(0, cidr.length() - "/32".length());
     }
 
 }
