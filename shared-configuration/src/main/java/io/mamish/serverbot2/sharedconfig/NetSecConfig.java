@@ -24,7 +24,7 @@ public class NetSecConfig {
     public static final String AUTH_PATH = "/authorize";
     public static final String AUTH_PARAM_TOKEN = "token";
 
-    public static final Duration AUTH_URL_MEMBER_TTL = Duration.ofDays(90);
-    public static final Duration AUTH_URL_GUEST_TTL = Duration.ofDays(3);
+    // Note: this isn't implemented on NetSec side yet, but is used for the shortened URLs requested by CommandService
+    public static final Duration AUTH_URL_TTL = Duration.ofDays(90);
 
 }

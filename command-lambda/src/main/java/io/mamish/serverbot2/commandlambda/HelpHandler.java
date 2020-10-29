@@ -7,11 +7,11 @@ import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
 
 import java.util.stream.Collectors;
 
-public class HelpMessageHelper {
+public class HelpHandler {
 
     private final ApiDefinitionSet<?> definitionSet;
 
-    public HelpMessageHelper(ApiDefinitionSet<?> definitionSet) {
+    public HelpHandler(ApiDefinitionSet<?> definitionSet) {
         this.definitionSet = definitionSet;
     }
 

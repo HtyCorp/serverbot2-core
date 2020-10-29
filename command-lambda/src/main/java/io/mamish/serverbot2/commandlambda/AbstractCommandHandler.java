@@ -11,7 +11,7 @@ public abstract class AbstractCommandHandler<ModelType> {
     private final Logger logger = LogManager.getLogger(AbstractCommandHandler.class);
 
     private final CommandDispatcher<ModelType> commandDispatcher;
-    private final HelpMessageHelper helpMessageHelper;
+    private final HelpHandler helpHandler;
 
     protected abstract Class<ModelType> getHandlerType();
     protected abstract ModelType getHandlerInstance();
@@ -19,7 +19,7 @@ public abstract class AbstractCommandHandler<ModelType> {
     public AbstractCommandHandler() {
         logger.trace("Building command dispatcher");
         commandDispatcher = new CommandDispatcher<>(getHandlerInstance(), getHandlerType());
-        helpMessageHelper = new HelpMessageHelper(commandDispatcher.getApiDefinitionSet());
+        helpHandler = new HelpHandler(commandDispatcher.getApiDefinitionSet());
         logger.trace("Constructor finished");
     }
 
@@ -32,7 +32,7 @@ public abstract class AbstractCommandHandler<ModelType> {
     }
 
     public ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp) {
-        return helpMessageHelper.onCommandHelp(commandHelp);
+        return helpHandler.onCommandHelp(commandHelp);
     }
 
 }

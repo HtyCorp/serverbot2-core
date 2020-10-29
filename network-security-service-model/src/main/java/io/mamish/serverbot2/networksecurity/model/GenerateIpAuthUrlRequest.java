@@ -7,21 +7,13 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
         description = "Generate a presigned URL a user can visit to authorise their IP for server access")
 public class GenerateIpAuthUrlRequest {
 
-    @ApiArgumentInfo(order = 0, description = "Opaque ID to indicate source (typically Discord command message ID)")
-    private String reservationId;
-
-    @ApiArgumentInfo(order = 1, description = "Discord user ID to associate with. Can be null for guest auth.")
+    @ApiArgumentInfo(order = 0, description = "Nominally the Discord user ID. Used to tag security group rules for replacement.")
     private String userId;
 
     public GenerateIpAuthUrlRequest() {}
 
-    public GenerateIpAuthUrlRequest(String reservationId, String userId) {
-        this.reservationId = reservationId;
+    public GenerateIpAuthUrlRequest(String userId) {
         this.userId = userId;
-    }
-
-    public String getReservationId() {
-        return reservationId;
     }
 
     public String getUserId() {

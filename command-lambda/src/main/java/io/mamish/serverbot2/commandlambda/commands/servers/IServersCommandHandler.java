@@ -9,6 +9,5 @@ public interface IServersCommandHandler {
     ProcessUserCommandResponse onCommandGames(CommandGames commandGames);
     ProcessUserCommandResponse onCommandStart(CommandStart commandStart);
     ProcessUserCommandResponse onCommandStop(CommandStop commandStop);
-    ProcessUserCommandResponse onCommandAddGuestIp(CommandAddGuestIp commandAddGuestIp);
 
 }

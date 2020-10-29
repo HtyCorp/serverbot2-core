@@ -9,6 +9,5 @@ public interface INetworkSecurity {
     AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request);
     DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroupRequest request);
     GetNetworkUsageResponse getNetworkUsage(GetNetworkUsageRequest getNetworkUsageRequest);
-    RevokeExpiredIpsResponse revokeExpiredIps(RevokeExpiredIpsRequest revokeExpiredIpsRequest);
 
 }

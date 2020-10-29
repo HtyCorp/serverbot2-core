@@ -3,15 +3,8 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
-import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
-import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
-import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
-import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
-import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,26 +18,13 @@ public class RootCommandHandler implements ICommandService {
 
     public RootCommandHandler() {
 
-        logger.trace("Initialising GameMetadata client");
-        IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-        logger.trace("Initialising NetworkSecurity client");
-        INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-        logger.trace("Initialising DiscordRelay client");
-        IDiscordService discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
-        logger.trace("Initialising URLShortener client");
-        UrlShortenerClient urlShortenerClient = new UrlShortenerClient();
-
-        IpAuthMessageHelper ipAuthMessageHelper = new IpAuthMessageHelper(discordServiceClient,
-                networkSecurityServiceClient, urlShortenerClient);
-
+        // Subsegments added since this init takes a long time and we need to track it
         logger.trace("Creating admin command handler...");
-        adminCommandHandler = new AdminCommandHandler(gameMetadataServiceClient, networkSecurityServiceClient,
-                discordServiceClient, urlShortenerClient);
+        adminCommandHandler = new AdminCommandHandler();
         logger.trace("Creating servers command handler...");
-        serversCommandHandler = new ServersCommandHandler(gameMetadataServiceClient, ipAuthMessageHelper);
+        serversCommandHandler = new ServersCommandHandler();
         logger.trace("Creating welcome command handler...");
-        welcomeCommandHandler = new WelcomeCommandHandler(gameMetadataServiceClient, discordServiceClient,
-                ipAuthMessageHelper);
+        welcomeCommandHandler = new WelcomeCommandHandler();
 
         logger.trace("Chaining handlers...");
         // Chaining: admin -> debug (pending) -> servers -> welcome
