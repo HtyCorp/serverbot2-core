@@ -17,6 +17,7 @@ public class ServerExceptionParser {
             RequestHandlingRuntimeException.class,
             RequestValidationException.class,
             ResourceAlreadyExistsException.class,
+            ResourceExpiredException.class,
             SerializationException.class,
             ServiceLimitException.class,
             UnknownRequestException.class,
