@@ -10,6 +10,8 @@ public class GetAuthorizationByIpRequest {
     @ApiArgumentInfo(order = 0, description = "The IP address to check")
     private String ipAddress;
 
+    public GetAuthorizationByIpRequest() { }
+
     public GetAuthorizationByIpRequest(String ipAddress) {
         this.ipAddress = ipAddress;
     }
