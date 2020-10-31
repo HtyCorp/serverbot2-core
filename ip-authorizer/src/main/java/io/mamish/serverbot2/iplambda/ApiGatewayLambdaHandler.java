@@ -114,7 +114,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             String expiryTimeUntilString = niceLookingTimeUntil(expiryTime);
             return generateSuccess(
                     "Your IP address ("+sourceIpAddress+") is whitelisted to join "+friendlyDomainName+" servers.\n"
-                    + "This will expiry " + expiryTimeUntilString
+                    + "This will expire " + expiryTimeUntilString + "."
             );
         } else {
             return generateSuccess(
@@ -128,7 +128,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     private String niceLookingTimeUntil(Instant endInstant) {
         Instant now = Instant.now();
 
-        if (!endInstant.isBefore(now)) {
+        if (now.isAfter(endInstant)) {
             return "very soon";
         }
 
