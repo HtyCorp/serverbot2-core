@@ -20,9 +20,10 @@ public class NetSecConfig {
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 
-    public static final String AUTH_SUBDOMAIN = "ipauth";
-    public static final String AUTH_PATH = "/authorize";
-    public static final String AUTH_PARAM_TOKEN = "token";
+    public static final String AUTHORIZER_SUBDOMAIN = "ipauth";
+    public static final String AUTHORIZER_PATH_AUTHORIZE = "/authorize";
+    public static final String AUTHORIZER_PATH_PARAM_TOKEN = "token";
+    public static final String AUTHORIZER_PATH_CHECK = "/check";
 
     public static final Duration AUTH_URL_MEMBER_TTL = Duration.ofDays(90);
     public static final Duration AUTH_URL_GUEST_TTL = Duration.ofDays(3);

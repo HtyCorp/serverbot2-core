@@ -6,6 +6,7 @@ import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IGroupManager {
 
@@ -15,6 +16,7 @@ public interface IGroupManager {
     void deleteGroup(String name) throws NoSuchResourceException;
 
     void setUserIp(String userIpAddress, DiscordUserAuthInfo userInfo);
+    Optional<DiscordUserAuthInfo> getUserInfoByIp(String userIpAddress);
 
     void revokeExpiredIps();
 

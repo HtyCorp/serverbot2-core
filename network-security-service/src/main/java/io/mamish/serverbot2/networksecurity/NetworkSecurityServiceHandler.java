@@ -104,14 +104,16 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         String token = crypto.encrypt(SdkBytes.fromUtf8String(authInfoJson));
 
         String authUrl = "https://"
-                + NetSecConfig.AUTH_SUBDOMAIN
+                + NetSecConfig.AUTHORIZER_SUBDOMAIN
                 + "."
                 + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
-                + NetSecConfig.AUTH_PATH
-                + "?"+NetSecConfig.AUTH_PARAM_TOKEN+"="
+                + NetSecConfig.AUTHORIZER_PATH_AUTHORIZE
+                + "?"+NetSecConfig.AUTHORIZER_PATH_PARAM_TOKEN +"="
                 + token; // crypto.encrypt() is already URL-safe
         return new GenerateIpAuthUrlResponse(authUrl);
     }
+
+
 
     @Override
     public AuthorizeIpResponse authorizeIp(AuthorizeIpRequest request) {
@@ -126,18 +128,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         }
         DiscordUserAuthInfo authInfo = gson.fromJson(authInfoJson, DiscordUserAuthInfo.class);
 
-        Instant tokenAuthIssueInstant = Instant.ofEpochSecond(authInfo.getAuthTimeEpochSeconds());
-        Instant tokenAuthExpireTime;
-        switch(authInfo.getAuthType()) {
-            case MEMBER:
-                tokenAuthExpireTime = tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_MEMBER_TTL); break;
-            case GUEST:
-                tokenAuthExpireTime = tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_GUEST_TTL); break;
-            default:
-                logger.error("Unexpected IP auth type {}", authInfo.getAuthType());
-                throw new RequestHandlingException("Unexpected data in auth token");
-        }
-
+        Instant tokenAuthExpireTime = calculateIpAuthExpiryTime(authInfo);
         if (Instant.now().isAfter(tokenAuthExpireTime)) {
             throw new ResourceExpiredException("Token has expired");
         }
@@ -145,6 +136,13 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         groupManager.setUserIp(userAddress, authInfo);
         return new AuthorizeIpResponse();
 
+    }
+
+    @Override
+    public GetAuthorizationByIpResponse getAuthorizationByIp(GetAuthorizationByIpRequest getAuthorizationByIpRequest) {
+        return groupManager.getUserInfoByIp(getAuthorizationByIpRequest.getIpAddress())
+                .map(info -> new GetAuthorizationByIpResponse(true, calculateIpAuthExpiryTime(info).getEpochSecond())
+                ).orElse( new GetAuthorizationByIpResponse(false, 0L));
     }
 
     @Override
@@ -183,6 +181,19 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
     public RevokeExpiredIpsResponse revokeExpiredIps(RevokeExpiredIpsRequest revokeExpiredIpsRequest) {
         groupManager.revokeExpiredIps();
         return new RevokeExpiredIpsResponse();
+    }
+
+    private Instant calculateIpAuthExpiryTime(DiscordUserAuthInfo userInfo) {
+        Instant tokenAuthIssueInstant = Instant.ofEpochSecond(userInfo.getAuthTimeEpochSeconds());
+        switch(userInfo.getAuthType()) {
+            case MEMBER:
+                return tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_MEMBER_TTL);
+            case GUEST:
+                return tokenAuthIssueInstant.plus(NetSecConfig.AUTH_URL_GUEST_TTL);
+            default:
+                logger.error("Unexpected IP auth type {}", userInfo.getAuthType());
+                throw new IllegalArgumentException("Unexpected data in auth token");
+        }
     }
 
     private void validateRequestedGameName(String name, boolean allowReserved) {

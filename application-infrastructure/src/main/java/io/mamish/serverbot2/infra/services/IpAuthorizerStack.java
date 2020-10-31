@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.IpAuthConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
@@ -32,6 +33,7 @@ public class IpAuthorizerStack extends Stack {
                 ManagedPolicies.SQS_FULL_ACCESS
         )).build();
 
+        Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
         Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
@@ -65,7 +67,7 @@ public class IpAuthorizerStack extends Stack {
         // DNS stuff: Create APIGW custom domain for this API
 
         restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(IDUtils.dot(NetSecConfig.AUTH_SUBDOMAIN, env.getSystemRootDomainName()))
+                .domainName(IDUtils.dot(NetSecConfig.AUTHORIZER_SUBDOMAIN, env.getSystemRootDomainName()))
                 .certificate(commonStack.getSystemWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
@@ -76,7 +78,7 @@ public class IpAuthorizerStack extends Stack {
 
         ARecord apiAliasRecord = ARecord.Builder.create(this, "IpApiAliasRecord")
                 .zone(commonStack.getSystemRootHostedZone())
-                .recordName(NetSecConfig.AUTH_SUBDOMAIN)
+                .recordName(NetSecConfig.AUTHORIZER_SUBDOMAIN)
                 .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
                 .ttl(Duration.minutes(5))
                 .build();

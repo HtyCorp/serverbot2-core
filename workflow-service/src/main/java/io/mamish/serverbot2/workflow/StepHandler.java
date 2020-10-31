@@ -146,17 +146,32 @@ public class StepHandler {
         String appDaemonQueueName = gameMetadata.getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
         String dnsLocation = dnsRecordManager.getLocationString(gameMetadata.getGameName());
+
+        String ipAuthCheckUrl = "https://"
+                + NetSecConfig.AUTHORIZER_SUBDOMAIN
+                + "."
+                + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
+                + NetSecConfig.AUTHORIZER_PATH_CHECK;
+
         try {
             appDaemonClient.startApp(new StartAppRequest());
             logger.info("Successful StartApp call to app daemon");
             appendMessage(executionState.getInitialMessageUuid(),
-                    "Started at " + dnsLocation +".\nIf you're unable to connect:\n"
-                    + " * Make sure your IP address is whitelisted (use '!addip')\n"
+                    "Started at " + dnsLocation +".\n"
+                    + "If you're unable to connect:\n"
+                    + " * Make sure your IP address is whitelisted (go to "+ipAuthCheckUrl+" or use !addip).\n"
                     + " * For games with long load times, wait a few minutes and try again.");
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);
         }
+    }
 
+    private String buildIpAuthCheckUrl() {
+        return "https://"
+                + NetSecConfig.AUTHORIZER_SUBDOMAIN
+                + "."
+                + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
+                + NetSecConfig.AUTHORIZER_PATH_CHECK;
     }
 
     void waitServerStop(ExecutionState executionState) {

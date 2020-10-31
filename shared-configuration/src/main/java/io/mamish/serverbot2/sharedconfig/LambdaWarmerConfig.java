@@ -23,7 +23,7 @@ public class LambdaWarmerConfig {
 
     public static final List<String> API_SUBDOMAINS_TO_WARM = List.of(
             UrlShortenerConfig.SUBDOMAIN,
-            NetSecConfig.AUTH_SUBDOMAIN // TODO: move this and related defs to IpAuthConfig
+            NetSecConfig.AUTHORIZER_SUBDOMAIN // TODO: move this and related defs to IpAuthConfig
     );
 
 }
