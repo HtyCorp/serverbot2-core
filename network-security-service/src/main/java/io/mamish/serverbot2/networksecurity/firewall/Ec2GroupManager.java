@@ -28,6 +28,7 @@ import java.security.Key;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -152,7 +153,7 @@ public class Ec2GroupManager implements IGroupManager {
 
     private Optional<String> findExistingUserCidr(DecryptedPrefixList userList, String userId) {
         return userList.getEntries().stream()
-                .filter(e -> e.getUserInfo().getUserId().equals(userId))
+                .filter(e -> Objects.equals(e.getUserInfo().getUserId(), userId))
                 .findFirst()
                 .map(DecryptedPrefixListEntry::getCidr);
     }
