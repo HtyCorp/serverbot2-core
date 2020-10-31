@@ -112,8 +112,9 @@ public class Ec2GroupManager implements IGroupManager {
     @Override
     public Optional<DiscordUserAuthInfo> getUserInfoByIp(String userIpAddress) {
         DecryptedPrefixList userList = getDecryptedUserList();
+        String userCidr = userIpAddress + "/32";
         return userList.getEntries().stream()
-                .filter(e -> e.getCidr().equals(userIpAddress))
+                .filter(e -> e.getCidr().equals(userCidr))
                 .map(DecryptedPrefixListEntry::getUserInfo)
                 .findFirst();
     }
