@@ -26,15 +26,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    // Used to choose the time unit displayed for time until expiry
-    private static final Map<Integer,ChronoUnit> NICE_TIME_THRESHOLDS = Map.of(
-            3, ChronoUnit.DAYS,
-            2, ChronoUnit.HOURS,
-            0, ChronoUnit.MINUTES
+    // Used to choose the time unit displayed for time until expiry in /check handler.
+    // Uses a list-of-pairs to make it clear that insertion/iteration order matters.
+    private static final List<Pair<Integer,ChronoUnit>> DISPLAY_TIME_UNIT_THRESHOLDS = List.of(
+            new Pair<>(3, ChronoUnit.DAYS),
+            new Pair<>(2, ChronoUnit.HOURS),
+            new Pair<>(0, ChronoUnit.MINUTES)
     );
 
     private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
@@ -111,7 +111,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
         if (authorizationResponse.isAuthorized()) {
             Instant expiryTime = Instant.ofEpochSecond(authorizationResponse.getExpiryTimeEpochSeconds());
-            String expiryTimeUntilString = niceLookingTimeUntil(expiryTime);
+            String expiryTimeUntilString = displayTimeUntil(expiryTime);
             return generateSuccess(
                     "Your IP address ("+sourceIpAddress+") is whitelisted to join "+friendlyDomainName+" servers.\n"
                     + "This will expire " + expiryTimeUntilString + "."
@@ -125,16 +125,16 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     }
 
-    private String niceLookingTimeUntil(Instant endInstant) {
+    private String displayTimeUntil(Instant endInstant) {
         Instant now = Instant.now();
 
         if (now.isAfter(endInstant)) {
             return "very soon";
         }
 
-        for (Map.Entry<Integer,ChronoUnit> entry: NICE_TIME_THRESHOLDS.entrySet()) {
-            int threshold = entry.getKey();
-            ChronoUnit timeUnit = entry.getValue();
+        for (Pair<Integer,ChronoUnit> thresholdEntry: DISPLAY_TIME_UNIT_THRESHOLDS) {
+            int threshold = thresholdEntry.a();
+            ChronoUnit timeUnit = thresholdEntry.b();
             long timeUntilInThisUnit = now.until(endInstant, timeUnit);
             if (timeUntilInThisUnit >= threshold) {
                 return "in " + timeUntilInThisUnit + " " + timeUnit.toString().toLowerCase();
