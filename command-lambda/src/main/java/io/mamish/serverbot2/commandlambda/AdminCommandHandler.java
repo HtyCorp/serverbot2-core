@@ -201,7 +201,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         Instance instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
                 .reservations().get(0).instances().get(0);
         String volumeId = instance.blockDeviceMappings().stream()
-                .filter(mapping -> mapping.deviceName().equals("/dev/sda1"))
+                .filter(mapping -> mapping.deviceName().equals(STANDARD_ROOT_DEVICE_NAME))
                 .map(mapping -> mapping.ebs().volumeId())
                 .findFirst()
                 .orElseThrow(() -> {
