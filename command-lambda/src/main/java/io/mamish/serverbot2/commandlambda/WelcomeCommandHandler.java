@@ -34,18 +34,14 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
 
     private final Logger logger = LogManager.getLogger(WelcomeCommandHandler.class);
 
+    private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;
     private final IDiscordService discordServiceClient;
     private final IpAuthMessageHelper ipAuthMessageHelper;
 
-    private final Ec2Client ec2Client = Ec2Client.builder()
-            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-            .httpClient(UrlConnectionHttpClient.create())
-            .region(new SystemSettingsRegionProvider().getRegion())
-            .build();
-
-    public WelcomeCommandHandler(IGameMetadataService gameMetadataServiceClient, IDiscordService discordServiceClient,
-                                 IpAuthMessageHelper ipAuthMessageHelper) {
+    public WelcomeCommandHandler(Ec2Client ec2Client, IGameMetadataService gameMetadataServiceClient,
+                                 IDiscordService discordServiceClient, IpAuthMessageHelper ipAuthMessageHelper) {
+        this.ec2Client = ec2Client;
         this.gameMetadataServiceClient = gameMetadataServiceClient;
         this.discordServiceClient = discordServiceClient;
         this.ipAuthMessageHelper = ipAuthMessageHelper;

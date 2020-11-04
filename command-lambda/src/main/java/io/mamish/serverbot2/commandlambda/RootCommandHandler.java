@@ -14,6 +14,10 @@ import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
+import software.amazon.awssdk.services.ec2.Ec2Client;
 
 public class RootCommandHandler implements ICommandService {
 
@@ -37,13 +41,20 @@ public class RootCommandHandler implements ICommandService {
         IpAuthMessageHelper ipAuthMessageHelper = new IpAuthMessageHelper(discordServiceClient,
                 networkSecurityServiceClient, urlShortenerClient);
 
+        logger.trace("Initialising EC2 client");
+        Ec2Client ec2Client = Ec2Client.builder()
+                .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                .httpClient(UrlConnectionHttpClient.create())
+                .region(new SystemSettingsRegionProvider().getRegion())
+                .build();
+
         logger.trace("Creating admin command handler...");
-        adminCommandHandler = new AdminCommandHandler(gameMetadataServiceClient, networkSecurityServiceClient,
-                discordServiceClient, urlShortenerClient);
+        adminCommandHandler = new AdminCommandHandler(ec2Client, gameMetadataServiceClient,
+                networkSecurityServiceClient, discordServiceClient, urlShortenerClient);
         logger.trace("Creating servers command handler...");
         serversCommandHandler = new ServersCommandHandler(gameMetadataServiceClient, ipAuthMessageHelper);
         logger.trace("Creating welcome command handler...");
-        welcomeCommandHandler = new WelcomeCommandHandler(gameMetadataServiceClient, discordServiceClient,
+        welcomeCommandHandler = new WelcomeCommandHandler(ec2Client, gameMetadataServiceClient, discordServiceClient,
                 ipAuthMessageHelper);
 
         logger.trace("Chaining handlers...");

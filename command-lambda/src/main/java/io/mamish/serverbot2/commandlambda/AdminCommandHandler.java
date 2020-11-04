@@ -5,7 +5,6 @@ import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.discordrelay.model.service.SimpleEmbed;
-import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
@@ -15,22 +14,28 @@ import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ModifyPortsRequest;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
-import io.mamish.serverbot2.sharedconfig.*;
+import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.Instance;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHandler> implements IAdminCommandHandler {
 
+    private static final String STANDARD_ROOT_DEVICE_NAME = "/dev/sda1";
+
     private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
 
+    private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;
     private final INetworkSecurity networkSecurityServiceClient;
     private final IDiscordService discordServiceClient;
@@ -39,8 +44,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public AdminCommandHandler(IGameMetadataService gameMetadataServiceClient, INetworkSecurity networkSecurityServiceClient,
-                               IDiscordService discordServiceClient, UrlShortenerClient urlShortenerClient) {
+    public AdminCommandHandler(Ec2Client ec2Client, IGameMetadataService gameMetadataServiceClient,
+                               INetworkSecurity networkSecurityServiceClient, IDiscordService discordServiceClient,
+                               UrlShortenerClient urlShortenerClient) {
+        this.ec2Client = ec2Client;
         this.gameMetadataServiceClient = gameMetadataServiceClient;
         this.networkSecurityServiceClient = networkSecurityServiceClient;
         this.discordServiceClient = discordServiceClient;
@@ -82,13 +89,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         String newDescription = commandSetDescription.getNewDescription();
 
         try {
-            UpdateGameResponse response = gameMetadataServiceClient.updateGame(new UpdateGameRequest(
-                    game,
-                    newDescription,
-                    null,
-                    null,
-                    null,
-                    null,
+            gameMetadataServiceClient.updateGame(new UpdateGameRequest(
+                    game, newDescription,
+                    null, null, null, null,
                     true
             ));
         } catch (RequestValidationException e) {
@@ -182,12 +185,47 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
     }
 
+    @Override
+    public ProcessUserCommandResponse onCommandBackupNow(CommandBackupNow commandBackupNow) {
+
+        String name = commandBackupNow.getGameName();
+
+        DescribeGameResponse describeResponse = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+
+        if (!describeResponse.isPresent()) {
+            logger.error("No game found from GMS:DescribeGame for game name '{}'", name);
+            throw new RequestValidationException("Error: no such game "+name+" exists.");
+        }
+
+        String instanceId = describeResponse.getGame().getInstanceId();
+        Instance instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
+                .reservations().get(0).instances().get(0);
+        String volumeId = instance.blockDeviceMappings().stream()
+                .filter(mapping -> mapping.deviceName().equals("/dev/sda1"))
+                .map(mapping -> mapping.ebs().volumeId())
+                .findFirst()
+                .orElseThrow(() -> {
+                    logger.error("No block device found for instance {} with device name {}",
+                            instanceId, STANDARD_ROOT_DEVICE_NAME);
+                    return new RequestHandlingException("Couldn't find root volume for this game's server");
+                });
+
+        String snapshotName = IDUtils.kebab("AppInstance", "ManualBackup", name,
+                "m"+commandBackupNow.getContext().getMessageId());
+        String snapshotId = ec2Client.createSnapshot(r -> r.volumeId(volumeId).description(snapshotName)).snapshotId();
+
+        logger.info("Created new snapshot {} for game {}", snapshotId, name);
+
+        return new ProcessUserCommandResponse("Created manual backup for " + name);
+
+    }
+
     private String makeSessionName(String userId, String gameName) {
         // Ref: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html#reference_iam-limits-entity-length
         final int MAX_LENGTH = 63;
         String sessionName = userId;
 
-        // User (snowflake) IDs will never actually exceed this, but leaving in in case I change the name format.
+        // User (snowflake) IDs will never actually exceed this, but leaving it in case the name format is changed.
         if (sessionName.length() > MAX_LENGTH) {
             sessionName = sessionName.substring(0, MAX_LENGTH);
         }

@@ -53,7 +53,7 @@ public class CommandStack extends Stack {
         Role functionRole = Util.standardLambdaRole(this, "CommandFunctionExecutionRole", List.of(
                 ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
                 ManagedPolicies.SQS_FULL_ACCESS,
-                ManagedPolicies.EC2_READ_ONLY_ACCESS
+                ManagedPolicies.EC2_FULL_ACCESS
         )).build();
 
         Util.addLambdaInvokePermissionToRole(this, functionRole,
