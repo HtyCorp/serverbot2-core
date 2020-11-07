@@ -20,7 +20,8 @@ public class NetSecConfig {
 
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 
-    public static final String AUTHORIZER_SUBDOMAIN = "ipauth";
+    public static final String AUTHORIZER_SUBDOMAIN = "ip";
+    public static final String AUTHORIZER_SUBDOMAIN_LEGACY = "ipauth";
     public static final String AUTHORIZER_PATH_AUTHORIZE = "/authorize";
     public static final String AUTHORIZER_PATH_PARAM_TOKEN = "token";
     public static final String AUTHORIZER_PATH_CHECK = "/check";

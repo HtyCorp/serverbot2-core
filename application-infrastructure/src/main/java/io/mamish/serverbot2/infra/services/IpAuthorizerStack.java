@@ -16,12 +16,20 @@ import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Alias;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.route53.ARecord;
+import software.amazon.awscdk.services.route53.ARecordProps;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGateway;
+import software.amazon.awscdk.services.route53.targets.ApiGatewayDomain;
 
 import java.util.List;
+import java.util.Map;
 
 public class IpAuthorizerStack extends Stack {
+
+    private final static Map<String,String> SUBDOMAINS = Map.of(
+            "primary", NetSecConfig.AUTHORIZER_SUBDOMAIN,
+            "legacy", NetSecConfig.AUTHORIZER_SUBDOMAIN_LEGACY
+    );
 
     public IpAuthorizerStack(Construct parent, String id, CommonStack commonStack, ApplicationEnv env) {
         super(parent, id);
@@ -66,22 +74,24 @@ public class IpAuthorizerStack extends Stack {
 
         // DNS stuff: Create APIGW custom domain for this API
 
-        restApi.addDomainName("IpRestApi", DomainNameOptions.builder()
-                .domainName(IDUtils.dot(NetSecConfig.AUTHORIZER_SUBDOMAIN, env.getSystemRootDomainName()))
-                .certificate(commonStack.getSystemWildcardCertificate())
-                .endpointType(EndpointType.REGIONAL)
-                .build());
+        SUBDOMAINS.forEach((name, subdomain) -> {
 
-        // Assuming that adding base path mapping isn't required. Most likely taken care of by `addDomainName`.
+            DomainName domain = restApi.addDomainName(name+"RestApi", DomainNameOptions.builder()
+                    .domainName(IDUtils.dot(subdomain, env.getSystemRootDomainName()))
+                    .certificate(commonStack.getSystemWildcardCertificate())
+                    .endpointType(EndpointType.REGIONAL)
+                    .build());
 
-        // Add R53 record for this custom domain.
+            ApiGatewayDomain route53AliasTarget = new ApiGatewayDomain(domain);
 
-        ARecord apiAliasRecord = ARecord.Builder.create(this, "IpApiAliasRecord")
-                .zone(commonStack.getSystemRootHostedZone())
-                .recordName(NetSecConfig.AUTHORIZER_SUBDOMAIN)
-                .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
-                .ttl(Duration.minutes(5))
-                .build();
+            ARecord record = ARecord.Builder.create(this, name+"Record")
+                    .zone(commonStack.getSystemRootHostedZone())
+                    .recordName(NetSecConfig.AUTHORIZER_SUBDOMAIN)
+                    .target(RecordTarget.fromAlias(route53AliasTarget))
+                    .ttl(Duration.minutes(5))
+                    .build();
+
+        });
 
     }
 
