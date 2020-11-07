@@ -86,7 +86,7 @@ public class IpAuthorizerStack extends Stack {
 
             ARecord record = ARecord.Builder.create(this, name+"Record")
                     .zone(commonStack.getSystemRootHostedZone())
-                    .recordName(NetSecConfig.AUTHORIZER_SUBDOMAIN)
+                    .recordName(subdomain)
                     .target(RecordTarget.fromAlias(route53AliasTarget))
                     .ttl(Duration.minutes(5))
                     .build();
