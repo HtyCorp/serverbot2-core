@@ -78,12 +78,22 @@ public class StepHandler {
                 new CreateSecurityGroupRequest(gameName)
         ).getCreatedGroup();
 
-        // Subnet choice: nothing fancy, just pick the first one returned by DescribeSubnets in the app VPC
-        String subnetId = ec2Client.describeSubnets(r -> r.filters(Filter.builder()
+        Filter vpcIdFilter = Filter.builder()
                 .name("vpc-id")
                 .values(CommonConfig.APPLICATION_VPC_ID.getValue())
-                .build())
-        ).subnets().get(0).subnetId();
+                .build();
+
+        Filter securityGroupNameFilter = Filter.builder()
+                .name("group-name")
+                .values(NetSecConfig.APP_INSTANCE_COMMON_SG_NAME)
+                .build();
+
+        // Subnet choice: nothing fancy, just pick the first one returned by DescribeSubnets in the app VPC
+        String subnetId = ec2Client.describeSubnets(r -> r.filters(vpcIdFilter))
+                .subnets().get(0).subnetId();
+
+        String commonGroupId = ec2Client.describeSecurityGroups(r -> r.filters(vpcIdFilter, securityGroupNameFilter))
+                .securityGroups().get(0).groupId();
 
         String newInstanceId;
         try {
@@ -95,7 +105,7 @@ public class StepHandler {
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
                     r.imageId(amiLocator.getIdealAmi().getAmiId())
                             .subnetId(subnetId)
-                            .securityGroupIds(newSecurityGroup.getGroupId())
+                            .securityGroupIds(commonGroupId, newSecurityGroup.getGroupId())
                             .instanceType(InstanceType.M5_LARGE)
                             .tagSpecifications(instanceAndVolumeTags(tagMap))
                             .iamInstanceProfile(spec -> spec.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
@@ -164,14 +174,6 @@ public class StepHandler {
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);
         }
-    }
-
-    private String buildIpAuthCheckUrl() {
-        return "https://"
-                + NetSecConfig.AUTHORIZER_SUBDOMAIN
-                + "."
-                + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
-                + NetSecConfig.AUTHORIZER_PATH_CHECK;
     }
 
     void waitServerStop(ExecutionState executionState) {

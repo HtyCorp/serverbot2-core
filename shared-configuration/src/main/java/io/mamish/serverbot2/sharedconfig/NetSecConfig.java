@@ -18,6 +18,12 @@ public class NetSecConfig {
     public static final String USER_IP_PREFIX_LIST_NAME = "DiscordUserIpList";
     public static final int MAX_USER_IP_ADDRESSES = 80;
 
+    public static final String APP_INSTANCE_COMMON_SG_NAME = "AppInstanceCommon";
+    // Uses custom SFTP port to avoid needing root access for privileged port
+    // Randomly picked from an unpopular range in:
+    // https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+    public static final int APP_INSTANCE_SFTP_PORT = 32176;
+
     public static final String KMS_ALIAS = "NetSecGeneralKey";
 
     public static final String AUTHORIZER_SUBDOMAIN = "ip";

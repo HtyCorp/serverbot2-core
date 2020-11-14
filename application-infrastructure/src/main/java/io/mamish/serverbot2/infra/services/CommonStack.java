@@ -118,8 +118,6 @@ public class CommonStack extends Stack {
                 .retention(RetentionDays.ONE_WEEK)
                 .build();
 
-        appFlowLogsGroup.getNode().findChild("Resource");
-
         FlowLogOptions appFlowLogsOptions = FlowLogOptions.builder()
                 .trafficType(FlowLogTrafficType.ACCEPT) // ALL has too much probe/scan traffic
                 .destination(FlowLogDestination.toCloudWatchLogs(appFlowLogsGroup))
