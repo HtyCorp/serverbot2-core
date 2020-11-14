@@ -45,6 +45,12 @@
             <artifactId>discord-relay-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.sshd/sshd-sftp -->
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-sftp</artifactId>
+            <version>2.5.1</version>
+        </dependency>
 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

@@ -22,6 +22,7 @@ public class ServiceHandler implements IAppDaemon {
     private final Logger logger = LogManager.getLogger(ServiceHandler.class);
 
     private Process runningAppProcess;
+    private SessionSftpServer sessionSftpServer;
 
     @Override
     public StartAppResponse startApp(StartAppRequest request) {
@@ -113,4 +114,21 @@ public class ServiceHandler implements IAppDaemon {
 
     }
 
+    @Override
+    public StartSftpServerResponse startSftpServer(StartSftpServerRequest request) {
+        if (sessionSftpServer == null) {
+            try {
+                sessionSftpServer = new SessionSftpServer();
+            } catch (IOException e) {
+                logger.error("IOException while initialising SFTP server", e);
+                throw new RequestHandlingException("Unable to start SFTP on server");
+            }
+        }
+
+        return new StartSftpServerResponse(new SftpSession(
+                sessionSftpServer.getSessionUsername(),
+                sessionSftpServer.getSessionPassword(),
+                sessionSftpServer.getSessionKeyPairFingerprint()
+        ));
+    }
 }
