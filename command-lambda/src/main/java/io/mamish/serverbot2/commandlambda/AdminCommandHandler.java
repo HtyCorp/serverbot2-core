@@ -1,10 +1,15 @@
 package io.mamish.serverbot2.commandlambda;
 
+import io.mamish.serverbot2.appdaemon.model.IAppDaemon;
+import io.mamish.serverbot2.appdaemon.model.SftpSession;
+import io.mamish.serverbot2.appdaemon.model.StartSftpServerRequest;
+import io.mamish.serverbot2.appdaemon.model.StartSftpServerResponse;
 import io.mamish.serverbot2.commandlambda.commands.admin.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
 import io.mamish.serverbot2.discordrelay.model.service.SimpleEmbed;
+import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
@@ -16,6 +21,7 @@ import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflow.model.ExecutionState;
 import io.mamish.serverbot2.workflow.model.Machines;
@@ -189,15 +195,9 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     public ProcessUserCommandResponse onCommandBackupNow(CommandBackupNow commandBackupNow) {
 
         String name = commandBackupNow.getGameName();
+        GameMetadata gameMetadata = fetchGameMetadata(name);
 
-        DescribeGameResponse describeResponse = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
-
-        if (!describeResponse.isPresent()) {
-            logger.error("No game found from GMS:DescribeGame for game name '{}'", name);
-            throw new RequestValidationException("Error: no such game "+name+" exists.");
-        }
-
-        String instanceId = describeResponse.getGame().getInstanceId();
+        String instanceId = gameMetadata.getInstanceId();
         Instance instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
                 .reservations().get(0).instances().get(0);
         String volumeId = instance.blockDeviceMappings().stream()
@@ -218,6 +218,52 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         return new ProcessUserCommandResponse("Created manual backup for " + name);
 
+    }
+
+    @Override
+    public ProcessUserCommandResponse onCommandFiles(CommandFiles commandFiles) {
+
+        String name = commandFiles.getGameName();
+        GameMetadata gameMetadata = fetchGameMetadata(name);
+
+        if (gameMetadata.getGameReadyState() != GameReadyState.RUNNING) {
+            return new ProcessUserCommandResponse("Can't connect to this service since it isn't running.");
+        }
+
+        IAppDaemon instanceAppDaemonClient = ApiClient.sqs(IAppDaemon.class, gameMetadata.getInstanceQueueName());
+        StartSftpServerResponse sftpResponse = instanceAppDaemonClient.startSftpServer(new StartSftpServerRequest());
+        String sftpUri = buildSftpUri(name, sftpResponse.getSftpSession());
+
+        discordServiceClient.newMessage(new NewMessageRequest(
+                "SFTP URI for "+name+": <"+sftpUri+">", null, null,
+                commandFiles.getContext().getSenderId()
+        ));
+
+        return new ProcessUserCommandResponse("A file connection URL has been sent to your private messages.");
+
+    }
+
+    private String buildSftpUri(String name, SftpSession session) {
+        String userInfo = session.getUsername() + ":" + session.getPassword();
+        String domainName = name + "." + CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
+        String sftpPath = "/opt/serverbot2";
+        String fingerprintParam = "fingerprint=" + session.getSshFingerprint();
+        return "sftp://"
+                + userInfo
+                + "@" + domainName
+                + sftpPath
+                + ";" + fingerprintParam;
+    }
+
+    private GameMetadata fetchGameMetadata(String name) {
+        DescribeGameResponse describeResponse = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+
+        if (!describeResponse.isPresent()) {
+            logger.error("No game found from GMS:DescribeGame for game name '{}'", name);
+            throw new RequestValidationException("Error: no such game "+name+" exists.");
+        }
+
+        return describeResponse.getGame();
     }
 
     private String makeSessionName(String userId, String gameName) {

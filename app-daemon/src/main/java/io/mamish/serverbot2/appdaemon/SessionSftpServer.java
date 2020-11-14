@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
 
 public class SessionSftpServer {
 
-    private final static String SSH_KEY_ALG = "ssh-rsa";
+    private final static String SSH_KEY_ALGORITHM = "ssh-rsa";
     private final static int RSA_KEY_SIZE = 2048;
 
     private final String sessionUsername = "sb2";
@@ -86,15 +86,17 @@ public class SessionSftpServer {
         byte[] md5DigestBytes = md5Digest.digest(keyBlob);
 
         // This isn't particularly efficient but it only happens once a session, so oh well.
-        return IntStream.range(0, md5DigestBytes.length)
+        String hexFingerprint = IntStream.range(0, md5DigestBytes.length)
                 .mapToObj(i -> String.format("%02x", md5DigestBytes[i]))
                 .collect(Collectors.joining(":"));
+
+        return SSH_KEY_ALGORITHM + ":" + hexFingerprint;
 
     }
 
     private byte[] generateEncodedSshKeyBlob(RSAPublicKey key) {
 
-        byte[] algorithmHeaderBytes = SSH_KEY_ALG.getBytes(StandardCharsets.US_ASCII);
+        byte[] algorithmHeaderBytes = SSH_KEY_ALGORITHM.getBytes(StandardCharsets.US_ASCII);
         byte[] modulusBytes = key.getModulus().toByteArray();
         byte[] exponentBytes = key.getPublicExponent().toByteArray();
 

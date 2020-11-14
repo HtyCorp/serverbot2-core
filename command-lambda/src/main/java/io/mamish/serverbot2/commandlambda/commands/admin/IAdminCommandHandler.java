@@ -13,5 +13,6 @@ public interface IAdminCommandHandler {
     ProcessUserCommandResponse onCommandClosePort(CommandClosePort commandClosePort);
     ProcessUserCommandResponse onCommandTerminal(CommandTerminal commandTerminal);
     ProcessUserCommandResponse onCommandBackupNow(CommandBackupNow commandBackupNow);
+    ProcessUserCommandResponse onCommandFiles(CommandFiles commandFiles);
 
 }
