@@ -97,17 +97,18 @@ public class SessionSftpServer {
     private byte[] generateEncodedSshKeyBlob(RSAPublicKey key) {
 
         byte[] algorithmHeaderBytes = SSH_KEY_ALGORITHM.getBytes(StandardCharsets.US_ASCII);
-        byte[] modulusBytes = key.getModulus().toByteArray();
         byte[] exponentBytes = key.getPublicExponent().toByteArray();
+        byte[] modulusBytes = key.getModulus().toByteArray();
 
         final int requiredBlobSizeBytes = 4 + algorithmHeaderBytes.length
-                + 4 + modulusBytes.length
-                + 4 + exponentBytes.length;
+                + 4 + exponentBytes.length
+                + 4 + modulusBytes.length;
+
         ByteBuffer buf = ByteBuffer.allocate(requiredBlobSizeBytes).order(ByteOrder.BIG_ENDIAN);
 
         writeLengthAndBytes(buf, algorithmHeaderBytes);
-        writeLengthAndBytes(buf, modulusBytes);
         writeLengthAndBytes(buf, exponentBytes);
+        writeLengthAndBytes(buf, modulusBytes);
 
         return buf.array();
 
