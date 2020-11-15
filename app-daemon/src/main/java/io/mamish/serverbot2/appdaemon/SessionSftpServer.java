@@ -23,7 +23,7 @@ public class SessionSftpServer {
     private final static String SSH_KEY_ALGORITHM = "ssh-rsa";
     private final static int RSA_KEY_SIZE = 2048;
 
-    private final String sessionUsername = "sb2";
+    private final String sessionUsername = "files";
     private final String sessionPassword = IDUtils.randomUUIDJoined();
     private final KeyPair sessionKeyPair = generateRsaKeyPair();
     private final String sessionKeyPairFingerprint = generateSshKeyFingerprint((RSAPublicKey)sessionKeyPair.getPublic());

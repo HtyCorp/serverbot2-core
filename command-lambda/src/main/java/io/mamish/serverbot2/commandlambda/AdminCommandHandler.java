@@ -237,7 +237,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         String privateMessageContent = "Important: you need to have an SFTP client installed to use this link. WinSCP is recommended: "
                 + "<https://winscp.net/eng/download.php>\n\n"
                 + "Click this link to launch your client and view/edit files for "+name+":\n"
-                + sftpUri;
+                + "<"+sftpUri+">";
 
         discordServiceClient.newMessage(new NewMessageRequest(
                 privateMessageContent, null, null,
@@ -251,11 +251,14 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private String buildSftpUri(String name, SftpSession session) {
         String userInfo = session.getUsername() + ":" + session.getPassword();
         String domainName = name + "." + CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
-        String sftpPath = "/opt/serverbot2";
+        String portDef = ":" + NetSecConfig.APP_INSTANCE_SFTP_PORT;
+        // Requires trailing slash to prevent WinSCP treating this as a direct download
+        String sftpPath = "/opt/serverbot2/";
         String fingerprintParam = "fingerprint=" + session.getSshFingerprint();
         return "sftp://"
                 + userInfo
                 + "@" + domainName
+                + portDef
                 + sftpPath
                 + ";" + fingerprintParam;
     }
