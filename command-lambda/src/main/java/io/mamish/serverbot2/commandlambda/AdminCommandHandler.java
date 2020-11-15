@@ -234,12 +234,17 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         StartSftpServerResponse sftpResponse = instanceAppDaemonClient.startSftpServer(new StartSftpServerRequest());
         String sftpUri = buildSftpUri(name, sftpResponse.getSftpSession());
 
+        String privateMessageContent = "Important: you need to have an SFTP client installed to use this link. WinSCP is recommended: "
+                + "<https://winscp.net/eng/download.php>\n\n"
+                + "Click this link to launch your client and view/edit files for "+name+":\n"
+                + sftpUri;
+
         discordServiceClient.newMessage(new NewMessageRequest(
-                "SFTP URI for "+name+": <"+sftpUri+">", null, null,
+                privateMessageContent, null, null,
                 commandFiles.getContext().getSenderId()
         ));
 
-        return new ProcessUserCommandResponse("A file connection URL has been sent to your private messages.");
+        return new ProcessUserCommandResponse("A connection URL has been sent to your private messages.");
 
     }
 
