@@ -151,14 +151,7 @@ public class SessionSftpServer {
     private String generateSshKeyFingerprint(RSAPublicKey publicKey) {
 
         byte[] keyBlob = generateEncodedSshKeyBlob(publicKey);
-
-        MessageDigest md5Digest;
-        try {
-            md5Digest = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to get digest instance for mandatory algorithm!");
-        }
-
+        MessageDigest md5Digest = ExceptionUtils.cantFail(() -> MessageDigest.getInstance("MD5"));
         byte[] md5DigestBytes = md5Digest.digest(keyBlob);
 
         // This isn't particularly efficient but it only happens once a session, so oh well.
