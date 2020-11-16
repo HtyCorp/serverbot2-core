@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Collections;
 import java.util.Optional;
@@ -95,11 +96,13 @@ public class SessionSftpServer {
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(zis.readAllBytes());
+                byte[] encodedKeyBytes = zis.readAllBytes();
+                // Per https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/security/Key.html#getFormat(),
+                // public keys uses X509 encoding while private keys using PKCS8.
                 if (entry.getName().equals(SSH_PUBLIC_KEY_ZIP_ENTRY_NAME)) {
-                    publicKey = rsaFactory.generatePublic(keySpec);
+                    publicKey = rsaFactory.generatePublic(new X509EncodedKeySpec(encodedKeyBytes));
                 } else if (entry.getName().equals(SSH_PRIVATE_KEY_ZIP_ENTRY_NAME)) {
-                    privateKey = rsaFactory.generatePrivate(keySpec);
+                    privateKey = rsaFactory.generatePrivate(new PKCS8EncodedKeySpec(encodedKeyBytes));
                 } else {
                     throw new IllegalStateException("Unexpected zip entry '"+entry.getName()+"'");
                 }
