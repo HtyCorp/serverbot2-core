@@ -1,40 +1,53 @@
 package io.mamish.serverbot2.appdaemon;
 
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.ExceptionUtils;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class SessionSftpServer {
+
+    // Key pair components are separately encoded and saved together in a ZIP file
+    private final static File SSH_KEY_LOCAL_PATH = new File("/opt/serverbot2/daemon/sftp_ssh_keypair.bin");
+    private final static String SSH_PUBLIC_KEY_ZIP_ENTRY_NAME = "public.bin";
+    private final static String SSH_PRIVATE_KEY_ZIP_ENTRY_NAME = "private.bin";
 
     private final static String SSH_KEY_ALGORITHM = "ssh-rsa";
     private final static int RSA_KEY_SIZE = 2048;
 
-    private final String sessionUsername = "files";
-    private final String sessionPassword = IDUtils.randomUUIDJoined();
-    private final KeyPair sessionKeyPair = generateRsaKeyPair();
-    private final String sessionKeyPairFingerprint = generateSshKeyFingerprint((RSAPublicKey)sessionKeyPair.getPublic());
+    private final static String SFTP_USERNAME = "files";
+
+    private final String sessionPassword;
+    private final KeyPair sessionKeyPair;
+    private final String sessionKeyPairFingerprint;
 
     public SessionSftpServer() throws IOException {
+
+        sessionPassword = IDUtils.randomUUIDJoined();
+        sessionKeyPair = getOrGenerateRsaKeyPair();
+        sessionKeyPairFingerprint = generateSshKeyFingerprint((RSAPublicKey)sessionKeyPair.getPublic());
 
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(NetSecConfig.APP_INSTANCE_SFTP_PORT);
         sshd.setKeyPairProvider(unusedSessionContext -> Collections.singletonList(sessionKeyPair));
-        sshd.setPasswordAuthenticator((user,pass,serverSession) -> user.equals(sessionUsername)
-                && pass.equals(sessionPassword));
+        sshd.setPasswordAuthenticator((user,pass,session) -> user.equals(SFTP_USERNAME) && pass.equals(sessionPassword));
 
         SftpSubsystemFactory defaultSftpSubsystemFactory = new SftpSubsystemFactory();
         sshd.setSubsystemFactories(Collections.singletonList(defaultSftpSubsystemFactory));
@@ -44,7 +57,7 @@ public class SessionSftpServer {
     }
 
     public String getSessionUsername() {
-        return sessionUsername;
+        return SFTP_USERNAME;
     }
 
     public String getSessionPassword() {
@@ -55,13 +68,72 @@ public class SessionSftpServer {
         return sessionKeyPairFingerprint;
     }
 
-    private KeyPair generateRsaKeyPair() {
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(RSA_KEY_SIZE);
-            return generator.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to get keygen instance for mandatory algorithm!");
+    private KeyPair getOrGenerateRsaKeyPair() {
+
+        KeyPairGenerator rsaGenerator = ExceptionUtils.cantFail(() -> KeyPairGenerator.getInstance("RSA"));
+        KeyFactory rsaFactory = ExceptionUtils.cantFail(() -> KeyFactory.getInstance("RSA"));
+
+        // See if there's a saved key pair we can use
+        Optional<KeyPair> maybeCachedKeyPair = readKeyPairFromFiles(rsaFactory);
+        if (maybeCachedKeyPair.isPresent()) {
+            return maybeCachedKeyPair.get();
+        }
+
+        // If not: generate a new one, save it and use it now
+        KeyPair newKeyPair = generateNewRsaKeyPair(rsaGenerator);
+        writeKeyPairToFiles(newKeyPair);
+        return newKeyPair;
+
+    }
+
+    private Optional<KeyPair> readKeyPairFromFiles(KeyFactory rsaFactory) {
+
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(SSH_KEY_LOCAL_PATH))) {
+
+            PublicKey publicKey = null;
+            PrivateKey privateKey = null;
+
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(zis.readAllBytes());
+                if (entry.getName().equals(SSH_PUBLIC_KEY_ZIP_ENTRY_NAME)) {
+                    publicKey = rsaFactory.generatePublic(keySpec);
+                } else if (entry.getName().equals(SSH_PRIVATE_KEY_ZIP_ENTRY_NAME)) {
+                    privateKey = rsaFactory.generatePrivate(keySpec);
+                } else {
+                    throw new IllegalStateException("Unexpected zip entry '"+entry.getName()+"'");
+                }
+            }
+
+            if (publicKey == null || privateKey == null) {
+                throw new IllegalStateException("Missing key entries from zip file");
+            }
+
+            return Optional.of(new KeyPair(publicKey, privateKey));
+
+        } catch (FileNotFoundException e) {
+            return Optional.empty();
+        } catch (IOException e) {
+            throw new RuntimeException("IOException while reading zip file:" + e.getMessage(), e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException("Encoded keyspec for SSH keypair component is invalid", e);
+        }
+    }
+
+    private KeyPair generateNewRsaKeyPair(KeyPairGenerator rsaGenerator) {
+        rsaGenerator.initialize(RSA_KEY_SIZE);
+        return rsaGenerator.generateKeyPair();
+    }
+
+    private void writeKeyPairToFiles(KeyPair keyPair) {
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(SSH_KEY_LOCAL_PATH))) {
+            zos.putNextEntry(new ZipEntry(SSH_PUBLIC_KEY_ZIP_ENTRY_NAME));
+            zos.write(keyPair.getPublic().getEncoded());
+            zos.putNextEntry(new ZipEntry(SSH_PRIVATE_KEY_ZIP_ENTRY_NAME));
+            zos.write(keyPair.getPrivate().getEncoded());
+            zos.closeEntry();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write zipped SSH key file");
         }
     }
 
@@ -70,6 +142,7 @@ public class SessionSftpServer {
      * SFTP URI format: https://tools.ietf.org/html/draft-ietf-secsh-scp-sftp-ssh-uri-01
      * Fingerprint encoding: https://tools.ietf.org/html/draft-ietf-secsh-fingerprint-00
      * SSH protocol (key algorithms): https://tools.ietf.org/html/draft-ietf-secsh-transport-16#page-11
+     * SSH protocol arch (encodings including 'mpint'): https://www.ietf.org/rfc/rfc4251.txt
      */
 
     private String generateSshKeyFingerprint(RSAPublicKey publicKey) {
