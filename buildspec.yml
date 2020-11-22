@@ -33,3 +33,4 @@ artifacts:
 cache:
   paths:
     - '/root/.m2/**/*'
+    - '/usr/local/lib/node_modules/**/*'
