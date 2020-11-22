@@ -19,7 +19,7 @@ phases:
       - "cp app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar gen/app-daemon/app-daemon.jar"
       # Synthesize application/service CDK stacks for application deployment
       - "mkdir gen/cloud-assembly"
-      - "(cd application-infrastructure/ && cdk synth -o ../gen/cloud-assembly)"
+      - "(cd application-infrastructure/ && cdk synth -o ../gen/cloud-assembly > /dev/null)"
       - "echo \"Generated $(cat gen/cloud-assembly/*.template.json | wc -l) template lines\""
   post_build:
     commands:
