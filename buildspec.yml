@@ -33,4 +33,4 @@ artifacts:
 cache:
   paths:
     - '/root/.m2/**/*'
-    - '/usr/local/lib/node_modules/**/*'
+    - '/usr/local/lib/node_modules/aws-cdk/**/*'
