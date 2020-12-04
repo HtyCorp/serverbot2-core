@@ -16,12 +16,9 @@ import software.amazon.awssdk.services.sqs.model.*;
 import java.util.List;
 import java.util.Map;
 
-public abstract class SqsApiServer<ModelType> {
+public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
     private static final String THREAD_NAME = "SqsApiRequestReceiverThread";
-
-    private final ModelType handlerInstance = createHandlerInstance();
-    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(handlerInstance,getModelClass());
 
     private final SqsClient sqsClient = SqsClient.create();
     private final String serviceInterfaceName = getModelClass().getSimpleName();
@@ -131,7 +128,7 @@ public abstract class SqsApiServer<ModelType> {
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
                             AWSXRay.beginSubsegment("DispatchRequest");
-                            String responseString = jsonApiHandler.handleRequest(message.body());
+                            String responseString = getRequestDispatcher().handleRequest(message.body());
                             AWSXRay.endSubsegment();
 
                             logger.info("Response payload:\n" + responseString);

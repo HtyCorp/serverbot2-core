@@ -17,4 +17,6 @@ public class ManagedPolicies {
     public static final IManagedPolicy XRAY_DAEMON_WRITE_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess");
     public static final IManagedPolicy SSM_MANAGED_INSTANCE_CORE = ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore");
     public static final IManagedPolicy EC2_READ_ONLY_ACCESS = ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ReadOnlyAccess");
+
+    public static final IManagedPolicy ECS_DEFAULT_INSTANCE_POLICY = ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonEC2ContainerServiceforEC2Role");
 }
