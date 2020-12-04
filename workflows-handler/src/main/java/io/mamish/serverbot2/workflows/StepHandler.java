@@ -249,7 +249,7 @@ public class StepHandler {
     }
 
     private void newMessage(String messageExternalId, String newContent) {
-        discordService.newMessage(new NewMessageRequest(newContent, messageExternalId, MessageChannel.SERVERS, null));
+        discordService.newMessage(new NewMessageRequest(newContent, messageExternalId, MessageChannel.MAIN, null));
     }
 
     private void appendMessage(String messageExternalId, String newContent) {

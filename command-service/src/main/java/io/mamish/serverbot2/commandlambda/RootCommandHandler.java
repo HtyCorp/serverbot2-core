@@ -73,10 +73,7 @@ public class RootCommandHandler implements ICommandService {
         MessageChannel channel = commandRequest.getChannel();
         if (channel == MessageChannel.ADMIN) {
             return adminCommandHandler.handleRequest(commandRequest);
-        } else if (channel == MessageChannel.DEBUG) {
-            // There are no commands yet, and Discord relay is configured not to relay from this channel.
-            return new ProcessUserCommandResponse(null, null);
-        } else if (channel == MessageChannel.SERVERS) {
+        } else if (channel == MessageChannel.MAIN) {
             return serversCommandHandler.handleRequest(commandRequest);
         } else if (channel == MessageChannel.WELCOME) {
             return welcomeCommandHandler.handleRequest(commandRequest);

@@ -72,7 +72,7 @@ public class LambdaHandlerTest {
 
         ProcessUserCommandRequest request = new ProcessUserCommandRequest(
                 List.of(requestArgs),
-                MessageChannel.SERVERS,
+                MessageChannel.MAIN,
                 DUMMY_MESSAGE_ID,
                 DUMMY_USER_ID,
                 DUMMY_USER_NAME);

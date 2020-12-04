@@ -18,15 +18,13 @@ public class DiscordConfig {
     public static final String PATH_PUBLIC = PATH_ALL+"/public";
 
     public static final Parameter CHANNEL_ID_WELCOME = new Parameter(PATH_PUBLIC, "channel-id/welcome");
-    public static final Parameter CHANNEL_ID_SERVERS = new Parameter(PATH_PUBLIC, "channel-id/servers");
+    public static final Parameter CHANNEL_ID_MAIN = new Parameter(PATH_PUBLIC, "channel-id/main");
     public static final Parameter CHANNEL_ID_ADMIN = new Parameter(PATH_PUBLIC, "channel-id/admin");
-    public static final Parameter CHANNEL_ID_DEBUG = new Parameter(PATH_PUBLIC, "channel-id/debug");
 
-    // Note only these two are supplied since the other channels don't support/require dynamic join/leave.
-    public static final Parameter CHANNEL_ROLE_SERVERS = new Parameter(PATH_PUBLIC, "role-id/servers");
-    public static final Parameter CHANNEL_ROLE_DEBUG = new Parameter(PATH_PUBLIC, "role-id/debug");
+    // Only the main channel support join/leave via commands.
+    public static final Parameter CHANNEL_ROLE_MAIN = new Parameter(PATH_PUBLIC, "role-id/main");
 
-    // I'm normally avoiding fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
+    // I'm normally avoid fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
     // Deletion/replacement of these should be manual and very careful anyway.
     public static final String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
     public static final String MESSAGE_TABLE_PKEY = "externalMessageId";

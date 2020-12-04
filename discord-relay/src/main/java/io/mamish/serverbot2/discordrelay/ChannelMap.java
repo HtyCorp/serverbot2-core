@@ -19,9 +19,8 @@ public class ChannelMap {
 
     public ChannelMap(DiscordApi discordApi) {
         putBoth(discordApi, MessageChannel.WELCOME, DiscordConfig.CHANNEL_ID_WELCOME);
-        putBoth(discordApi, MessageChannel.SERVERS, DiscordConfig.CHANNEL_ID_SERVERS);
+        putBoth(discordApi, MessageChannel.MAIN, DiscordConfig.CHANNEL_ID_MAIN);
         putBoth(discordApi, MessageChannel.ADMIN, DiscordConfig.CHANNEL_ID_ADMIN);
-        putBoth(discordApi, MessageChannel.DEBUG, DiscordConfig.CHANNEL_ID_DEBUG);
     }
 
     public Optional<MessageChannel> getAppChannel(ServerTextChannel discordChannel) {
