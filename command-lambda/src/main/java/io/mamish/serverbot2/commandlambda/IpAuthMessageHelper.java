@@ -36,9 +36,9 @@ public class IpAuthMessageHelper {
 
         String message = "To whitelist your IP to join **"+friendlyDomain+"** servers, use this link.\n"
                 + "This will detect your IP and add it to the firewall. If you've done this before, it replaces your "
-                + "last whitelisted IP.\n"
-                + "For any questions, message Mamish#7674 or view this bot's code at "
-                + "https://github.com/HtyCorp/serverbot2-core";
+                + "last whitelisted IP.\n";
+                //+ "For any questions, message Mamish#7674 or view this bot's code at "
+                //+ "https://github.com/HtyCorp/serverbot2-core";
 
         String embedTitle = "Whitelist IP for " + context.getSenderName();
         String embedDescription = "Personal link to detect and whitelist your IP address for " + friendlyDomain;

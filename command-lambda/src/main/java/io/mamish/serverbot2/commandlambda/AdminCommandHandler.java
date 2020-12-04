@@ -147,9 +147,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     public ProcessUserCommandResponse onCommandTerminal(CommandTerminal commandTerminal) {
         String gameName = commandTerminal.getGameName();
 
-        DescribeGameResponse response = gameMetadataServiceClient.describeGame(
-                new DescribeGameRequest(gameName)
-        );
+        DescribeGameResponse response = gameMetadataServiceClient.describeGame(new DescribeGameRequest(gameName));
 
         String baseErrorString = "Can't connect to '" + gameName + "': ";
 
@@ -227,7 +225,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         GameMetadata gameMetadata = fetchGameMetadata(name);
 
         if (gameMetadata.getGameReadyState() != GameReadyState.RUNNING) {
-            return new ProcessUserCommandResponse("Can't connect to this service since it isn't running.");
+            return new ProcessUserCommandResponse("Game must be running before you can edit its files (use '!start " + name + "').");
         }
 
         IAppDaemon instanceAppDaemonClient = ApiClient.sqs(IAppDaemon.class, gameMetadata.getInstanceQueueName());
