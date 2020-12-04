@@ -153,17 +153,14 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         MessageChannel channel = modifyRoleMembershipRequest.getRoleChannel();
         RoleModifyOperation modifyOperation = modifyRoleMembershipRequest.getRoleModifyOperation();
 
-        if (!Utils.equalsAny(channel, MessageChannel.SERVERS, MessageChannel.DEBUG)) {
+        if (channel != MessageChannel.MAIN) {
             throw new RequestValidationException("Requested channel " + channel + "does not support join/leave");
         }
         if (!Utils.equalsAny(modifyOperation, RoleModifyOperation.ADD_USER, RoleModifyOperation.REMOVE_USER)) {
             throw new RequestValidationException("Requested modification type " + modifyOperation + "not valid");
         }
 
-        String roleId;
-        if (channel == MessageChannel.SERVERS) roleId = DiscordConfig.CHANNEL_ROLE_SERVERS.getValue();
-        else if (channel == MessageChannel.DEBUG) roleId = DiscordConfig.CHANNEL_ROLE_DEBUG.getValue();
-        else throw new RequestHandlingRuntimeException("Impossible state: invalid message channel passed validation");
+        String roleId = DiscordConfig.CHANNEL_ROLE_MAIN.getValue();
 
         User targetUser = discordApi.getUserById(modifyRoleMembershipRequest.getUserDiscordId()).join();
         Role targetRole = discordApi.getRoleById(roleId).get();

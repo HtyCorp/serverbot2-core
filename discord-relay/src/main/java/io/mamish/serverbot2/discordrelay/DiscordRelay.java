@@ -127,7 +127,7 @@ public class DiscordRelay {
         }
 
         Optional<MessageChannel> oAppChannel = channelMap.getAppChannel(channel);
-        if (oAppChannel.isEmpty() || oAppChannel.get().equals(MessageChannel.DEBUG)) {
+        if (oAppChannel.isEmpty()) {
             logIgnoreMessageReason(receivedMessage, "not in a response-enabled channel");
             return;
         }

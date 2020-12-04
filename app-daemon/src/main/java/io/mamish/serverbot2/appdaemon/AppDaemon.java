@@ -155,14 +155,14 @@ public class AppDaemon {
     private void sendIdlenessWarning() {
         discordServiceClient.newMessage(new NewMessageRequest(
                 gameName + " is idle (no connections) and will shut down soon.",
-                null, MessageChannel.SERVERS, null
+                null, MessageChannel.MAIN, null
         ));
     }
 
     private void sendIdleShutdownNotice() {
         discordServiceClient.newMessage(new NewMessageRequest(
                 gameName + " is idle and shutting down now.",
-                null, MessageChannel.SERVERS, null
+                null, MessageChannel.MAIN, null
         ));
     }
 

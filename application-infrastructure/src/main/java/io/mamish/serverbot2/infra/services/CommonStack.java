@@ -85,15 +85,11 @@ public class CommonStack extends Stack {
         Util.instantiateConfigSsmParameter(this, "ChannelIdWelcomeParam",
                 DiscordConfig.CHANNEL_ID_WELCOME, env.getDiscordRelayChannelIdWelcome());
         Util.instantiateConfigSsmParameter(this, "ChannelIdMainParam",
-                DiscordConfig.CHANNEL_ID_SERVERS, env.getDiscordRelayChannelIdMain());
+                DiscordConfig.CHANNEL_ID_MAIN, env.getDiscordRelayChannelIdMain());
         Util.instantiateConfigSsmParameter(this, "ChannelIdAdminParam",
                 DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
-        Util.instantiateConfigSsmParameter(this, "ChannelIdDebugParam",
-                DiscordConfig.CHANNEL_ID_DEBUG, env.getDiscordRelayChannelIdDebug());
         Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
-                DiscordConfig.CHANNEL_ROLE_SERVERS, env.getDiscordRelayRoleIdMain());
-        Util.instantiateConfigSsmParameter(this, "RoleIdDebugParam",
-                DiscordConfig.CHANNEL_ROLE_DEBUG, env.getDiscordRelayRoleIdDebug());
+                DiscordConfig.CHANNEL_ROLE_MAIN, env.getDiscordRelayRoleIdMain());
 
         deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
                 .bucketName(env.getArtifactBucketName())
