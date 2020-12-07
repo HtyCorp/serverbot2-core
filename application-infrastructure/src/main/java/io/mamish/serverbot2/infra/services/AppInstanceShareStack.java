@@ -1,7 +1,8 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.customresource.S3Artifact;
-import io.mamish.serverbot2.infra.customresource.S3ArtifactProps;
+import io.mamish.serverbot2.infra.constructs.S3Artifact;
+import io.mamish.serverbot2.infra.constructs.S3ArtifactProps;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
@@ -18,7 +19,7 @@ import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(Construct parent, String id, CommonStack commonStack) {
+    public AppInstanceShareStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer
@@ -29,7 +30,7 @@ public class AppInstanceShareStack extends Stack {
                 .path(appDaemonJarPath)
                 .build();
         S3Artifact appDaemonArtifact = new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
-                appDaemonJarAsset, commonStack.getDeployedArtifactBucket(), "app-daemon",
+                appDaemonJarAsset, parent.getCommonResources().getDeployedArtifactBucket(), "app-daemon",
                 ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
         ));
 

@@ -7,32 +7,40 @@ import software.amazon.awscdk.core.StageProps;
 
 public class ApplicationStage extends Stage {
 
-    public final AppInstanceShareStack appInstanceShareStack;
-    public final CommandStack commandStack;
-    public final CommonStack commonStack;
-    public final GameMetadataStack gameMetadataStack;
-    public final IpAuthorizerStack ipAuthorizerStack;
-    public final UrlShortenerStack urlShortenerStack;
-    public final NetSecStack netSecStack;
-    public final ReaperStack reaperStack;
-    public final RelayStack relayStack;
-    public final WorkflowsStack workflowsStack;
-    public final LambdaWarmerStack lambdaWarmerStack;
+    private final ApplicationEnv env;
+    private final CommonStack commonStack;
+    private final ServiceClusterStack serviceClusterStack;
+
+    public ApplicationEnv getEnv() {
+        return env;
+    }
+
+    public CommonStack getCommonResources() {
+        return commonStack;
+    }
+
+    public ServiceClusterStack getServiceCluster() {
+        return serviceClusterStack;
+    }
 
     public ApplicationStage(Construct parent, String id, StageProps props, ApplicationEnv env) {
         super(parent, id, props);
 
-        commonStack = new CommonStack(this, "CommonResources", env);
-        ipAuthorizerStack = new IpAuthorizerStack(this, "IpAuthorizerApi", commonStack, env);
-        urlShortenerStack = new UrlShortenerStack(this, "UrlShortenerApi", commonStack, env);
-        relayStack = new RelayStack(this, "DiscordRelay", commonStack);
-        appInstanceShareStack = new AppInstanceShareStack(this, "AppInstanceResources", commonStack);
-        commandStack = new CommandStack(this, "CommandService");
-        workflowsStack = new WorkflowsStack(this, "WorkflowService");
-        gameMetadataStack = new GameMetadataStack(this, "GameMetadataService");
-        netSecStack = new NetSecStack(this, "NetworkSecurityService", commonStack);
-        reaperStack = new ReaperStack(this, "ResourceReaper");
-        lambdaWarmerStack = new LambdaWarmerStack(this, "LambdaWarmer");
+        this.env = env;
+
+        commonStack = new CommonStack(this, "CommonResources");
+        serviceClusterStack = new ServiceClusterStack(this, "ServiceCluster");
+
+        new IpAuthorizerStack(this, "IpAuthorizerApi");
+        new UrlShortenerStack(this, "UrlShortenerApi");
+        new RelayStack(this, "DiscordRelay", this);
+        new AppInstanceShareStack(this, "AppInstanceResources");
+        new CommandStack(this, "CommandService");
+        new WorkflowsStack(this, "WorkflowService");
+        new GameMetadataStack(this, "GameMetadataService");
+        new NetSecStack(this, "NetworkSecurityService");
+        new ReaperStack(this, "ResourceReaper");
+        new LambdaWarmerStack(this, "LambdaWarmer");
 
     }
 

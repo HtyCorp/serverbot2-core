@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.customresource;
+package io.mamish.serverbot2.infra.constructs;
 
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedutil.IDUtils;

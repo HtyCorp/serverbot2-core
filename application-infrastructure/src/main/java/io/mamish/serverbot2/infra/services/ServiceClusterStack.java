@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.sharedutil.Utils;
 import software.amazon.awscdk.core.Construct;
@@ -32,9 +33,14 @@ public class ServiceClusterStack extends Stack {
     private final CfnInstanceProfile containerInstanceProfile;
     private final SecurityGroup containerInstanceSecurityGroup;
     private final Map<AmiHardwareType,CfnLaunchTemplate> launchTemplatesByHardwareType = new EnumMap<>(AmiHardwareType.class);
-    private final CfnCluster serviceCluster;
 
-    public ServiceClusterStack(Construct parent, String id, CommonStack commonStack) {
+    private final ICluster serviceCluster;
+
+    public ICluster getCluster() {
+        return serviceCluster;
+    }
+
+    public ServiceClusterStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         Role containerInstanceRole = Role.Builder.create(this, "ContainerInstanceRole")
@@ -55,10 +61,14 @@ public class ServiceClusterStack extends Stack {
         LaunchTemplateProperty mixedInstancesTemplate = LaunchTemplateProperty.builder()
                 .launchTemplateSpecification(makeLatestTemplateSpecification(launchTemplatesByHardwareType.get(AmiHardwareType.STANDARD)))
                 .overrides(List.of(
-                        makeInstanceTypeOverride("m4.large", AmiHardwareType.STANDARD),
+                        /* Criteria for choosing spot instance types:
+                         * - Must support ECS ENI trunking (currently m5, r5, c5, a1, m6g, r6g, c6g)
+                         * - 2..16GB memory since we're running several Java microservices
+                         * - Need memory more than CPU so avoid c-class unless spot availability is lacking without it
+                         * - Don't use ARM types just yet (should be fine with Java on ECS, but needs testing)
+                         */
                         makeInstanceTypeOverride("m5.large", AmiHardwareType.STANDARD),
                         makeInstanceTypeOverride("m5a.large", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("r4.large", AmiHardwareType.STANDARD),
                         makeInstanceTypeOverride("r5.large", AmiHardwareType.STANDARD),
                         makeInstanceTypeOverride("r5a.large", AmiHardwareType.STANDARD)
                 ))
@@ -72,7 +82,8 @@ public class ServiceClusterStack extends Stack {
                 .instancesDistribution(capacityOptimisedInstanceDistribution)
                 .build();
 
-        List<String> serviceSubnetIds = Utils.mapList(commonStack.getServiceVpc().getPublicSubnets(), ISubnet::getSubnetId);
+        List<String> serviceSubnetIds = Utils.mapList(parent.getCommonResources().getServiceVpc().getPublicSubnets(),
+                ISubnet::getSubnetId);
         CfnAutoScalingGroup capacityAutoScalingGroup = CfnAutoScalingGroup.Builder.create(this, "CapacityAutoScalingGroup")
                 .capacityRebalance(true)
                 .minSize("0")
@@ -88,13 +99,21 @@ public class ServiceClusterStack extends Stack {
                         .autoScalingGroupArn(capacityAutoScalingGroup.getRef()).build())
                 .build();
 
-        serviceCluster = CfnCluster.Builder.create(this, "ServiceCluster")
+        CfnCluster cfnServiceCluster = CfnCluster.Builder.create(this, "CfnServiceCluster")
                 .clusterName(CLUSTER_NAME)
                 .capacityProviders(List.of(capacityProvider.getRef()))
                 .defaultCapacityProviderStrategy(List.of(CapacityProviderStrategyItemProperty.builder()
                         .capacityProvider(capacityProvider.getRef())
                         .build()))
                 .build();
+
+        serviceCluster = Cluster.fromClusterAttributes(this, "ServiceCluster", ClusterAttributes.builder()
+                .clusterName(cfnServiceCluster.getRef())
+                .clusterArn(cfnServiceCluster.getAttrArn())
+                .vpc(parent.getCommonResources().getServiceVpc())
+                .defaultCloudMapNamespace(parent.getCommonResources().getApiVpcNamespace())
+                .hasEc2Capacity(true)
+                .build());
 
     }
 

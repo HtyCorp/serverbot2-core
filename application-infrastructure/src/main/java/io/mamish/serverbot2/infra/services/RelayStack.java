@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class RelayStack extends Stack {
 
-    public RelayStack(Construct parent, String id, CommonStack commonStack) {
+    public RelayStack(Construct parent, String id, ApplicationStage appStage) {
         super(parent, id);
 
         // Data stores for relay
@@ -31,7 +32,6 @@ public class RelayStack extends Stack {
                 .name(DiscordConfig.MESSAGE_TABLE_PKEY)
                 .type(AttributeType.STRING)
                 .build();
-        // Table configured for destroy since
         Table messageTable = Table.Builder.create(this, "DiscordRelayMessageTable")
                 .tableName(DiscordConfig.MESSAGE_TABLE_NAME)
                 .removalPolicy(RemovalPolicy.DESTROY)
@@ -48,7 +48,7 @@ public class RelayStack extends Stack {
         // ECS resources required for our Fargate service hosting the Discord relay
 
         Cluster cluster = Cluster.Builder.create(this, "DiscordRelayCluster")
-                .vpc(commonStack.getServiceVpc())
+                .vpc(appStage.getCommonResources().getServiceVpc())
                 .build();
 
         Role taskRole = Role.Builder.create(this, "DiscordRelayRole")

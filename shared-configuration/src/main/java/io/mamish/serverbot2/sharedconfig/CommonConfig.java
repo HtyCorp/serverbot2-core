@@ -28,6 +28,8 @@ public class CommonConfig {
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
+    public static final String SERVICES_SYSTEM_SUBDOMAIN = "services";
+
     public static final String LAMBDA_LIVE_ALIAS_NAME = "LIVE";
     public static final int LAMBDA_MEMORY_MB_FOR_PROVISIONED = 512;
     public static final int LAMBDA_MEMORY_MB_FOR_STANDARD = 2048;

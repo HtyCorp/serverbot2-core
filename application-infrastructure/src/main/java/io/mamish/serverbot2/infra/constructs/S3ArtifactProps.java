@@ -1,4 +1,4 @@
-package io.mamish.serverbot2.infra.customresource;
+package io.mamish.serverbot2.infra.constructs;
 
 import software.amazon.awscdk.services.s3.IBucket;
 import software.amazon.awscdk.services.s3.assets.Asset;

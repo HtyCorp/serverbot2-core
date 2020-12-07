@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -16,7 +17,7 @@ import java.util.List;
 
 public class NetSecStack extends Stack {
 
-    public NetSecStack(Construct parent, String id, CommonStack commonStack) {
+    public NetSecStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         CfnPrefixList userIpList = CfnPrefixList.Builder.create(this, "DiscordUserIpPrefixList")
@@ -26,7 +27,7 @@ public class NetSecStack extends Stack {
                 .build();
 
         SecurityGroup commonGroup = SecurityGroup.Builder.create(this, "AppInstanceCommonGroup")
-                .vpc(commonStack.getApplicationVpc())
+                .vpc(parent.getCommonResources().getApplicationVpc())
                 .allowAllOutbound(false)
                 .securityGroupName(NetSecConfig.APP_INSTANCE_COMMON_SG_NAME)
                 .description("Group for common ports/protocols on application instances")
@@ -43,7 +44,7 @@ public class NetSecStack extends Stack {
         Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
         Util.addFullExecuteApiPermissionToRole(this, functionRole);
 
-        commonStack.getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
+        parent.getCommonResources().getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
         Util.highMemJavaFunction(this, "NetSecService", "network-security-service",
                 "io.mamish.serverbot2.networksecurity.LambdaHandler",

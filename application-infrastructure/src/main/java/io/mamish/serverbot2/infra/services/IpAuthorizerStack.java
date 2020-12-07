@@ -1,6 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -16,9 +16,7 @@ import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.lambda.Alias;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.route53.ARecord;
-import software.amazon.awscdk.services.route53.ARecordProps;
 import software.amazon.awscdk.services.route53.RecordTarget;
-import software.amazon.awscdk.services.route53.targets.ApiGateway;
 import software.amazon.awscdk.services.route53.targets.ApiGatewayDomain;
 
 import java.util.List;
@@ -31,7 +29,7 @@ public class IpAuthorizerStack extends Stack {
             "legacy", NetSecConfig.AUTHORIZER_SUBDOMAIN_LEGACY
     );
 
-    public IpAuthorizerStack(Construct parent, String id, CommonStack commonStack, ApplicationEnv env) {
+    public IpAuthorizerStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // Define function and associated role
@@ -77,15 +75,15 @@ public class IpAuthorizerStack extends Stack {
         SUBDOMAINS.forEach((name, subdomain) -> {
 
             DomainName domain = restApi.addDomainName(name+"RestApi", DomainNameOptions.builder()
-                    .domainName(IDUtils.dot(subdomain, env.getSystemRootDomainName()))
-                    .certificate(commonStack.getSystemWildcardCertificate())
+                    .domainName(IDUtils.dot(subdomain, parent.getEnv().getSystemRootDomainName()))
+                    .certificate(parent.getCommonResources().getSystemWildcardCertificate())
                     .endpointType(EndpointType.REGIONAL)
                     .build());
 
             ApiGatewayDomain route53AliasTarget = new ApiGatewayDomain(domain);
 
             ARecord record = ARecord.Builder.create(this, name+"Record")
-                    .zone(commonStack.getSystemRootHostedZone())
+                    .zone(parent.getCommonResources().getSystemRootHostedZone())
                     .recordName(subdomain)
                     .target(RecordTarget.fromAlias(route53AliasTarget))
                     .ttl(Duration.minutes(5))

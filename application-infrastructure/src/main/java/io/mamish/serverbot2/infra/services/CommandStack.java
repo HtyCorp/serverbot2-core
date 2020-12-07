@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.*;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public class CommandStack extends Stack {
 
-    public CommandStack(Construct parent, String id) {
+    public CommandStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // Terminal access user (federation doesn't work when chaining from the function role)
