@@ -8,7 +8,6 @@ import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
@@ -47,9 +46,9 @@ public class AppInstanceShareStack extends Stack {
                         ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS
                 )).build();
 
-        Util.addConfigPathReadPermissionToRole(this, commonRole, AppInstanceConfig.PATH_ALL);
+        Util.addConfigPathReadPermission(this, commonRole, AppInstanceConfig.PATH_ALL);
 
-        Util.addLambdaInvokePermissionToRole(this, commonRole,
+        Util.addLambdaInvokePermission(this, commonRole,
                 GameMetadataConfig.FUNCTION_NAME,
                 NetSecConfig.FUNCTION_NAME);
 

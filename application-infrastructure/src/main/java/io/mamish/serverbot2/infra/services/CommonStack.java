@@ -81,7 +81,7 @@ public class CommonStack extends Stack {
         return apiVpcLink;
     }
 
-    public PrivateDnsNamespace getApiVpcNamespace() {
+    public PrivateDnsNamespace getInternalServiceNamespace() {
         return apiVpcNamespace;
     }
 

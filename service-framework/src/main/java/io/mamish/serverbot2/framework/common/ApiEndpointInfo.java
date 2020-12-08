@@ -9,5 +9,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface ApiEndpointInfo {
     String serviceName();
-    String uriPath();
+    String uriPath(); // Note: this SHOULD have a leading slash
+    ApiHttpMethod httpMethod();
+    ApiAuthType authType();
 }

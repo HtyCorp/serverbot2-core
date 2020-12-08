@@ -51,9 +51,25 @@
             <artifactId>service-framework</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
-            <artifactId>workflow-service-model</artifactId>
+            <artifactId>command-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>game-metadata-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>network-security-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>workflows-model</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -95,6 +111,16 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>apigateway</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>apigatewayv2</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>apigatewayv2-integrations</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
         <dependency>

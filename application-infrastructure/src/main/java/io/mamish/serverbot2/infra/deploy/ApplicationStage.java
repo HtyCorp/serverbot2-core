@@ -33,7 +33,7 @@ public class ApplicationStage extends Stage {
 
         new IpAuthorizerStack(this, "IpAuthorizerApi");
         new UrlShortenerStack(this, "UrlShortenerApi");
-        new RelayStack(this, "DiscordRelay", this);
+        new RelayStack(this, "DiscordRelay");
         new AppInstanceShareStack(this, "AppInstanceResources");
         new CommandStack(this, "CommandService");
         new WorkflowsStack(this, "WorkflowService");

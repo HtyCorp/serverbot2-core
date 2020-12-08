@@ -21,10 +21,10 @@ public class LambdaWarmerStack extends Stack {
 
         Role lambdaFunctionRole = Util.standardLambdaRole(this, "WarmerFunctionRole", List.of()).build();
 
-        Util.addConfigPathReadPermissionToRole(this, lambdaFunctionRole,CommonConfig.PATH);
-        Util.addLambdaInvokePermissionToRole(this, lambdaFunctionRole,
+        Util.addConfigPathReadPermission(this, lambdaFunctionRole,CommonConfig.PATH);
+        Util.addLambdaInvokePermission(this, lambdaFunctionRole,
                 LambdaWarmerConfig.FUNCTION_NAMES_TO_WARM.toArray(String[]::new));
-        Util.addFullExecuteApiPermissionToRole(this, lambdaFunctionRole);
+        Util.addFullExecuteApiPermission(this, lambdaFunctionRole);
 
         Alias warmerFunctionAlias = Util.highMemJavaFunction(this, "WarmerFunction", "lambda-warmer",
                 "io.mamish.serverbot2.lambdawarmer.ScheduledLambdaHandler",

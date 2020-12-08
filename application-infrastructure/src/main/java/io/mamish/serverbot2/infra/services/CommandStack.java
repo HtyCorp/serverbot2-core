@@ -4,7 +4,6 @@ import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.*;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Fn;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.*;
@@ -57,13 +56,13 @@ public class CommandStack extends Stack {
                 ManagedPolicies.EC2_FULL_ACCESS
         )).build();
 
-        Util.addLambdaInvokePermissionToRole(this, functionRole,
+        Util.addLambdaInvokePermission(this, functionRole,
                 GameMetadataConfig.FUNCTION_NAME,
                 NetSecConfig.FUNCTION_NAME);
-        Util.addConfigPathReadPermissionToRole(this, functionRole,
+        Util.addConfigPathReadPermission(this, functionRole,
                 CommandLambdaConfig.PATH,
                 CommonConfig.PATH);
-        Util.addFullExecuteApiPermissionToRole(this, functionRole);
+        Util.addFullExecuteApiPermission(this, functionRole);
 
         Util.highMemJavaFunction(this, "CommandService", "command-lambda",
                 "io.mamish.serverbot2.commandlambda.LambdaHandler",

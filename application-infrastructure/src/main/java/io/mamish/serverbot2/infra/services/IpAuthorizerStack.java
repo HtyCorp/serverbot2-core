@@ -7,7 +7,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.IpAuthConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -39,8 +38,8 @@ public class IpAuthorizerStack extends Stack {
                 ManagedPolicies.SQS_FULL_ACCESS
         )).build();
 
-        Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
-        Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
+        Util.addConfigPathReadPermission(this, functionRole, CommonConfig.PATH);
+        Util.addLambdaInvokePermission(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler",

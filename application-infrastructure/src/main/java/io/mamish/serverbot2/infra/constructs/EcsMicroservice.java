@@ -3,25 +3,40 @@ package io.mamish.serverbot2.infra.constructs;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.services.ec2.Peer;
+import software.amazon.awscdk.services.ec2.Port;
+import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.ecs.*;
+import software.amazon.awscdk.services.iam.IGrantable;
+import software.amazon.awscdk.services.iam.IPrincipal;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
+import software.amazon.awscdk.services.servicediscovery.DnsRecordType;
+import software.amazon.awscdk.services.servicediscovery.Service;
 
 import java.util.List;
 
-public class EcsMicroservice extends Construct {
+public class EcsMicroservice extends Construct implements IGrantable {
 
     private final Role taskRole;
+    private final Service internalDiscoveryService;
 
     public Role getTaskRole() {
         return taskRole;
     }
 
-    public EcsMicroservice(Construct parent, String id, ApplicationStage appStage, EcsMicroserviceProps props) {
+    public Service getInternalDiscoveryService() {
+        return internalDiscoveryService;
+    }
+
+    public EcsMicroservice(Stack parent, String id, ApplicationStage appStage, String internalServiceName) {
         super(parent, id);
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")
@@ -31,14 +46,15 @@ public class EcsMicroservice extends Construct {
                 ))
                 .build();
 
+        Util.addConfigPathReadPermission(parent, taskRole, CommonConfig.PATH);
+
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
-                .compatibility(Compatibility.EC2)
                 .cpu("256")
                 .memoryMiB("1024") // Note this has specific allowed values in Fargate: not arbitrary
                 .taskRole(taskRole)
                 .build();
 
-        // Main container in service: the Discord relay
+        // Main container: service instance built from Maven module fat JAR in ${maven-module}/target/docker
 
         LogGroup serverLogGroup = LogGroup.Builder.create(this, "ServerLogGroup")
                 .retention(RetentionDays.ONE_YEAR)
@@ -46,9 +62,9 @@ public class EcsMicroservice extends Construct {
                 .build();
         LogDriver serverLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
                 .logGroup(serverLogGroup)
-                .streamPrefix(props.getJavaModuleName())
+                .streamPrefix(internalServiceName)
                 .build());
-        String dockerDirPath = Util.codeBuildPath(props.getJavaModuleName(), "target", "docker");
+        String dockerDirPath = Util.codeBuildPath(internalServiceName, "target", "docker");
         taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
                 .essential(true)
                 .image(ContainerImage.fromAsset(dockerDirPath))
@@ -75,14 +91,40 @@ public class EcsMicroservice extends Construct {
                 .hostPort(2000)
                 .build());
 
+        // Cloud Map options for service discovery (used by API Gateway)
+
+        CloudMapOptions cloudMapOptions = CloudMapOptions.builder()
+                .name(internalServiceName)
+                .cloudMapNamespace(appStage.getCommonResources().getInternalServiceNamespace())
+                .dnsRecordType(DnsRecordType.SRV)
+                .dnsTtl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
+                .build();
+
         // Finally, create the service from our complete task definition with containers
 
-        FargateService service = FargateService.Builder.create(this, "DiscordRelayService")
+        SecurityGroup defaultTaskSg = SecurityGroup.Builder.create(this, "DefaultTaskSecurityGroup")
+                .vpc(appStage.getCommonResources().getServiceVpc())
+                .allowAllOutbound(true)
+                .build();
+        defaultTaskSg.addIngressRule(
+                Peer.ipv4(appStage.getCommonResources().getServiceVpc().getVpcCidrBlock()),
+                Port.tcp(CommonConfig.SERVICES_INTERNAL_HTTP_PORT));
+        Ec2Service service = Ec2Service.Builder.create(this, "EcsService")
                 .cluster(appStage.getServiceCluster().getCluster())
                 .taskDefinition(taskDefinition)
                 .assignPublicIp(true)
+                .cloudMapOptions(cloudMapOptions)
+                .securityGroups(List.of(defaultTaskSg))
                 .build();
+
+        // Current iteration of apigwv2 constructs need a Service, not an IService, so just cast it.
+        // This isn't ideal but the underlying lib code does return a concrete Service so it's safe for now.
+        internalDiscoveryService = (Service) service.getCloudMapService();
 
     }
 
+    @Override
+    public IPrincipal getGrantPrincipal() {
+        return taskRole;
+    }
 }

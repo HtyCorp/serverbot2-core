@@ -1,19 +1,19 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
+import io.mamish.serverbot2.infra.constructs.ServiceApi;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.ec2.CfnPrefixList;
 import software.amazon.awscdk.services.ec2.Peer;
 import software.amazon.awscdk.services.ec2.Port;
 import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.iam.Role;
-
-import java.util.List;
 
 public class NetSecStack extends Stack {
 
@@ -36,19 +36,16 @@ public class NetSecStack extends Stack {
                 Port.tcp(NetSecConfig.APP_INSTANCE_SFTP_PORT),
                 "Custom SFTP port for Apache SSHD / SFTP");
 
-        Role functionRole = Util.standardLambdaRole(this, "NetSecServiceLambda", List.of(
-                ManagedPolicies.EC2_FULL_ACCESS,
-                ManagedPolicies.LOGS_FULL_ACCESS
-        )).build();
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security");
 
-        Util.addConfigPathReadPermissionToRole(this, functionRole, CommonConfig.PATH);
-        Util.addFullExecuteApiPermissionToRole(this, functionRole);
+        Role taskRole = service.getTaskRole();
+        Util.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);
+        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH);
+        Util.addFullExecuteApiPermission(this, taskRole);
+        parent.getCommonResources().getNetSecKmsKey().grant(taskRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
-        parent.getCommonResources().getNetSecKmsKey().grant(functionRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
-
-        Util.highMemJavaFunction(this, "NetSecService", "network-security-service",
-                "io.mamish.serverbot2.networksecurity.LambdaHandler",
-                b -> b.functionName(NetSecConfig.FUNCTION_NAME).role(functionRole));
+        ServiceApi api = new ServiceApi(this, "Api", parent, INetworkSecurity.class);
+        api.addEcsRoute(INetworkSecurity.class, service);
 
     }
 

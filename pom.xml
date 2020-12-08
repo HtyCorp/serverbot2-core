@@ -82,8 +82,8 @@
         <module>app-daemon-model</module>
         <module>discord-relay</module>
         <module>discord-relay-model</module>
-        <module>command-lambda</module>
-        <module>command-lambda-model</module>
+        <module>command-service</module>
+        <module>command-service-model</module>
         <module>ip-authorizer</module>
         <module>shared-configuration</module>
         <module>shared-util</module>
@@ -94,8 +94,8 @@
         <module>resource-reaper</module>
         <module>network-security-service-model</module>
         <module>network-security-service</module>
-        <module>workflow-service</module>
-        <module>workflow-service-model</module>
+        <module>workflows-handler</module>
+        <module>workflows-model</module>
         <module>test-utilities</module>
         <module>url-shortener</module>
         <module>lambda-warmer</module>

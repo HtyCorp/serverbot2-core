@@ -3,7 +3,6 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.sharedutil.Utils;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup;
 import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup.*;
@@ -111,7 +110,7 @@ public class ServiceClusterStack extends Stack {
                 .clusterName(cfnServiceCluster.getRef())
                 .clusterArn(cfnServiceCluster.getAttrArn())
                 .vpc(parent.getCommonResources().getServiceVpc())
-                .defaultCloudMapNamespace(parent.getCommonResources().getApiVpcNamespace())
+                .defaultCloudMapNamespace(parent.getCommonResources().getInternalServiceNamespace())
                 .hasEc2Capacity(true)
                 .build());
 
