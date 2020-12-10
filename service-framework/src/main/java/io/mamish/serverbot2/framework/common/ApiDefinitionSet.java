@@ -10,12 +10,18 @@ import java.util.stream.Stream;
 
 public class ApiDefinitionSet<ModelType> {
 
+    private final ApiEndpointInfo endpointInfo;
     private final Map<String, ApiActionDefinition> nameToDefinitionMap;
     private final Map<Class<?>, ApiActionDefinition> requestClassToDefinitionMap;
 
     public ApiDefinitionSet(Class<ModelType> modelClass) {
 
         assert modelClass.isInterface();
+
+        endpointInfo = modelClass.getAnnotation(ApiEndpointInfo.class);
+        if (endpointInfo == null) {
+            throw new IllegalArgumentException("Model class is missing endpoint info annotation");
+        }
 
         Stream<Method> allListenerInterfaceMethods;
         Function<Method, ApiActionDefinition> tryGenerateDefinition;
@@ -52,6 +58,10 @@ public class ApiDefinitionSet<ModelType> {
                 ApiActionDefinition::getRequestDataType,
                 Function.identity()
         ));
+    }
+
+    public ApiEndpointInfo getEndpointInfo() {
+        return endpointInfo;
     }
 
     public ApiActionDefinition getFromName(String name) {

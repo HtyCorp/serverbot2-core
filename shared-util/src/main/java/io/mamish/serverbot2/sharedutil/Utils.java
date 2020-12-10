@@ -19,4 +19,8 @@ public class Utils {
         return inputList.stream().map(mapper).collect(Collectors.toList());
     }
 
+    public static boolean inRangeInclusive(long number, long min, long max) {
+        return number >= min && number <= max;
+    }
+
 }

@@ -7,18 +7,26 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.common.ApiActionDefinition;
 import io.mamish.serverbot2.framework.common.ApiDefinitionSet;
+import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
+import io.mamish.serverbot2.framework.common.ApiHttpMethod;
 import io.mamish.serverbot2.framework.exception.ApiException;
 import io.mamish.serverbot2.framework.exception.ServerExceptionDto;
 import io.mamish.serverbot2.framework.exception.ServerExceptionParser;
 import io.mamish.serverbot2.framework.exception.client.ApiClientException;
+import io.mamish.serverbot2.framework.exception.client.ApiClientIOException;
 import io.mamish.serverbot2.framework.exception.server.SerializationException;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.Utils;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.lambda.LambdaClient;
 import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 
@@ -41,11 +49,43 @@ public final class ApiClient {
             .httpClient(UrlConnectionHttpClient.create())
             .build();
 
+    private static final SigV4HttpClient sigV4HttpClient = new SigV4HttpClient();
+    private static final AwsCredentialsProvider credentialsProvider = DefaultCredentialsProvider.create();
+    private static final Region region = new DefaultAwsRegionProviderChain().getRegion();
+
     private ApiClient() {}
 
+    public static <ModelType> ModelType http(Class<ModelType> modelInterfaceClass) {
+        return makeProxyInstance(modelInterfaceClass, request -> {
+            ApiEndpointInfo endpoint = request.getEndpointInfo();
+            if (endpoint.httpMethod() != ApiHttpMethod.POST) {
+                throw new IllegalArgumentException("Only HTTP POST is supported");
+            }
+            String uri = "https://"
+                    + endpoint.serviceName()
+                    + CommonConfig.SERVICES_SYSTEM_SUBDOMAIN
+                    + "."
+                    + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
+                    + endpoint.uriPath();
+            AwsCredentials credentials = credentialsProvider.resolveCredentials();
+            try {
+                SigV4HttpResponse response = sigV4HttpClient.post(uri, request.getPayload(),
+                        "execute-api", region, credentials);
+                if (response.getBody().isEmpty()) {
+                    throw new ApiClientException("Service sent an empty response");
+                }
+                // Note: not checking response status at this status since non-2xx code might be thrown as part of an
+                // error that would be parsed into a useful ApiServerException, so should pass it back from this method.
+                return response.getBody().get();
+            } catch (IOException e) {
+                throw new ApiClientIOException("Unexpected network error while making HTTP call", e);
+            }
+        });
+    }
+
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
-        return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(payloadAndId.a());
+        return makeProxyInstance(modelInterfaceClass, request -> {
+            SdkBytes lambdaPayload = SdkBytes.fromUtf8String(request.getPayload());
             String functionLiveAlias = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
                     .functionName(functionLiveAlias));
@@ -56,8 +96,8 @@ public final class ApiClient {
     public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaApiServer<ModelType> localFunction) {
         final int outputCapacity = 262144; // 256KB
         final Charset UTF8 = StandardCharsets.UTF_8;
-        return makeProxyInstance(modelInterfaceClass, payloadAndId -> {
-            InputStream inputStream = new ByteArrayInputStream(payloadAndId.a().getBytes(UTF8));
+        return makeProxyInstance(modelInterfaceClass, request -> {
+            InputStream inputStream = new ByteArrayInputStream(request.getPayload().getBytes(UTF8));
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(outputCapacity);
             try {
                 localFunction.handleRequest(inputStream, outputStream, null);
@@ -70,11 +110,11 @@ public final class ApiClient {
 
     public static <ModelType> ModelType sqs(Class<ModelType> modelInterfaceClass, String queueName) {
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
-        return makeProxyInstance(modelInterfaceClass, payloadAndId -> sqsRequestResponse.sendAndReceive(
+        return makeProxyInstance(modelInterfaceClass, request -> sqsRequestResponse.sendAndReceive(
                 queueUrl,
-                payloadAndId.a(),
+                request.getPayload(),
                 ApiConfig.CLIENT_DEFAULT_TIMEOUT,
-                payloadAndId.b())
+                request.getRequestId())
         );
     }
 
@@ -84,7 +124,7 @@ public final class ApiClient {
      * 2) Definition set is not missing any definitions for the interface.
      */
     private static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
-                Function<Pair<String,String>,String> senderReceiver) {
+                Function<ClientRequest,String> senderReceiver) {
         ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass);
         @SuppressWarnings("unchecked")
         ModelType modelType = (ModelType) Proxy.newProxyInstance(
@@ -94,12 +134,13 @@ public final class ApiClient {
                     try {
                         AWSXRay.beginSubsegment(modelInterfaceClass.getSimpleName()+"Client");
 
-                        Object request = args[0];
-                        ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(request.getClass());
+                        Object requestPojo = args[0];
+                        ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(requestPojo.getClass());
                         String requestId = IDUtils.randomUUID();
-                        String payload = annotatedJsonPayload(request, apiDefinition, requestId);
+                        String payload = annotatedJsonPayload(requestPojo, apiDefinition, requestId);
 
-                        String responseString = senderReceiver.apply(new Pair<>(payload, requestId));
+                        ClientRequest clientRequest = new ClientRequest(definitionSet.getEndpointInfo(), payload, requestId);
+                        String responseString = senderReceiver.apply(clientRequest);
 
                         JsonObject response = JsonParser.parseString(responseString).getAsJsonObject();
                         JsonElement error = response.get(ApiConfig.JSON_RESPONSE_ERROR_KEY);
@@ -150,6 +191,30 @@ public final class ApiClient {
         jsonObject.addProperty(KEY, apiDefinition.getName());
         jsonObject.addProperty(RID, requestId);
         return gson.toJson(jsonObject);
+    }
+
+    private static class ClientRequest {
+        private final ApiEndpointInfo endpointInfo;
+        private final String payload;
+        private final String requestId;
+
+        public ClientRequest(ApiEndpointInfo endpointInfo, String payload, String requestId) {
+            this.endpointInfo = endpointInfo;
+            this.payload = payload;
+            this.requestId = requestId;
+        }
+
+        public ApiEndpointInfo getEndpointInfo() {
+            return endpointInfo;
+        }
+
+        public String getPayload() {
+            return payload;
+        }
+
+        public String getRequestId() {
+            return requestId;
+        }
     }
 
 }
