@@ -130,7 +130,6 @@ public class ServiceClusterStack extends Stack {
                 .userData(CONTAINER_INSTANCE_USERDATA)
                 .iamInstanceProfile(IamInstanceProfileProperty.builder().arn(containerInstanceProfile.getAttrArn()).build())
                 .monitoring(MonitoringProperty.builder().enabled(true).build())
-                .instanceMarketOptions(InstanceMarketOptionsProperty.builder().marketType("spot").build())
                 .securityGroupIds(List.of(containerInstanceSecurityGroup.getSecurityGroupId()))
                 .build();
 
