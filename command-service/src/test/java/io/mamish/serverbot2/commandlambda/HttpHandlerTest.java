@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class LambdaHandlerTest {
+public class HttpHandlerTest {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
     private static final String DUMMY_USER_ID = "12345678901234567";
@@ -67,8 +67,7 @@ public class LambdaHandlerTest {
     }
 
     private void testSimpleResponseMessage(String expectedResponseMessage, String... requestArgs) {
-        LambdaHandler handler = new LambdaHandler();
-        ICommandService localClient = ApiClient.localLambda(ICommandService.class, handler);
+        RootCommandHandler commandHandler = new RootCommandHandler();
 
         ProcessUserCommandRequest request = new ProcessUserCommandRequest(
                 List.of(requestArgs),
@@ -76,7 +75,7 @@ public class LambdaHandlerTest {
                 DUMMY_MESSAGE_ID,
                 DUMMY_USER_ID,
                 DUMMY_USER_NAME);
-        ProcessUserCommandResponse response = localClient.processUserCommand(request);
+        ProcessUserCommandResponse response = commandHandler.processUserCommand(request);
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));
 

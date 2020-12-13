@@ -12,7 +12,7 @@
     <artifactId>game-metadata-service</artifactId>
     
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.gamemetadata.LambdaHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.gamemetadata.HttpHandler</module.assemblyJarMainClass>
     </properties>
 
     <build>

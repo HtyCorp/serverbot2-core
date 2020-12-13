@@ -83,7 +83,7 @@ public class DiscordRelay {
         logger.info("Building DDB message table");
         messageTable = new DynamoMessageTable();
 
-        logger.info("Starting SQS service handler...");
+        logger.info("Starting API service handler...");
         new DiscordServiceHandler(discordApi, channelMap, messageTable);
 
         logger.info("Registering Javacord message listener...");

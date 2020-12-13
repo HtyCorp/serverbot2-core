@@ -1,14 +1,21 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.commandlambda.model.ICommandService;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
+import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
+import io.mamish.serverbot2.infra.constructs.ServiceApi;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.*;
 import software.amazon.awscdk.core.Fn;
+import software.amazon.awscdk.core.IConstruct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.*;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CommandStack extends Stack {
 
@@ -31,8 +38,8 @@ public class CommandStack extends Stack {
                 .build());
 
         // User construct doesn't expose tags: need to use backing CFN resource directly
-        ((CfnUser)ssmSessionUser.getNode().getDefaultChild()).getTags().setTag("SSMSessionRunAs",
-                AppInstanceConfig.MANAGED_OS_USER_NAME);
+        CfnUser sessionUserCfn = ((CfnUser)ssmSessionUser.getNode().getDefaultChild());
+        Objects.requireNonNull(sessionUserCfn).getTags().setTag("SSMSessionRunAs", AppInstanceConfig.MANAGED_OS_USER_NAME);
 
         CfnAccessKey accessKey = CfnAccessKey.Builder.create(this, "SsmSessionUserKey")
                 .userName(ssmSessionUser.getUserName())
@@ -48,25 +55,27 @@ public class CommandStack extends Stack {
                 CommandLambdaConfig.TERMINAL_FEDERATION_ACCESS_KEY,
                 fullAccessKeyAsToken);
 
-        // Service function
+        // Service
 
-        Role functionRole = Util.standardLambdaRole(this, "CommandFunctionExecutionRole", List.of(
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "command-service");
+
+        Util.addManagedPoliciesToRole(service.getTaskRole(),
                 ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
                 ManagedPolicies.SQS_FULL_ACCESS,
                 ManagedPolicies.EC2_FULL_ACCESS
-        )).build();
-
-        Util.addLambdaInvokePermission(this, functionRole,
-                GameMetadataConfig.FUNCTION_NAME,
-                NetSecConfig.FUNCTION_NAME);
-        Util.addConfigPathReadPermission(this, functionRole,
+        );
+        Util.addExecuteApiPermission(this, service,
+                IGameMetadataService.class,
+                INetworkSecurity.class
+        );
+        Util.addConfigPathReadPermission(this, service,
                 CommandLambdaConfig.PATH,
-                CommonConfig.PATH);
-        Util.addFullExecuteApiPermission(this, functionRole);
+                CommonConfig.PATH
+        );
+        Util.addFullExecuteApiPermission(this, service);
 
-        Util.highMemJavaFunction(this, "CommandService", "command-service",
-                "io.mamish.serverbot2.commandlambda.LambdaHandler",
-                b -> b.functionName(CommandLambdaConfig.FUNCTION_NAME).role(functionRole));
+        ServiceApi api = new ServiceApi(this, "Api", parent, ICommandService.class);
+        api.addEcsRoute(ICommandService.class, service);
 
     }
 }

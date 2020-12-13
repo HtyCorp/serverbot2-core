@@ -1,9 +1,9 @@
 package io.mamish.serverbot2.networksecurity;
 
-import io.mamish.serverbot2.framework.server.LambdaApiServer;
+import io.mamish.serverbot2.framework.server.HttpApiServer;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 
-public class LambdaHandler extends LambdaApiServer<INetworkSecurity> {
+public class HttpHandler extends HttpApiServer<INetworkSecurity> {
 
     @Override
     protected Class<INetworkSecurity> getModelClass() {

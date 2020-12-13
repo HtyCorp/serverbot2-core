@@ -1,9 +1,10 @@
 package io.mamish.serverbot2.gamemetadata;
 
+import io.mamish.serverbot2.framework.server.HttpApiServer;
 import io.mamish.serverbot2.framework.server.LambdaApiServer;
 import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 
-public class LambdaHandler extends LambdaApiServer<IGameMetadataService> {
+public class HttpHandler extends HttpApiServer<IGameMetadataService> {
 
     @Override
     protected Class<IGameMetadataService> getModelClass() {
