@@ -27,7 +27,10 @@ public class Main {
             Parameter parameter = new Parameter(DeployConfig.DEV_ENVIRONMENT_PARAM_NAME);
             devEnvironmentJson = parameter.getValue();
 
-            JsonObject envObj = JsonParser.parseString(devEnvironmentJson).getAsJsonObject();
+            JsonObject envObj = JsonParser.parseString(devEnvironmentJson)
+                    .getAsJsonObject()
+                    .get("environment")
+                    .getAsJsonObject();
             ApplicationEnv devEnvironment = gson.fromJson(envObj, ApplicationEnv.class);
 
             buildForDev(devEnvironment);
