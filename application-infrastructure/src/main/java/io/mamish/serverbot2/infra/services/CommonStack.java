@@ -109,6 +109,8 @@ public class CommonStack extends Stack {
                 DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
         Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
                 DiscordConfig.CHANNEL_ROLE_MAIN, env.getDiscordRelayRoleIdMain());
+        Util.instantiateConfigSsmParameter(this, "PrefixListSizeParam",
+                NetSecConfig.USER_IP_PREFIX_LIST_SIZE, Integer.toString(env.getPrefixListCapacity()));
 
         deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
                 .bucketName(env.getArtifactBucketName())

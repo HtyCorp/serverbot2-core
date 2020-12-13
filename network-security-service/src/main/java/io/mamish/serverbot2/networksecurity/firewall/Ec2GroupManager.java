@@ -160,7 +160,8 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     private boolean listIsFull(DecryptedPrefixList userList) {
-        return userList.getEntries().size() >= NetSecConfig.MAX_USER_IP_ADDRESSES;
+        int prefixListCapacity = Integer.parseInt(NetSecConfig.USER_IP_PREFIX_LIST_SIZE.getValue());
+        return userList.getEntries().size() >= prefixListCapacity;
     }
 
     private String getRemovalCandidateCidr(DecryptedPrefixList userList) {

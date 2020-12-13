@@ -23,7 +23,7 @@ public class NetSecStack extends Stack {
         CfnPrefixList userIpList = CfnPrefixList.Builder.create(this, "DiscordUserIpPrefixList")
                 .addressFamily("IPv4")
                 .prefixListName(NetSecConfig.USER_IP_PREFIX_LIST_NAME)
-                .maxEntries(NetSecConfig.MAX_USER_IP_ADDRESSES)
+                .maxEntries(parent.getEnv().getPrefixListCapacity())
                 .build();
 
         SecurityGroup commonGroup = SecurityGroup.Builder.create(this, "AppInstanceCommonGroup")
@@ -40,7 +40,7 @@ public class NetSecStack extends Stack {
 
         Role taskRole = service.getTaskRole();
         Util.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);
-        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH);
+        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH, NetSecConfig.PATH_PUBLIC);
         Util.addFullExecuteApiPermission(this, taskRole);
         parent.getCommonResources().getNetSecKmsKey().grant(taskRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
