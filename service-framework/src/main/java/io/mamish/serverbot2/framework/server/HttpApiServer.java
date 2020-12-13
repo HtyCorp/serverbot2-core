@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
 import io.mamish.serverbot2.framework.common.ApiHttpMethod;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import spark.Spark;
@@ -19,6 +20,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         }
         String internalApiRequestPath = ApiConfig.REQUEST_INTERNAL_BASE_PATH + getEndpointInfo().uriPath();
 
+        Spark.port(CommonConfig.SERVICES_INTERNAL_HTTP_PORT);
         Spark.post(internalApiRequestPath, (request, response) -> {
 
             logger.info("Request payload:");

@@ -15,13 +15,13 @@ import java.util.List;
 
 public class PipelineStack extends Stack {
 
-    private CdkPipeline pipeline;
+    private final CdkPipeline pipeline;
 
     public CdkPipeline getPipeline() {
         return pipeline;
     }
 
-    public PipelineStack(Construct parent, String id, StackProps stackProps) {
+    public PipelineStack(Construct parent, String id, StackProps stackProps, String sourceBranch, String pipelineName) {
         super(parent, id, stackProps);
 
         // Bucket for Maven dependency caching
@@ -48,7 +48,7 @@ public class PipelineStack extends Stack {
                 .oauthToken(SecretValue.secretsManager(DeployConfig.GITHUB_OAUTH_TOKEN_SECRET_NAME))
                 .owner(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_OWNER)
                 .repo(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_REPO)
-                .branch(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_BRANCH)
+                .branch(sourceBranch)
                 .build();
 
         // Shelving this until I can figure out if pipelines lib can allow multiple source artifacts
@@ -83,7 +83,7 @@ public class PipelineStack extends Stack {
                 .build();
 
         pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
-                .pipelineName("CDKDeploymentPipeline")
+                .pipelineName(pipelineName)
                 .sourceAction(gitHubSource)
                 .synthAction(codeBuildAction)
                 .cloudAssemblyArtifact(assemblyArtifact)

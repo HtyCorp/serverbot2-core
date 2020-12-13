@@ -26,48 +26,60 @@ public class Main {
 
             Parameter parameter = new Parameter(DeployConfig.DEV_ENVIRONMENT_PARAM_NAME);
             devEnvironmentJson = parameter.getValue();
+            ApplicationEnv devEnvironment = gson.fromJson(devEnvironmentJson, ApplicationEnv.class);
 
-            JsonObject envObj = JsonParser.parseString(devEnvironmentJson)
-                    .getAsJsonObject()
-                    .get("environment")
-                    .getAsJsonObject();
-            ApplicationEnv devEnvironment = gson.fromJson(envObj, ApplicationEnv.class);
+            synthesizeDevPipeline(devEnvironment);
 
-            buildForDev(devEnvironment);
+        } catch (ParameterNotFoundException e1) {
+            System.err.println("No dev environment definition found, trying deployment manifest instead...");
 
-        } catch (ParameterNotFoundException e) {
-            System.err.println("No dev environment definition found, moving on...");
-        }
+            String deploymentManifestJson;
+            try {
 
-        String deploymentManifestJson;
-        try {
+                Parameter parameter = new Parameter(DeployConfig.DEPLOYMENT_MANIFEST_PARAM_NAME);
+                deploymentManifestJson = parameter.getValue();
 
-            Parameter parameter = new Parameter(DeployConfig.DEPLOYMENT_MANIFEST_PARAM_NAME);
-            deploymentManifestJson = parameter.getValue();
+                DeploymentManifest deploymentManifest = gson.fromJson(deploymentManifestJson, DeploymentManifest.class);
+                synthesizeFullPipeline(deploymentManifest);
 
-            DeploymentManifest deploymentManifest = gson.fromJson(deploymentManifestJson, DeploymentManifest.class);
-            buildForPipeline(deploymentManifest);
+            } catch (ParameterNotFoundException e2) {
+                throw new RuntimeException("Could not locate any environment definitions from SSM parameters", e2);
+            }
 
-        } catch (ParameterNotFoundException e) {
-            throw new RuntimeException("Could not locate any environment definitions from SSM parameters");
         }
 
     }
 
-    private static void buildForDev(ApplicationEnv env) {
-        App app = new App();
-        Environment cdkEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
-        StageProps cdkProps = StageProps.builder().env(cdkEnv).build();
-        new ApplicationStage(app, env.getName(), cdkProps, env);
+    private static void synthesizeDevPipeline(ApplicationEnv appEnv) {
+
+        if (!appEnv.isEnabled()) {
+            throw new IllegalStateException("Dev environment is set to disabled.");
+        } else if (appEnv.requiresApproval()) {
+            throw new IllegalStateException("Dev environment requires approval (this is unsupported).");
+        }
+
+        App app = makeAppWithStandardAzIds(List.of(appEnv));
+
+        // Build dev CDK pipeline.
+        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
+                "ecs-api-migration", "DevEnvironmentPipeline");
+        CdkPipeline pipeline = pipelineStack.getPipeline();
+
+        Environment cdkEnv = Environment.builder().account(appEnv.getAccountId()).region(appEnv.getRegion()).build();
+        StageProps stageProps = StageProps.builder().env(cdkEnv).build();
+
+        pipeline.addApplicationStage(new ApplicationStage(app, appEnv.getName(), stageProps, appEnv));
+
         app.synth();
     }
 
-    private static void buildForPipeline(DeploymentManifest deploymentManifest) {
+    private static void synthesizeFullPipeline(DeploymentManifest deploymentManifest) {
         // Load environment manifest and create root app with extra generated context.
-        App app = makeAppWithStandardAzIds(deploymentManifest);
+        App app = makeAppWithStandardAzIds(deploymentManifest.getEnvironments());
 
         // Build central CDK pipeline.
-        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps());
+        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
+                DeployConfig.GITHUB_DEPLOYMENT_SOURCE_BRANCH, "CDKDeploymentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         // Add an application stage for every enabled environment in manifest.
@@ -97,12 +109,12 @@ public class Main {
         return StackProps.builder().env(defaultEnv).build();
     }
 
-    private static App makeAppWithStandardAzIds(DeploymentManifest manifest) {
+    private static App makeAppWithStandardAzIds(List<ApplicationEnv> environments) {
         // Pre-populate AZ IDs: pipelines can't get them from context lookups, and they must be added programmatically
         // before any nodes/constructs are added (which actually occurs during App instance construction).
         // Obviously this will fail for regions with less than 3 AZs.
         // Format ref: https://docs.aws.amazon.com/cdk/latest/guide/context.html#context_viewing
-        Map<String,Object> envZoneContextMap = manifest.getEnvironments().stream().map(env -> {
+        Map<String,Object> envZoneContextMap = environments.stream().map(env -> {
             String account = env.getAccountId();
             String region = env.getRegion();
             String envZonesContextKey = String.format("availability-zones:account=%s:region=%s", account, region);

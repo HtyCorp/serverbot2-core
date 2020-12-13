@@ -51,6 +51,7 @@ public class ServiceClusterStack extends Stack {
                 .build();
 
         containerInstanceSecurityGroup = SecurityGroup.Builder.create(this, "ContainerInstanceSecurityGroup")
+                .vpc(parent.getCommonResources().getServiceVpc())
                 .allowAllOutbound(true)
                 .build();
 
@@ -112,6 +113,7 @@ public class ServiceClusterStack extends Stack {
                 .vpc(parent.getCommonResources().getServiceVpc())
                 .defaultCloudMapNamespace(parent.getCommonResources().getInternalServiceNamespace())
                 .hasEc2Capacity(true)
+                .securityGroups(List.of(containerInstanceSecurityGroup))
                 .build());
 
     }
@@ -129,7 +131,7 @@ public class ServiceClusterStack extends Stack {
                 .securityGroupIds(List.of(containerInstanceSecurityGroup.getSecurityGroupId()))
                 .build();
 
-        return CfnLaunchTemplate.Builder.create(this, "ClusterCapacityGroupTemplate")
+        return CfnLaunchTemplate.Builder.create(this, "ClusterCapacityGroupTemplate" + hardwareType.name())
                 .launchTemplateData(launchTemplateData)
                 .build();
     }

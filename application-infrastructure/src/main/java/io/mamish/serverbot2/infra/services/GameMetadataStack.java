@@ -44,7 +44,7 @@ public class GameMetadataStack extends Stack {
                 .projectionType(ProjectionType.ALL)
                 .build());
 
-        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "gamemetadata");
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "game-metadata-service");
         metadataTable.grantFullAccess(service);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IGameMetadataService.class);

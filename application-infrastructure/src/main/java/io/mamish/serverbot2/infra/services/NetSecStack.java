@@ -36,7 +36,7 @@ public class NetSecStack extends Stack {
                 Port.tcp(NetSecConfig.APP_INSTANCE_SFTP_PORT),
                 "Custom SFTP port for Apache SSHD / SFTP");
 
-        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security");
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security-service");
 
         Role taskRole = service.getTaskRole();
         Util.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);

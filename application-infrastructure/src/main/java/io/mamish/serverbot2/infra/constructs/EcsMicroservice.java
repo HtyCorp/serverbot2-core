@@ -54,6 +54,8 @@ public class EcsMicroservice extends Construct implements IGrantable {
         Util.addConfigPathReadPermission(parent, taskRole, CommonConfig.PATH);
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
+                .compatibility(Compatibility.EC2)
+                .networkMode(NetworkMode.AWS_VPC)
                 .cpu("256")
                 .memoryMiB("1024") // Note this has specific allowed values in Fargate: not arbitrary
                 .taskRole(taskRole)
@@ -62,16 +64,15 @@ public class EcsMicroservice extends Construct implements IGrantable {
         // Prepare Docker dir for CDK
 
         Path jarSrc = Util.codeBuildPath(internalName, "target", internalName+"-1.0-SNAPSHOT-jar-with-dependencies.jar");
-        InputStream dockerfileSrc = getClass().getResourceAsStream("EcsStandardServiceDockerfile");
+        InputStream dockerfileSrc = getClass().getResourceAsStream("/EcsStandardServiceDockerfile");
 
-        Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "docker", internalName);
+        Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "target", "docker", internalName);
         Path jarDst = serviceDockerDir.resolve("service-worker.jar");
         Path dockerfileDst = serviceDockerDir.resolve("Dockerfile");
 
         try {
-            if (!serviceDockerDir.toFile().mkdirs()) {
-                throw new IOException("Failed to create destination directory");
-            }
+            //noinspection ResultOfMethodCallIgnored
+            serviceDockerDir.toFile().mkdirs();
             Files.copy(jarSrc, jarDst, StandardCopyOption.REPLACE_EXISTING);
             Files.copy(dockerfileSrc, dockerfileDst, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -88,10 +89,16 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .logGroup(serverLogGroup)
                 .streamPrefix(internalName)
                 .build());
-        taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
+        ContainerDefinition serviceContainer = taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
+                .memoryReservationMiB(768)
                 .essential(true)
                 .image(ContainerImage.fromAsset(serviceDockerDir.toString()))
                 .logging(serverLogDriver)
+                .build());
+        serviceContainer.addPortMappings(PortMapping.builder()
+                .protocol(Protocol.TCP)
+                .containerPort(CommonConfig.SERVICES_INTERNAL_HTTP_PORT)
+                .hostPort(CommonConfig.SERVICES_INTERNAL_HTTP_PORT)
                 .build());
 
         // Sidecar container: Xray daemon
@@ -105,6 +112,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .streamPrefix("xray-daemon")
                 .build());
         ContainerDefinition xrayContainer = taskDefinition.addContainer("XrayDaemonContainer", ContainerDefinitionOptions.builder()
+                .memoryReservationMiB(32)
                 .image(ContainerImage.fromRegistry("amazon/aws-xray-daemon"))
                 .logging(xrayLogDriver)
                 .build());
