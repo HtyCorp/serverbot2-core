@@ -1,13 +1,15 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
+import io.mamish.serverbot2.sharedconfig.Parameter;
 import io.mamish.serverbot2.sharedutil.Pair;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.services.ssm.SsmClient;
+import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 
 import java.util.List;
 import java.util.Map;
@@ -17,16 +19,56 @@ public class Main {
 
     public static void main(String[] args) {
 
+        Gson gson = new Gson();
+
+        String devEnvironmentJson;
+        try {
+
+            Parameter parameter = new Parameter(DeployConfig.DEV_ENVIRONMENT_PARAM_NAME);
+            devEnvironmentJson = parameter.getValue();
+
+            JsonObject envObj = JsonParser.parseString(devEnvironmentJson).getAsJsonObject();
+            ApplicationEnv devEnvironment = gson.fromJson(envObj, ApplicationEnv.class);
+
+            buildForDev(devEnvironment);
+
+        } catch (ParameterNotFoundException e) {
+            System.err.println("No dev environment definition found, moving on...");
+        }
+
+        String deploymentManifestJson;
+        try {
+
+            Parameter parameter = new Parameter(DeployConfig.DEPLOYMENT_MANIFEST_PARAM_NAME);
+            deploymentManifestJson = parameter.getValue();
+
+            DeploymentManifest deploymentManifest = gson.fromJson(deploymentManifestJson, DeploymentManifest.class);
+            buildForPipeline(deploymentManifest);
+
+        } catch (ParameterNotFoundException e) {
+            throw new RuntimeException("Could not locate any environment definitions from SSM parameters");
+        }
+
+    }
+
+    private static void buildForDev(ApplicationEnv env) {
+        App app = new App();
+        Environment cdkEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
+        StageProps cdkProps = StageProps.builder().env(cdkEnv).build();
+        new ApplicationStage(app, env.getName(), cdkProps, env);
+        app.synth();
+    }
+
+    private static void buildForPipeline(DeploymentManifest deploymentManifest) {
         // Load environment manifest and create root app with extra generated context.
-        DeploymentManifest manifest = loadDeploymentManifest();
-        App app = makeAppWithStandardAzIds(manifest);
+        App app = makeAppWithStandardAzIds(deploymentManifest);
 
         // Build central CDK pipeline.
         PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps());
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         // Add an application stage for every enabled environment in manifest.
-        for (ApplicationEnv env: manifest.getEnvironments()) {
+        for (ApplicationEnv env: deploymentManifest.getEnvironments()) {
             if (env.isEnabled()) {
                 String stageId = env.getName() + "Deployment";
                 Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
@@ -50,13 +92,6 @@ public class Main {
                 .region(Util.defaultRegion())
                 .build();
         return StackProps.builder().env(defaultEnv).build();
-    }
-
-    private static DeploymentManifest loadDeploymentManifest() {
-        SsmClient ssmClient = SsmClient.builder().httpClient(UrlConnectionHttpClient.create()).build();
-        String manifestParamName = DeployConfig.ENVIRONMENT_MANIFEST_PARAM_NAME;
-        String manifestString = ssmClient.getParameter(r -> r.name(manifestParamName)).parameter().value();
-        return (new Gson()).fromJson(manifestString, DeploymentManifest.class);
     }
 
     private static App makeAppWithStandardAzIds(DeploymentManifest manifest) {

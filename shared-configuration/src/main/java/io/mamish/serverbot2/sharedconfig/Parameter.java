@@ -15,6 +15,11 @@ public class Parameter extends ConfigValue {
             .build();
     private static final Function<String,String> fetcher =  n -> ssmClient.getParameter(r -> r.name(n)).parameter().value();
 
+    public Parameter(String name) {
+        // SSM params have a '/' at the start of their path, unlike SM secrets
+        super("/" + name, fetcher);
+    }
+
     public Parameter(String path, String name) {
         // SSM params have a '/' at the start of their path, unlike SM secrets
         super("/" + path + "/" + name, fetcher);

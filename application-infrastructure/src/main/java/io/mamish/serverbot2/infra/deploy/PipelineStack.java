@@ -72,7 +72,7 @@ public class PipelineStack extends Stack {
         codeBuildProject.addToRolePolicy(PolicyStatement.Builder.create()
                 .effect(Effect.ALLOW)
                 .actions(List.of("ssm:GetParameter"))
-                .resources(List.of("arn:aws:ssm:*:*:parameter/"+DeployConfig.ENVIRONMENT_MANIFEST_PARAM_NAME))
+                .resources(List.of("arn:aws:ssm:*:*:parameter/"+DeployConfig.DEPLOYMENT_MANIFEST_PARAM_NAME))
                 .build());
 
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
