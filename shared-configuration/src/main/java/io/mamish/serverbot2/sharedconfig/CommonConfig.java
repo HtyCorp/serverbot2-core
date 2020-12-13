@@ -14,7 +14,7 @@ public class CommonConfig {
     // workflow-service/src/main/resources/NewInstanceUserdata.txt
     public static final Parameter S3_DEPLOYED_ARTIFACTS_BUCKET = new Parameter(PATH, "deployed-artifacts-bucket");
 
-    public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";
+    public static final String STANDARD_VPC_CIDR = "10.0.0.0/16";
     public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "app-vpc-id");
     public static final String APPLICATION_VPC_FLOW_LOGS_GROUP_NAME = "serverbot2/app/flowlogs";
 

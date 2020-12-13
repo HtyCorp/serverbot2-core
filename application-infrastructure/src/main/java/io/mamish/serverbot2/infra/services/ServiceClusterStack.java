@@ -85,7 +85,7 @@ public class ServiceClusterStack extends Stack {
                 .instancesDistribution(capacityOptimisedInstanceDistribution)
                 .build();
 
-        List<String> serviceSubnetIds = Utils.mapList(parent.getCommonResources().getServiceVpc().getPublicSubnets(),
+        List<String> serviceSubnetIds = Utils.mapList(parent.getCommonResources().getServiceVpc().getPrivateSubnets(),
                 ISubnet::getSubnetId);
         CfnAutoScalingGroup capacityAutoScalingGroup = CfnAutoScalingGroup.Builder.create(this, "CapacityAutoScalingGroup")
                 .capacityRebalance(true)

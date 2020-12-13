@@ -143,7 +143,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
         Ec2Service service = Ec2Service.Builder.create(this, "EcsService")
                 .cluster(appStage.getServiceCluster().getCluster())
                 .taskDefinition(taskDefinition)
-                .assignPublicIp(true)
+                .assignPublicIp(false)
                 .cloudMapOptions(cloudMapOptions)
                 .securityGroups(List.of(defaultTaskSg))
                 .build();

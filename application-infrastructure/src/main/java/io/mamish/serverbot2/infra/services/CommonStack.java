@@ -7,7 +7,6 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
@@ -116,16 +115,21 @@ public class CommonStack extends Stack {
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
-        List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
-                .name("main")
+        SubnetConfiguration publicSubnet = SubnetConfiguration.builder()
+                .name("public")
                 .subnetType(SubnetType.PUBLIC)
-                .cidrMask(24)
-                .build());
+                .cidrMask(20)
+                .build();
+        SubnetConfiguration privateSubnet = SubnetConfiguration.builder()
+                .name("private")
+                .cidrMask(20)
+                .build();
 
         serviceVpc = Vpc.Builder.create(this, "ServiceVpc")
-                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                .cidr(CommonConfig.STANDARD_VPC_CIDR)
                 .maxAzs(3)
-                .subnetConfiguration(singlePublicSubnet)
+                .subnetConfiguration(List.of(publicSubnet, privateSubnet))
+                .natGateways(1)
                 .build();
 
         LogGroup appFlowLogsGroup = LogGroup.Builder.create(this, "AppFlowLogsGroup")
@@ -140,10 +144,10 @@ public class CommonStack extends Stack {
                 .build();
 
         applicationVpc = Vpc.Builder.create(this, "ApplicationVpc")
-                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                .cidr(CommonConfig.STANDARD_VPC_CIDR)
                 .flowLogs(Map.of("default", appFlowLogsOptions))
                 .maxAzs(3)
-                .subnetConfiguration(singlePublicSubnet)
+                .subnetConfiguration(List.of(publicSubnet))
                 .build();
 
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
