@@ -4,16 +4,10 @@ import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
 import io.mamish.serverbot2.infra.constructs.ServiceApi;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
-import io.mamish.serverbot2.infra.util.ManagedPolicies;
-import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.dynamodb.*;
-import software.amazon.awscdk.services.iam.Role;
-
-import java.util.List;
 
 public class GameMetadataStack extends Stack {
 

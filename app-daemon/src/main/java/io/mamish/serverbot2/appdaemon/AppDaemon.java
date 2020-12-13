@@ -13,8 +13,6 @@ import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageRequest;
 import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
-import io.mamish.serverbot2.sharedconfig.DiscordConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

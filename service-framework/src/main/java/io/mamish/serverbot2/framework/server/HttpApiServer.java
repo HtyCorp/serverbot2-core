@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.framework.server;
 
 import com.google.gson.Gson;
-import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
 import io.mamish.serverbot2.framework.common.ApiHttpMethod;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;

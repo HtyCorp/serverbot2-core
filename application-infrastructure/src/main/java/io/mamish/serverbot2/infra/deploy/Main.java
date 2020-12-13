@@ -1,8 +1,6 @@
 package io.mamish.serverbot2.infra.deploy;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;

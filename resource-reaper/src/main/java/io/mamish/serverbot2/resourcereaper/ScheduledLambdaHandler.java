@@ -7,7 +7,6 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.RevokeExpiredIpsRequest;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import software.amazon.awssdk.services.sqs.SqsClient;
 

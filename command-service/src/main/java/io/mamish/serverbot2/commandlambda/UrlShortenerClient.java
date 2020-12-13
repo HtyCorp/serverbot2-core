@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.commandlambda;
 
-import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.google.gson.JsonObject;
 import io.mamish.serverbot2.framework.client.SigV4HttpClient;
 import io.mamish.serverbot2.framework.client.SigV4HttpResponse;

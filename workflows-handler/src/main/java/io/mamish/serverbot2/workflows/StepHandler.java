@@ -12,7 +12,9 @@ import io.mamish.serverbot2.networksecurity.model.CreateSecurityGroupRequest;
 import io.mamish.serverbot2.networksecurity.model.DeleteSecurityGroupRequest;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.ManagedSecurityGroup;
-import io.mamish.serverbot2.sharedconfig.*;
+import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
+import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.workflows.model.ExecutionState;
 import org.apache.logging.log4j.LogManager;
@@ -98,7 +100,7 @@ public class StepHandler {
         String newInstanceId;
         try {
             InputStream templateStream = getClass().getClassLoader().getResourceAsStream("instance_init.sh.template");
-            String userdataTemplate = new String(templateStream.readAllBytes(), StandardCharsets.UTF_8);
+            String userdataTemplate = new String(Objects.requireNonNull(templateStream).readAllBytes(), StandardCharsets.UTF_8);
             String finalUserdata = userdataTemplate.replace("${SB2::OsUserName}", AppInstanceConfig.MANAGED_OS_USER_NAME);
             String encodedUserdata = Base64.getEncoder().encodeToString(finalUserdata.getBytes(StandardCharsets.UTF_8));
 
@@ -263,6 +265,7 @@ public class StepHandler {
 
         while (true) {
             try {
+                //noinspection BusyWait
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 logger.error("Unexpected thread interrupt while polling EC2 instance condition", e);

@@ -2,7 +2,10 @@ package io.mamish.serverbot2.commandlambda;
 
 import io.mamish.serverbot2.commandlambda.commands.welcome.*;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
-import io.mamish.serverbot2.discordrelay.model.service.*;
+import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
+import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
+import io.mamish.serverbot2.discordrelay.model.service.ModifyRoleMembershipRequest;
+import io.mamish.serverbot2.discordrelay.model.service.RoleModifyOperation;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.gamemetadata.model.GameMetadata;
 import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
