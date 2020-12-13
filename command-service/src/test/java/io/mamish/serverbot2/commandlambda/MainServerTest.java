@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class HttpHandlerTest {
+public class MainServerTest {
 
     private static final String SIGIL = CommonConfig.COMMAND_SIGIL_CHARACTER;
     private static final String DUMMY_USER_ID = "12345678901234567";

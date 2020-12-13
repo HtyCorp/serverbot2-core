@@ -12,7 +12,7 @@
     <artifactId>network-security-service</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.networksecurity.HttpHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.networksecurity.MainServer</module.assemblyJarMainClass>
     </properties>
 
     <build>

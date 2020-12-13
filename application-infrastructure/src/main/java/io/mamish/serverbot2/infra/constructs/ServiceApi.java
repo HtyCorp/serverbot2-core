@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.constructs;
 
+import io.mamish.serverbot2.framework.common.ApiAuthType;
 import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -9,6 +10,7 @@ import software.amazon.awscdk.services.apigatewayv2.*;
 import software.amazon.awscdk.services.apigatewayv2.integrations.HttpServiceDiscoveryIntegration;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ServiceApi extends Construct {
 
@@ -23,9 +25,14 @@ public class ServiceApi extends Construct {
         serviceName = mainServiceInterfaceClass.getAnnotation(ApiEndpointInfo.class).serviceName();
         commonVpcLink = appStage.getCommonResources().getApiVpcLink();
 
-        api = HttpApi.Builder.create(this, "ServiceApi")
+        // CDK currently uses this ID as the API name, so to remove confusion make a compound name from the interface.
+        api = HttpApi.Builder.create(this, mainServiceInterfaceClass.getSimpleName()+"ServiceApi")
                 .createDefaultStage(false)
                 .build();
+
+        // Disable default endpoint (requires CDK escape hatch)
+        CfnApi cfnApi = (CfnApi) api.getNode().getDefaultChild();
+        Objects.requireNonNull(cfnApi).setDisableExecuteApiEndpoint(true);
 
         String fqdn = IDUtils.dot(serviceName, CommonConfig.SERVICES_SYSTEM_SUBDOMAIN,
                 appStage.getEnv().getSystemRootDomainName());
@@ -65,11 +72,18 @@ public class ServiceApi extends Construct {
                 .vpcLink(commonVpcLink)
                 .build();
 
-        api.addRoutes(AddRoutesOptions.builder()
+        IHttpRoute route = api.addRoutes(AddRoutesOptions.builder()
                 .integration(ecsServiceIntegration)
                 .methods(List.of(httpMethodForEndpoint))
                 .path(endpointInfo.uriPath())
-                .build());
+                .build()
+        ).get(0);
+
+        if (endpointInfo.authType() == ApiAuthType.IAM) {
+            CfnRoute cfnRoute = (CfnRoute) route.getNode().getDefaultChild();
+            Objects.requireNonNull(cfnRoute).setAuthorizationType("AWS_IAM");
+        }
+
     }
 
 }

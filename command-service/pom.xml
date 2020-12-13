@@ -12,7 +12,7 @@
     <artifactId>command-service</artifactId>
     
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.commandlambda.HttpHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.commandlambda.MainServer</module.assemblyJarMainClass>
     </properties>
 
     <build>

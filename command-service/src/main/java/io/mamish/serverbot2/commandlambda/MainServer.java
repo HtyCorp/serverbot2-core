@@ -3,7 +3,11 @@ package io.mamish.serverbot2.commandlambda;
 import io.mamish.serverbot2.commandlambda.model.ICommandService;
 import io.mamish.serverbot2.framework.server.HttpApiServer;
 
-public class HttpHandler extends HttpApiServer<ICommandService> {
+public class MainServer extends HttpApiServer<ICommandService> {
+
+    public static void main(String[] args) {
+        new MainServer();
+    }
 
     @Override
     protected Class<ICommandService> getModelClass() {

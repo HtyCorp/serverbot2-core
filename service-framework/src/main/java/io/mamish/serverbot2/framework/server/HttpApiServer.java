@@ -17,7 +17,8 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
             throw new IllegalArgumentException("HTTP APIs only support POST method currently");
         }
-        String internalApiRequestPath = ApiConfig.REQUEST_INTERNAL_BASE_PATH + getEndpointInfo().uriPath();
+        // Would be nice to add this onto a 'base' path but APIGW HTTP APIs seem limited on this.
+        String internalApiRequestPath = getEndpointInfo().uriPath();
 
         Spark.port(CommonConfig.SERVICES_INTERNAL_HTTP_PORT);
         Spark.post(internalApiRequestPath, (request, response) -> {

@@ -92,7 +92,7 @@ public class ServiceClusterStack extends Stack {
         CfnAutoScalingGroup capacityAutoScalingGroup = CfnAutoScalingGroup.Builder.create(this, "CapacityAutoScalingGroup")
                 .capacityRebalance(true)
                 .minSize("0")
-                .maxSize("5")
+                .maxSize("3")
                 .desiredCapacity("0")
                 .vpcZoneIdentifier(serviceSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
