@@ -29,7 +29,7 @@ public class S3Artifact extends Construct {
                 .build();
 
         String providerCodePath = Util.codeBuildPath("application-infrastructure", "src", "main", "resources",
-                "s3_artifact_resource_provider");
+                "s3_artifact_resource_provider").toString();
         Function providerFunction = Function.Builder.create(this, "Function")
                 .runtime(Runtime.PYTHON_3_7)
                 .handler("lambda_function.lambda_handler")

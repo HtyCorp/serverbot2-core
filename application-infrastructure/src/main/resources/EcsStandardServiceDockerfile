@@ -1,0 +1,4 @@
+FROM amazoncorretto:11
+WORKDIR /opt/service
+COPY ./service-worker.jar bin/service-worker.jar
+CMD java -jar bin/service-worker.jar

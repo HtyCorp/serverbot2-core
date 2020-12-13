@@ -12,6 +12,7 @@ import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.secretsmanager.CfnSecret;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,9 +23,9 @@ import java.util.stream.Stream;
 
 public class Util {
 
-    public static String codeBuildPath(String... path) {
+    public static Path codeBuildPath(String... segments) {
         String codeBuildDir = System.getenv("CODEBUILD_SRC_DIR");
-        return Paths.get(codeBuildDir, path).toString();
+        return Paths.get(codeBuildDir, segments);
     }
 
     public static String environmentManifestPath() {

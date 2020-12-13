@@ -21,6 +21,11 @@ import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.servicediscovery.DnsRecordType;
 import software.amazon.awscdk.services.servicediscovery.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 public class EcsMicroservice extends Construct implements IGrantable {
@@ -36,7 +41,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
         return internalDiscoveryService;
     }
 
-    public EcsMicroservice(Stack parent, String id, ApplicationStage appStage, String internalServiceName) {
+    public EcsMicroservice(Stack parent, String id, ApplicationStage appStage, String internalName) {
         super(parent, id);
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")
@@ -54,7 +59,26 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .taskRole(taskRole)
                 .build();
 
-        // Main container: service instance built from Maven module fat JAR in ${maven-module}/target/docker
+        // Prepare Docker dir for CDK
+
+        Path jarSrc = Util.codeBuildPath(internalName, "target", internalName+"-1.0-SNAPSHOT-jar-with-dependencies.jar");
+        InputStream dockerfileSrc = getClass().getResourceAsStream("EcsStandardServiceDockerfile");
+
+        Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "docker", internalName);
+        Path jarDst = serviceDockerDir.resolve("service-worker.jar");
+        Path dockerfileDst = serviceDockerDir.resolve("Dockerfile");
+
+        try {
+            if (!serviceDockerDir.toFile().mkdirs()) {
+                throw new IOException("Failed to create destination directory");
+            }
+            Files.copy(jarSrc, jarDst, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(dockerfileSrc, dockerfileDst, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to copy files to docker directory", e);
+        }
+
+        // Main container: service instance built from above fat JAR
 
         LogGroup serverLogGroup = LogGroup.Builder.create(this, "ServerLogGroup")
                 .retention(RetentionDays.ONE_YEAR)
@@ -62,12 +86,11 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .build();
         LogDriver serverLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
                 .logGroup(serverLogGroup)
-                .streamPrefix(internalServiceName)
+                .streamPrefix(internalName)
                 .build());
-        String dockerDirPath = Util.codeBuildPath(internalServiceName, "target", "docker");
         taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
                 .essential(true)
-                .image(ContainerImage.fromAsset(dockerDirPath))
+                .image(ContainerImage.fromAsset(serviceDockerDir.toString()))
                 .logging(serverLogDriver)
                 .build());
 
@@ -94,7 +117,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
         // Cloud Map options for service discovery (used by API Gateway)
 
         CloudMapOptions cloudMapOptions = CloudMapOptions.builder()
-                .name(internalServiceName)
+                .name(internalName)
                 .cloudMapNamespace(appStage.getCommonResources().getInternalServiceNamespace())
                 .dnsRecordType(DnsRecordType.SRV)
                 .dnsTtl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
