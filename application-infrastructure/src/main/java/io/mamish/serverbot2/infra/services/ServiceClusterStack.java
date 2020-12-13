@@ -8,13 +8,14 @@ import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup;
 import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup.*;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.IamInstanceProfileProperty;
-import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.InstanceMarketOptionsProperty;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.LaunchTemplateDataProperty;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.MonitoringProperty;
 import software.amazon.awscdk.services.ec2.ISubnet;
 import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.ecs.CfnCluster.CapacityProviderStrategyItemProperty;
+import software.amazon.awscdk.services.ecs.CfnCapacityProvider.AutoScalingGroupProviderProperty;
+import software.amazon.awscdk.services.ecs.CfnCapacityProvider.ManagedScalingProperty;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
@@ -79,6 +80,7 @@ public class ServiceClusterStack extends Stack {
                 .build();
         InstancesDistributionProperty capacityOptimisedInstanceDistribution = InstancesDistributionProperty.builder()
                 .spotAllocationStrategy("capacity-optimized")
+                .onDemandPercentageAboveBaseCapacity(0) // 0 = all spot, 100 = all on-demand, default = 100
                 .build();
         MixedInstancesPolicyProperty autoScalingMixedInstancesPolicy = MixedInstancesPolicyProperty.builder()
                 .launchTemplate(mixedInstancesTemplate)
@@ -94,12 +96,23 @@ public class ServiceClusterStack extends Stack {
                 .desiredCapacity("0")
                 .vpcZoneIdentifier(serviceSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
+                .newInstancesProtectedFromScaleIn(true)
                 .build();
 
+        ManagedScalingProperty managedScaling = ManagedScalingProperty.builder()
+                .status("ENABLED")
+                .minimumScalingStepSize(1)
+                .maximumScalingStepSize(1)
+                .targetCapacity(90) // Target cluster resource utilization as percentage
+                .build();
+        AutoScalingGroupProviderProperty autoScalingProviderProperty = AutoScalingGroupProviderProperty.builder()
+                // This can actually take a group name (which is what Ref returns) instead of ARN
+                .autoScalingGroupArn(capacityAutoScalingGroup.getRef())
+                .managedScaling(managedScaling)
+                .managedTerminationProtection("ENABLED")
+                .build();
         CfnCapacityProvider capacityProvider = CfnCapacityProvider.Builder.create(this, "CapacityProvider")
-                .autoScalingGroupProvider(CfnCapacityProvider.AutoScalingGroupProviderProperty.builder()
-                        // this can actually take a group name (which is what Ref returns) instead of ARN
-                        .autoScalingGroupArn(capacityAutoScalingGroup.getRef()).build())
+                .autoScalingGroupProvider(autoScalingProviderProperty)
                 .build();
 
         CfnCluster cfnServiceCluster = CfnCluster.Builder.create(this, "CfnServiceCluster")
