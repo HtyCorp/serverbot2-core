@@ -19,6 +19,8 @@ import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +28,10 @@ import java.util.Map;
 public class ServiceClusterStack extends Stack {
 
     private static final String CLUSTER_NAME = "ServiceCluster";
-    private static final String CONTAINER_INSTANCE_USERDATA = "#!/bin/bash\n" +
-            "echo ECS_CLUSTER="+CLUSTER_NAME+" >> /etc/ecs/ecs.config";
+    private static final String CONTAINER_INSTANCE_USERDATA = Base64.getEncoder().encodeToString((
+            "#!/bin/bash\n" +
+            "echo ECS_CLUSTER="+CLUSTER_NAME+" >> /etc/ecs/ecs.config"
+    ).getBytes(StandardCharsets.UTF_8));
 
     private final CfnInstanceProfile containerInstanceProfile;
     private final SecurityGroup containerInstanceSecurityGroup;
