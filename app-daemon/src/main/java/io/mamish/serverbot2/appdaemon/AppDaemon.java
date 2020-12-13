@@ -45,10 +45,8 @@ public class AppDaemon {
 
     private final Logger logger = LogManager.getLogger(AppDaemon.class);
     private final SfnClient sfnClient = SfnClient.create();
-    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class,
-            NetSecConfig.FUNCTION_NAME);
-    private final IDiscordService discordServiceClient = ApiClient.sqs(IDiscordService.class,
-            DiscordConfig.SQS_QUEUE_NAME);
+    private final INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
+    private final IDiscordService discordServiceClient = ApiClient.http(IDiscordService.class);
 
     public AppDaemon() {
         phoneHome();

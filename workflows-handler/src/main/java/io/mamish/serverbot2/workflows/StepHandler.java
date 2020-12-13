@@ -37,9 +37,9 @@ public class StepHandler {
     private final SqsClient sqsClient = SqsClient.create();
     private final AppDnsRecordManager dnsRecordManager = new AppDnsRecordManager();
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
-    private final IGameMetadataService gameMetadataService = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
-    private final INetworkSecurity networkSecurityService = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
-    private final IDiscordService discordService = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
+    private final IGameMetadataService gameMetadataService = ApiClient.http(IGameMetadataService.class);
+    private final INetworkSecurity networkSecurityService = ApiClient.http(INetworkSecurity.class);
+    private final IDiscordService discordService = ApiClient.http(IDiscordService.class);
 
     void createGameMetadata(ExecutionState executionState) {
         String name = executionState.getGameName();

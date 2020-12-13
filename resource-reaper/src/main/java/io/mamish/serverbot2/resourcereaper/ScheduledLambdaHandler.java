@@ -18,7 +18,7 @@ public class ScheduledLambdaHandler implements RequestHandler<ScheduledEvent,Str
     private static final String TAGKEY = ReaperConfig.HEARTBEAT_TAG_NAME;
 
     private final SqsClient sqs = SqsClient.create();
-    private final INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+    private final INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
 
     @Override
     public String handleRequest(ScheduledEvent scheduledEvent, Context context) {

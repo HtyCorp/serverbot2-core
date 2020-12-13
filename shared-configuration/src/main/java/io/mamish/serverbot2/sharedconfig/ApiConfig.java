@@ -14,4 +14,7 @@ public class ApiConfig {
 
     public static final String TEMP_QUEUE_URL_PREFIX = "ApiClientTempQueue";
 
+    // Base path for requests by API Gateway to services on ECS (HTTP integration)
+    public static final String REQUEST_INTERNAL_BASE_PATH = "/api";
+
 }

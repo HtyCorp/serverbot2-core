@@ -66,7 +66,7 @@ public class DiscordRelay {
         messageHandlerExecutor = Executors.newCachedThreadPool();
 
         logger.info("Building CommandService client...");
-        commandServiceClient = ApiClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
+        commandServiceClient = ApiClient.http(ICommandService.class);
 
         logger.info("Logging in to Discord API...");
         String apiToken = DiscordConfig.API_TOKEN.getValue();

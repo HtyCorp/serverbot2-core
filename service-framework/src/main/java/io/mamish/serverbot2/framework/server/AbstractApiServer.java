@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.framework.server;
 
+import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
+
 public abstract class AbstractApiServer<ModelType> {
 
     /**
@@ -29,8 +31,13 @@ public abstract class AbstractApiServer<ModelType> {
     protected abstract ModelType createHandlerInstance();
 
     private final JsonApiRequestDispatcher<ModelType> requestDispatcher = new JsonApiRequestDispatcher<>(createHandlerInstance(),getModelClass());
+    private final ApiEndpointInfo apiEndpointInfo = getModelClass().getAnnotation(ApiEndpointInfo.class);
 
     public JsonApiRequestDispatcher<ModelType> getRequestDispatcher() {
         return requestDispatcher;
+    }
+
+    public ApiEndpointInfo getEndpointInfo() {
+        return apiEndpointInfo;
     }
 }

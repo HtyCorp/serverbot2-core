@@ -40,7 +40,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
     private final Gson gson = new Gson();
 
-    private final INetworkSecurity networkSecurityClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+    private final INetworkSecurity networkSecurityClient = ApiClient.http(INetworkSecurity.class);
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {

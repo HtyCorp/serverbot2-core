@@ -30,11 +30,11 @@ public class RootCommandHandler implements ICommandService {
     public RootCommandHandler() {
 
         logger.trace("Initialising GameMetadata client");
-        IGameMetadataService gameMetadataServiceClient = ApiClient.lambda(IGameMetadataService.class, GameMetadataConfig.FUNCTION_NAME);
+        IGameMetadataService gameMetadataServiceClient = ApiClient.http(IGameMetadataService.class);
         logger.trace("Initialising NetworkSecurity client");
-        INetworkSecurity networkSecurityServiceClient = ApiClient.lambda(INetworkSecurity.class, NetSecConfig.FUNCTION_NAME);
+        INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
         logger.trace("Initialising DiscordRelay client");
-        IDiscordService discordServiceClient = ApiClient.sqs(IDiscordService.class, DiscordConfig.SQS_QUEUE_NAME);
+        IDiscordService discordServiceClient = ApiClient.http(IDiscordService.class);
         logger.trace("Initialising URLShortener client");
         UrlShortenerClient urlShortenerClient = new UrlShortenerClient();
 
