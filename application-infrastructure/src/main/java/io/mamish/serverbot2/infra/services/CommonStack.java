@@ -122,6 +122,7 @@ public class CommonStack extends Stack {
                 .build();
         SubnetConfiguration privateSubnet = SubnetConfiguration.builder()
                 .name("private")
+                .subnetType(SubnetType.PRIVATE)
                 .cidrMask(20)
                 .build();
 
