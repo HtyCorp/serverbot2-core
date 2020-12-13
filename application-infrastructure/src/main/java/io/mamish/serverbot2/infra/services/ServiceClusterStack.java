@@ -79,7 +79,6 @@ public class ServiceClusterStack extends Stack {
                 .build();
         InstancesDistributionProperty capacityOptimisedInstanceDistribution = InstancesDistributionProperty.builder()
                 .spotAllocationStrategy("capacity-optimized")
-                .spotInstancePools(2)
                 .build();
         MixedInstancesPolicyProperty autoScalingMixedInstancesPolicy = MixedInstancesPolicyProperty.builder()
                 .launchTemplate(mixedInstancesTemplate)
