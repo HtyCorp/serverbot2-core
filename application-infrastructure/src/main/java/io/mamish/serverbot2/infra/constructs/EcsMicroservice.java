@@ -63,7 +63,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         // Prepare Docker dir for CDK
 
-        Path jarSrc = Util.codeBuildPath(internalName, "target", internalName+"-1.0-SNAPSHOT-jar-with-dependencies.jar");
+        Path jarSrc = Util.mavenJarPath(internalName);
         InputStream dockerfileSrc = getClass().getResourceAsStream("/EcsStandardServiceDockerfile");
 
         Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "target", "docker", internalName);

@@ -40,7 +40,8 @@ public class ApplicationStage extends Stage {
         new GameMetadataStack(this, "GameMetadataService");
         new NetSecStack(this, "NetworkSecurityService");
         new ReaperStack(this, "ResourceReaper");
-        new LambdaWarmerStack(this, "LambdaWarmer");
+        // Warmer is not necessary anymore since we're using ECS for critical services
+        //new LambdaWarmerStack(this, "LambdaWarmer");
 
     }
 

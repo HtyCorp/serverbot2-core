@@ -6,7 +6,7 @@ import io.mamish.serverbot2.framework.common.ApiRequestInfo;
 
 import java.util.List;
 
-@ApiRequestInfo(order = 0, name = "ProcessUserCommand", numRequiredFields = 4, description = "Run a user command submitted from Discord")
+@ApiRequestInfo(order = 0, name = "ProcessUserCommand", numRequiredFields = 5, description = "Run a user command submitted from Discord")
 public class ProcessUserCommandRequest {
 
     @ApiArgumentInfo(order = 0, description = "List of whitespace-split words in user command")

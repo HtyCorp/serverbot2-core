@@ -49,8 +49,10 @@ public class ServiceClusterStack extends Stack {
 
         Role containerInstanceRole = Role.Builder.create(this, "ContainerInstanceRole")
                 .assumedBy(new ServicePrincipal("ec2.amazonaws.com"))
-                .managedPolicies(List.of(ManagedPolicies.ECS_DEFAULT_INSTANCE_POLICY))
-                .build();
+                .managedPolicies(List.of(
+                        ManagedPolicies.ECS_DEFAULT_INSTANCE_POLICY, // Required for ECS operation
+                        ManagedPolicies.SSM_MANAGED_INSTANCE_CORE // Extra policy to allow SSH for management
+                )).build();
         containerInstanceProfile = CfnInstanceProfile.Builder.create(this, "ContainerInstanceProfile")
                 .roles(List.of(containerInstanceRole.getRoleName()))
                 .build();

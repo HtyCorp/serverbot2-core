@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.TraceHeader;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams;
@@ -17,9 +19,6 @@ import java.util.Optional;
 
 public class SigV4HttpClient {
 
-    private static final String XRAY_LAMBDA_ENV_TRACE_ID_KEY = "_X_AMZN_TRACE_ID";
-    private static final String XRAY_TRACE_ID_HEADER_NAME = "X-Amzn-Trace-Id";
-
     private final SdkHttpClient httpClient = UrlConnectionHttpClient.create();
     private final Aws4Signer requestSigner = Aws4Signer.create();
 
@@ -29,11 +28,12 @@ public class SigV4HttpClient {
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
         ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
 
-        Map<String, List<String>> extraHeaders = new HashMap<>();
-        String traceIdFromLambda = System.getenv(XRAY_LAMBDA_ENV_TRACE_ID_KEY);
-        if (traceIdFromLambda != null) {
-            extraHeaders.put(XRAY_TRACE_ID_HEADER_NAME, List.of(traceIdFromLambda));
-        }
+        // Propagate Xray trace ID into request headers if one is found
+        Map<String, List<String>> extraHeaders = new HashMap<>(1);
+        Optional.ofNullable(AWSXRay.getTraceEntity()).ifPresent(entity -> extraHeaders.put(
+                TraceHeader.HEADER_KEY,
+                List.of(entity.getTraceId().toString()))
+        );
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
                 .uri(URI.create(uri))

@@ -126,7 +126,7 @@ public class Util {
                                              Consumer<Function.Builder> functionEditor, Consumer<Alias.Builder> aliasEditor) {
         Function.Builder functionBuilder = Function.Builder.create(parent, id)
                 .runtime(Runtime.JAVA_11)
-                .code(mavenJarAsset(moduleName))
+                .code(Code.fromAsset(mavenJarPath(moduleName).toString()))
                 .memorySize(memory)
                 .handler(handler)
                 .tracing(Tracing.ACTIVE)
@@ -146,15 +146,10 @@ public class Util {
 
     }
 
-    public static Code mavenJarAsset(String moduleName) {
-        // Should make this refer to home or maybe current working directory if env not found
-        String rootPath = System.getenv("CODEBUILD_SRC_DIR");
+    public static Path mavenJarPath(String moduleName) {
         final String projectVersion = System.getProperty("serverbot2.version");
-        final String assemblyDescriptor = "jar-with-dependencies";
-        String baseFileName = IDUtils.kebab(moduleName, projectVersion, assemblyDescriptor);
-        String fullFileName = baseFileName + ".jar";
-        String jarPath = IDUtils.slash( rootPath, moduleName, "target", fullFileName);
-        return Code.fromAsset(jarPath);
+        String shadedJarFilename = moduleName + "-" + projectVersion + ".jar";
+        return codeBuildPath(moduleName, "target", shadedJarFilename);
     }
 
     public static StringParameter instantiateConfigSsmParameter(Construct parent, String id, Parameter parameter, String value) {
