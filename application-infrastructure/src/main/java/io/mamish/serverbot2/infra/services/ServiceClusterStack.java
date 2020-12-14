@@ -91,9 +91,11 @@ public class ServiceClusterStack extends Stack {
                 ISubnet::getSubnetId);
         CfnAutoScalingGroup capacityAutoScalingGroup = CfnAutoScalingGroup.Builder.create(this, "CapacityAutoScalingGroup")
                 .capacityRebalance(true)
-                .minSize("0")
+                // Observation: When capacity is 0, managed scaling seems to interpret this as "100% utilization",
+                // resulting in capacity increase. This loops forever. Avoid it by setting minimum size = 1.
+                .minSize("1")
                 .maxSize("3")
-                .desiredCapacity("0")
+                .desiredCapacity("1")
                 .vpcZoneIdentifier(serviceSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
                 .newInstancesProtectedFromScaleIn(true)

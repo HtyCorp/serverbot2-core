@@ -2,6 +2,7 @@ package io.mamish.serverbot2.gamemetadata.metastore;
 
 import io.mamish.serverbot2.gamemetadata.model.GameReadyState;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
@@ -15,10 +16,10 @@ import java.util.stream.Stream;
 
 public class DynamoTableMetadataStore implements IMetadataStore {
 
-    private DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
+    private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(DynamoDbClient.builder()
                     .httpClient(UrlConnectionHttpClient.create())
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                    .credentialsProvider(ContainerCredentialsProvider.builder().build())
                     .build()
             ).build();
     private DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,

@@ -11,6 +11,7 @@ import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
@@ -40,9 +41,8 @@ public class RootCommandHandler implements ICommandService {
 
         logger.trace("Initialising EC2 client");
         Ec2Client ec2Client = Ec2Client.builder()
-                .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                .credentialsProvider(ContainerCredentialsProvider.builder().build())
                 .httpClient(UrlConnectionHttpClient.create())
-                .region(new SystemSettingsRegionProvider().getRegion())
                 .build();
 
         logger.trace("Creating admin command handler...");
