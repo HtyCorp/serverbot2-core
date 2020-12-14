@@ -124,7 +124,7 @@ public final class ApiClient {
      */
     private static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
                 Function<ClientRequest,String> senderReceiver) {
-        ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass);
+        ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass, true);
         @SuppressWarnings("unchecked")
         ModelType modelType = (ModelType) Proxy.newProxyInstance(
                 ApiClient.class.getClassLoader(),

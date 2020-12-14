@@ -6,8 +6,12 @@ import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.services.apigatewayv2.*;
 import software.amazon.awscdk.services.apigatewayv2.integrations.HttpServiceDiscoveryIntegration;
+import software.amazon.awscdk.services.route53.ARecord;
+import software.amazon.awscdk.services.route53.RecordTarget;
+import software.amazon.awscdk.services.route53.targets.ApiGatewayv2Domain;
 
 import java.util.List;
 import java.util.Objects;
@@ -62,6 +66,14 @@ public class ServiceApi extends Construct {
                         .domainName(serviceDomainName)
                         .build())
                 .build();
+
+        ARecord apiAliasRecord = ARecord.Builder.create(this, "DnsRecord")
+                .recordName(fqdn)
+                .zone(appStage.getCommonResources().getSystemRootHostedZone())
+                .target(RecordTarget.fromAlias(new ApiGatewayv2Domain(serviceDomainName)))
+                .ttl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
+                .build();
+
     }
 
     public void addEcsRoute(Class<?> serviceInterfaceClass, EcsMicroservice ecsMicroservice) {
