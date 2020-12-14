@@ -146,6 +146,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .assignPublicIp(false)
                 .cloudMapOptions(cloudMapOptions)
                 .securityGroups(List.of(defaultTaskSg))
+                .placementStrategies(List.of(PlacementStrategy.packedByMemory()))
                 .build();
 
         // Current iteration of apigwv2 constructs need a Service, not an IService, so just cast it.

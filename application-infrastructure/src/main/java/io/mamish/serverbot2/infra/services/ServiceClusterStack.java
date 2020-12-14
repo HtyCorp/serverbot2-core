@@ -94,7 +94,7 @@ public class ServiceClusterStack extends Stack {
                 // Observation: When capacity is 0, managed scaling seems to interpret this as "100% utilization",
                 // resulting in capacity increase. This loops forever. Avoid it by setting minimum size = 1.
                 .minSize("1")
-                .maxSize("3")
+                .maxSize("2")
                 .desiredCapacity("1")
                 .vpcZoneIdentifier(serviceSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
@@ -105,7 +105,7 @@ public class ServiceClusterStack extends Stack {
                 .status("ENABLED")
                 .minimumScalingStepSize(1)
                 .maximumScalingStepSize(1)
-                .targetCapacity(90) // Target cluster resource utilization as percentage
+                .targetCapacity(100) // Target cluster resource utilization as percentage
                 .build();
         AutoScalingGroupProviderProperty autoScalingProviderProperty = AutoScalingGroupProviderProperty.builder()
                 // This can actually take a group name (which is what Ref returns) instead of ARN
