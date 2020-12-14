@@ -11,7 +11,6 @@ import spark.Spark;
 public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
     private final Logger logger = LogManager.getLogger(HttpApiServer.class);
-    private final Gson gson = new Gson();
 
     public HttpApiServer() {
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
@@ -24,7 +23,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         Spark.post(internalApiRequestPath, (request, response) -> {
 
             logger.info("Request payload:");
-            logger.info(gson.toJson(request));
+            logger.info(request.body());
 
             String responseBody = getRequestDispatcher().handleRequest(request.body());
 

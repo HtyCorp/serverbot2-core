@@ -7,8 +7,12 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.services.apigatewayv2.*;
+import software.amazon.awscdk.services.apigatewayv2.CfnStage.AccessLogSettingsProperty;
 import software.amazon.awscdk.services.apigatewayv2.integrations.HttpServiceDiscoveryIntegration;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.ApiGatewayv2Domain;
@@ -17,6 +21,19 @@ import java.util.List;
 import java.util.Objects;
 
 public class ServiceApi extends Construct {
+
+    // This has to be single-line in the actual spec, so lack of newlines is deliberate.
+    private static final String DEFAULT_ACCESS_LOG_FORMAT = "{ " +
+            "\"requestTime\":\"$context.requestTime\", " +
+            "\"requestId\":\"$context.requestId\", " +
+            "\"caller\":\"$context.identity.caller\", " +
+            "\"ip\": \"$context.identity.sourceIp\", " +
+            "\"httpMethod\":\"$context.httpMethod\", " +
+            "\"routeKey\":\"$context.routeKey\", " +
+            "\"status\":\"$context.status\", " +
+            "\"protocol\":\"$context.protocol\", " +
+            "\"responseLength\":\"$context.responseLength\" " +
+            "}";
 
     // Recorded so we can assert that added service interfaces all use the same service name.
     private final String serviceName;
@@ -35,7 +52,7 @@ public class ServiceApi extends Construct {
         String className = mainServiceInterfaceClass.getSimpleName();
         int startStrip = (className.startsWith("I") && Character.isUpperCase(className.charAt(1))) ? 1 : 0;
         int endStrip = (className.endsWith("Service")) ? "Service".length() : 0;
-        String apiId = className.substring(startStrip, className.length() - endStrip);
+        String apiId = className.substring(startStrip, className.length() - endStrip) + "ServiceApi";
 
         // CDK currently uses this ID as the API name, so to remove confusion make a compound name from the interface.
         api = HttpApi.Builder.create(this, apiId)
@@ -58,7 +75,7 @@ public class ServiceApi extends Construct {
         // since there are some nasty circular dependencies otherwise if we try to make services grant permission to
         // each other based on the generated API ID.
 
-        HttpStage.Builder.create(this, "ServiceStage")
+        HttpStage defaultStage = HttpStage.Builder.create(this, "ServiceStage")
                 .httpApi(api)
                 .stageName(serviceName)
                 .autoDeploy(true)
@@ -67,12 +84,27 @@ public class ServiceApi extends Construct {
                         .build())
                 .build();
 
+        // Configure custom DNS
+
         ARecord apiAliasRecord = ARecord.Builder.create(this, "DnsRecord")
                 .recordName(fqdn)
                 .zone(appStage.getCommonResources().getSystemRootHostedZone())
                 .target(RecordTarget.fromAlias(new ApiGatewayv2Domain(serviceDomainName)))
                 .ttl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
                 .build();
+
+        // Enable access logs (not supported in high-level constructs)
+
+        LogGroup accessLogGroup = LogGroup.Builder.create(this, apiId+"AccessLogs")
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .retention(RetentionDays.THREE_MONTHS)
+                .build();
+
+        CfnStage cfnStage = (CfnStage) defaultStage.getNode().getDefaultChild();
+        Objects.requireNonNull(cfnStage).setAccessLogSettings(AccessLogSettingsProperty.builder()
+                .destinationArn(accessLogGroup.getLogGroupArn())
+                .format(DEFAULT_ACCESS_LOG_FORMAT)
+                .build());
 
     }
 
