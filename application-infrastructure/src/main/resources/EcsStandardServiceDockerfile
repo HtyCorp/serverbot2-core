@@ -1,4 +1,4 @@
-FROM amazoncorretto:11
+FROM 489478819445.dkr.ecr.us-west-2.amazonaws.com/corretto11:latest
 WORKDIR /opt/service
 COPY ./service-worker.jar bin/service-worker.jar
 CMD java -jar bin/service-worker.jar
