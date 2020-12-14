@@ -22,13 +22,16 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     public AbstractApiRequestDispatcher(ModelType handlerInstance, Class<ModelType> handlerInterfaceClass) {
         this.handlerInstance = handlerInstance;
         logger.trace("Building definition set for " + handlerInterfaceClass.getSimpleName());
-        this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass);
+        this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass, requiresEndpointInfo());
         logger.trace("Finished construction");
     }
 
     public ApiDefinitionSet<?> getApiDefinitionSet() {
         return apiDefinitionSet;
     }
+
+    // Whether the implementing subclass requires the API definition to have endpoint info present
+    protected abstract boolean requiresEndpointInfo();
 
     protected abstract Pair<String, ParsedInputType> parseNameKey(RawInputType rawInput)
             throws UnparsableInputException;

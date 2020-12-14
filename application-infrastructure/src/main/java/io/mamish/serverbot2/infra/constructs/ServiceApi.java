@@ -25,8 +25,16 @@ public class ServiceApi extends Construct {
         serviceName = mainServiceInterfaceClass.getAnnotation(ApiEndpointInfo.class).serviceName();
         commonVpcLink = appStage.getCommonResources().getApiVpcLink();
 
+        // Build service name (CDK uses the given ID directly as name since they don't have to be unique)
+        // Strip the leading "I" and training "Service" if present.
+
+        String className = mainServiceInterfaceClass.getSimpleName();
+        int startStrip = (className.startsWith("I") && Character.isUpperCase(className.charAt(1))) ? 1 : 0;
+        int endStrip = (className.endsWith("Service")) ? "Service".length() : 0;
+        String apiId = className.substring(startStrip, className.length() - endStrip);
+
         // CDK currently uses this ID as the API name, so to remove confusion make a compound name from the interface.
-        api = HttpApi.Builder.create(this, mainServiceInterfaceClass.getSimpleName()+"ServiceApi")
+        api = HttpApi.Builder.create(this, apiId)
                 .createDefaultStage(false)
                 .build();
 

@@ -33,6 +33,12 @@ public class CommandDispatcher<ModelType> extends AbstractApiRequestDispatcher<M
     }
 
     @Override
+    protected boolean requiresEndpointInfo() {
+        // Endpoint info not required - command interfaces are used internally so don't have endpoint info associated
+        return false;
+    }
+
+    @Override
     protected Pair<String, ProcessUserCommandRequest> parseNameKey(ProcessUserCommandRequest input) {
         List<String> words = input.getWords();
         if (words.size() < 1) {

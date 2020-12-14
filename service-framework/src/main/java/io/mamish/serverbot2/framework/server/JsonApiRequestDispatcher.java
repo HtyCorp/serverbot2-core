@@ -19,6 +19,12 @@ public class JsonApiRequestDispatcher<HandlerType> extends
     }
 
     @Override
+    protected boolean requiresEndpointInfo() {
+        // Endpoint info required - this dispatcher is exclusively used by API services and clients
+        return true;
+    }
+
+    @Override
     protected Pair<String, JsonObject> parseNameKey(String jsonString) {
         try {
             JsonObject obj = JsonParser.parseString(jsonString).getAsJsonObject();
