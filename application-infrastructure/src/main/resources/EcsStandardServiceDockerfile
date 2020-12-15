@@ -1,35 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
-
-# Using 'FROM amazonlinux:2' had a few issues I couldn't get a workaround for:
-# 1) Docker Hub rate limits prevent the amount of pulls allowed, causing issues in the pipeline building Docker assets
-# 2) ECR Public Gallery doesn't publish a Corretto11 image at this time
-# 3) The Corretto ECR instance (https://aws.amazon.com/blogs/opensource/new-update-channels-for-amazon-corretto-releases/)
-#    requires login to the relevant account/registry, but CDK's docker build commands only authenticate to this account.
-# 4) Mirroring the image in a local repo could work but would need one time setup with a custom resource.
-
-# Solution: use the AL2 image from Public Gallery and copy the Dockerfile contents from Corretto's official sources
-
-# Start copy from: https://github.com/corretto/corretto-docker/blob/master/11/jdk/al2/Dockerfile
-
-ARG version=11.0.9.12-1
-RUN set -eux \
-    && export GNUPGHOME="$(mktemp -d)" \
-    && curl -fL -o corretto.key https://yum.corretto.aws/corretto.key \
-    && gpg --batch --import corretto.key \
-    && gpg --batch --export --armor '6DC3636DAE534049C8B94623A122542AB04F24E3' > corretto.key \
-    && rpm --import corretto.key \
-    && rm -r "$GNUPGHOME" corretto.key \
-    && curl -fL -o /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo \
-    && grep -q '^gpgcheck=1' /etc/yum.repos.d/corretto.repo \
-    && yum install -y java-11-amazon-corretto-devel-$version \
-    && (find /usr/lib/jvm/java-11-amazon-corretto -name src.zip -delete || true) \
-    && yum install -y fontconfig \
-    && yum clean all
-ENV LANG C.UTF-8
-ENV JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto
-
-# End copy
-
+FROM amazoncorretto:11
 WORKDIR /opt/service
 COPY ./service-worker.jar bin/service-worker.jar
 CMD java -jar bin/service-worker.jar
