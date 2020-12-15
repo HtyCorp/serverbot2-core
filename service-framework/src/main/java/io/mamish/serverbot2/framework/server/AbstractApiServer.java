@@ -1,6 +1,8 @@
 package io.mamish.serverbot2.framework.server;
 
 import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
+import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 
 public abstract class AbstractApiServer<ModelType> {
 
@@ -30,14 +32,31 @@ public abstract class AbstractApiServer<ModelType> {
      */
     protected abstract ModelType createHandlerInstance();
 
-    private final JsonApiRequestDispatcher<ModelType> requestDispatcher = new JsonApiRequestDispatcher<>(createHandlerInstance(),getModelClass());
-    private final ApiEndpointInfo apiEndpointInfo = getModelClass().getAnnotation(ApiEndpointInfo.class);
+    private final JsonApiRequestDispatcher<ModelType> requestDispatcher;
+    private final ApiEndpointInfo apiEndpointInfo;
 
-    public JsonApiRequestDispatcher<ModelType> getRequestDispatcher() {
+    public AbstractApiServer() {
+
+        // Xray defaults: treat missing context as non-fatal (only affects monitoring) and set a good service name
+
+        String displayServiceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
+        XrayUtils.setServiceName(displayServiceName);
+        XrayUtils.setIgnoreMissingContext();
+
+        // Make a new service handler and a dispatcher for it, so subclasses can route requests
+
+        ModelType serviceRequestHandler = createHandlerInstance();
+        requestDispatcher = new JsonApiRequestDispatcher<>(serviceRequestHandler,getModelClass());
+        apiEndpointInfo = getModelClass().getAnnotation(ApiEndpointInfo.class);
+
+    }
+
+    protected JsonApiRequestDispatcher<ModelType> getRequestDispatcher() {
         return requestDispatcher;
     }
 
-    public ApiEndpointInfo getEndpointInfo() {
+    protected ApiEndpointInfo getEndpointInfo() {
         return apiEndpointInfo;
     }
+
 }

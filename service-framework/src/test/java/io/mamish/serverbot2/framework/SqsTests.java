@@ -1,16 +1,15 @@
 package io.mamish.serverbot2.framework;
 
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.server.SqsApiServer;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 public class SqsTests {
 
     void disabledTestSendReceive() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        XrayUtils.setInstrumentationEnabled(false);
 
         IDummyService implementation = request -> {
             System.out.println("Got a request");
@@ -21,7 +20,7 @@ public class SqsTests {
         String queueName = "TempTestQueue-" + IDUtils.randomUUIDJoined();
         String queueUrl = sqs.createQueue(r -> r.queueName(queueName)).queueUrl();
 
-        SqsApiServer<IDummyService> service = new SqsApiServer<IDummyService>(queueName) {
+        SqsApiServer<IDummyService> service = new SqsApiServer<>(queueName) {
             @Override
             protected Class<IDummyService> getModelClass() {
                 return IDummyService.class;

@@ -7,6 +7,7 @@ import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ public class MainServerTest {
 
     @BeforeAll
     static void disableXray() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        XrayUtils.setInstrumentationEnabled(false);
     }
 
     @Test

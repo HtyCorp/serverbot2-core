@@ -4,7 +4,6 @@ import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.TraceHeader;
 import io.mamish.serverbot2.framework.common.ApiHttpMethod;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedutil.IDUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import spark.Request;
@@ -21,8 +20,6 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         // Would be nice to add this onto a 'base' path but APIGW HTTP APIs seem limited on this.
         String internalApiRequestPath = getEndpointInfo().uriPath();
 
-        final String serviceTraceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
-
         Spark.port(CommonConfig.SERVICES_INTERNAL_HTTP_PORT);
         Spark.post(internalApiRequestPath, (request, response) -> {
 
@@ -33,9 +30,9 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
             TraceHeader trace = extractTraceHeaderIfAvailable(request);
             if (trace != null) {
-                AWSXRay.beginSegment(serviceTraceName, trace.getRootTraceId(), trace.getParentId());
+                AWSXRay.beginSegment("HandleRequest", trace.getRootTraceId(), trace.getParentId());
             } else {
-                AWSXRay.beginSegment(serviceTraceName);
+                AWSXRay.beginSegment("HandleRequest");
             }
 
             try {

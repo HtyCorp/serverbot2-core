@@ -2,11 +2,11 @@ package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.TraceHeader;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -74,7 +74,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
             // used outside a trace due to missing Xray context. This lines sets the Xray recorder to ignore these.
             // This is only required because automatic client instrumentation is enabled (and can't be selectively
             // disabled per-client like I hoped...).
-            AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+            XrayUtils.setIgnoreMissingContext();
 
             final String receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(receiveQueueName)).queueUrl();
 
@@ -99,9 +99,9 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                         // Propagate Xray trace information if available in message attributes
                         TraceHeader trace = extractTraceHeaderIfAvailable(message);
                         if (trace != null) {
-                            AWSXRay.beginSegment(serviceInterfaceName+"Server", trace.getRootTraceId(), trace.getParentId());
+                            AWSXRay.beginSegment("HandleRequest", trace.getRootTraceId(), trace.getParentId());
                         } else {
-                            AWSXRay.beginSegment(serviceInterfaceName+"Server");
+                            AWSXRay.beginSegment("HandleRequest");
                         }
 
                         try {

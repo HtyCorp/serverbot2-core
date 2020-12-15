@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.discordrelay;
 
 import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.commandlambda.model.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
@@ -12,6 +11,7 @@ import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
@@ -33,7 +33,8 @@ public class DiscordRelay {
 
     public static void main(String[] args) {
         System.out.println("Launching Discord relay...");
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        XrayUtils.setIgnoreMissingContext();
+        XrayUtils.setServiceName("DiscordRelay");
         new DiscordRelay();
     }
 

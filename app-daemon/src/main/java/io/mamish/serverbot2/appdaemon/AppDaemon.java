@@ -1,7 +1,5 @@
 package io.mamish.serverbot2.appdaemon;
 
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.discordrelay.model.service.NewMessageRequest;
@@ -14,6 +12,7 @@ import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -27,7 +26,8 @@ import java.util.concurrent.TimeUnit;
 public class AppDaemon {
 
     public static void main(String[] args) {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        XrayUtils.setIgnoreMissingContext();
+        XrayUtils.setServiceName("AppDaemon");
         new AppDaemon();
     }
 
