@@ -24,7 +24,7 @@ public class AppInstanceShareStack extends Stack {
         // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer
         // looking S3 bucket from the CDK asset staging bucket.
 
-        String appDaemonJarPath = Util.codeBuildPath("app-daemon", "target", "app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar").toString();
+        String appDaemonJarPath = Util.mavenJarPath("app-daemon").toString();
         Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
                 .path(appDaemonJarPath)
                 .build();
