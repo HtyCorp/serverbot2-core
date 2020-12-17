@@ -61,7 +61,7 @@ public abstract class AbstractApiServer<ModelType> {
     }
 
     protected String getSimpleServiceName() {
-        return getSimpleServiceName();
+        return simpleServiceName;
     }
 
 }
