@@ -62,6 +62,7 @@ public final class ApiClient {
             }
             String uri = "https://"
                     + endpoint.serviceName()
+                    + "."
                     + CommonConfig.SERVICES_SYSTEM_SUBDOMAIN
                     + "."
                     + CommonConfig.SYSTEM_ROOT_DOMAIN_NAME.getValue()
