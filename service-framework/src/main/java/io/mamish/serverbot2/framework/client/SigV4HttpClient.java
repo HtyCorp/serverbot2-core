@@ -1,7 +1,9 @@
 package io.mamish.serverbot2.framework.client;
 
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.Entity;
 import com.amazonaws.xray.entities.TraceHeader;
+import io.mamish.serverbot2.sharedutil.Utils;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams;
@@ -30,6 +32,10 @@ public class SigV4HttpClient {
 
         // Propagate Xray trace ID into request headers if one is found
         Map<String, List<String>> extraHeaders = new HashMap<>(1);
+        Utils.ifNotNull(AWSXRay.getTraceEntity(), Entity::getTraceId, traceId -> extraHeaders.put(
+                TraceHeader.HEADER_KEY,
+                List.of(traceId.toString())
+        ));
         Optional.ofNullable(AWSXRay.getTraceEntity()).ifPresent(entity -> extraHeaders.put(
                 TraceHeader.HEADER_KEY,
                 List.of(entity.getTraceId().toString()))

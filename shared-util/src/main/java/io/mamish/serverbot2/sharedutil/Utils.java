@@ -2,6 +2,7 @@ package io.mamish.serverbot2.sharedutil;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,15 @@ public class Utils {
 
     public static boolean inRangeInclusive(long number, long min, long max) {
         return number >= min && number <= max;
+    }
+
+    public static <T,U> void ifNotNull(T tValue, Function<T,U> uGetter, Consumer<U> action) {
+        if (tValue != null) {
+            U uValue = uGetter.apply(tValue);
+            if (uValue != null) {
+                action.accept(uValue);
+            }
+        }
     }
 
 }
