@@ -46,6 +46,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
                 AWSXRay.endSubsegment();
 
+                response.header("server", "Serverbot2 API");
                 return responseBody;
 
             } catch (Exception e) {

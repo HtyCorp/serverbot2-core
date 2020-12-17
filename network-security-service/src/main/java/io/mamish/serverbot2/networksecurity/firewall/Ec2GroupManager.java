@@ -16,12 +16,10 @@ import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 
@@ -38,7 +36,7 @@ public class Ec2GroupManager implements IGroupManager {
 
     private final Ec2Client ec2Client = Ec2Client.builder()
             .httpClient(UrlConnectionHttpClient.create())
-            .credentialsProvider(ProfileCredentialsProvider.create())
+            .credentialsProvider(ContainerCredentialsProvider.builder().build())
             .build();
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
