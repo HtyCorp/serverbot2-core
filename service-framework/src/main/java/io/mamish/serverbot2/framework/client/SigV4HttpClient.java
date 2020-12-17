@@ -36,10 +36,6 @@ public class SigV4HttpClient {
                 TraceHeader.HEADER_KEY,
                 List.of(traceId.toString())
         ));
-        Optional.ofNullable(AWSXRay.getTraceEntity()).ifPresent(entity -> extraHeaders.put(
-                TraceHeader.HEADER_KEY,
-                List.of(entity.getTraceId().toString()))
-        );
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
                 .uri(URI.create(uri))
