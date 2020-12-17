@@ -30,17 +30,21 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
             TraceHeader trace = extractTraceHeaderIfAvailable(request);
             if (trace != null) {
-                AWSXRay.beginSegment("HandleRequest", trace.getRootTraceId(), trace.getParentId());
+                AWSXRay.beginSegment(getSimpleServiceName(), trace.getRootTraceId(), trace.getParentId());
             } else {
-                AWSXRay.beginSegment("HandleRequest");
+                AWSXRay.beginSegment(getSimpleServiceName());
             }
 
             try {
+
+                AWSXRay.beginSubsegment("HandleRequest");
 
                 String responseBody = getRequestDispatcher().handleRequest(request.body());
 
                 logger.info("Response payload:");
                 logger.info(responseBody);
+
+                AWSXRay.endSubsegment();
 
                 return responseBody;
 

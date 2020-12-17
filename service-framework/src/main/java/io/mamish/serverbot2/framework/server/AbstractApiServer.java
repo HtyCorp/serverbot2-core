@@ -34,13 +34,14 @@ public abstract class AbstractApiServer<ModelType> {
 
     private final JsonApiRequestDispatcher<ModelType> requestDispatcher;
     private final ApiEndpointInfo apiEndpointInfo;
+    private final String simpleServiceName;
 
     public AbstractApiServer() {
 
         // Xray defaults: treat missing context as non-fatal (only affects monitoring) and set a good service name
 
-        String displayServiceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
-        XrayUtils.setServiceName(displayServiceName);
+        simpleServiceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
+        XrayUtils.setServiceName(simpleServiceName);
         XrayUtils.setIgnoreMissingContext();
 
         // Make a new service handler and a dispatcher for it, so subclasses can route requests
@@ -57,6 +58,10 @@ public abstract class AbstractApiServer<ModelType> {
 
     protected ApiEndpointInfo getEndpointInfo() {
         return apiEndpointInfo;
+    }
+
+    protected String getSimpleServiceName() {
+        return getSimpleServiceName();
     }
 
 }
