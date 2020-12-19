@@ -4,6 +4,7 @@ import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.regions.providers.InstanceProfileRegionProvider;
 
 public class AppContext {
@@ -38,6 +39,10 @@ public class AppContext {
         globalContext = instanceContext();
     }
 
+    public static void setDefault() {
+        globalContext = defaultContext();
+    }
+
     private static AppContext lambdaContext() {
         return new AppContext(
                 Region.of(System.getenv("AWS_REGION")),
@@ -60,6 +65,14 @@ public class AppContext {
         return new AppContext(
                 new InstanceProfileRegionProvider().getRegion(),
                 InstanceProfileCredentialsProvider.create(),
+                UrlConnectionHttpClient.create()
+        );
+    }
+
+    private static AppContext defaultContext() {
+        return new AppContext(
+                new DefaultAwsRegionProviderChain().getRegion(),
+                DefaultCredentialsProvider.create(),
                 UrlConnectionHttpClient.create()
         );
     }

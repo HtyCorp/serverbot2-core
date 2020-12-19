@@ -12,6 +12,8 @@ import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +30,7 @@ public class AppDaemon {
     public static void main(String[] args) {
         XrayUtils.setIgnoreMissingContext();
         XrayUtils.setServiceName("AppDaemon");
+        AppContext.setInstance();
         new AppDaemon();
     }
 
@@ -42,7 +45,7 @@ public class AppDaemon {
     private IdleState idleState = IdleState.ACTIVE_USE;
 
     private final Logger logger = LogManager.getLogger(AppDaemon.class);
-    private final SfnClient sfnClient = SfnClient.create();
+    private final SfnClient sfnClient = SdkUtils.client(SfnClient.builder());
     private final INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
     private final IDiscordService discordServiceClient = ApiClient.http(IDiscordService.class);
 

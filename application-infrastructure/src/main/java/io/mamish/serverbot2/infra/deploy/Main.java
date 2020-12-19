@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.DeployConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 public class Main {
 
     public static void main(String[] args) {
+
+        XrayUtils.setInstrumentationEnabled(false);
+        AppContext.setDefault();
 
         Gson gson = new Gson();
 
