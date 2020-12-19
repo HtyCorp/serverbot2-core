@@ -2,6 +2,7 @@ package io.mamish.serverbot2.commandlambda;
 
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.workflows.model.ExecutionState;
 import io.mamish.serverbot2.workflows.model.Machines;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -23,10 +24,7 @@ public class SfnRunner {
     // To reduce cold starts, this is deliberately deferred since most commands don't require it.
     private void ensureClientInitialised() {
         if (sfnClient == null) {
-            sfnClient = SfnClient.builder()
-                    .httpClient(UrlConnectionHttpClient.create())
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                    .build();
+            sfnClient = SdkUtils.client(SfnClient.builder());
             Map<String,Machines> nameToEnumMap = Arrays.stream(Machines.values()).collect(Collectors.toMap(
                     Machines::toString,
                     Function.identity()

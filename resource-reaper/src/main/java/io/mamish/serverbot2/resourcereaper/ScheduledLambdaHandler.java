@@ -8,15 +8,23 @@ import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.networksecurity.model.RevokeExpiredIpsRequest;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.time.Instant;
 
 public class ScheduledLambdaHandler implements RequestHandler<ScheduledEvent,String> {
 
+    static {
+        XrayUtils.setServiceName("ResourceReaper");
+        AppContext.setLambda();
+    }
+
     private static final String TAGKEY = ReaperConfig.HEARTBEAT_TAG_NAME;
 
-    private final SqsClient sqs = SqsClient.create();
+    private final SqsClient sqs = SdkUtils.client(SqsClient.builder());
     private final INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
 
     @Override

@@ -6,6 +6,7 @@ import io.mamish.serverbot2.framework.client.SigV4HttpResponse;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -21,9 +22,7 @@ public class UrlShortenerClient {
 
     private final Logger logger = LogManager.getLogger(UrlShortenerClient.class);
 
-    private final SigV4HttpClient sigV4HttpClient = new SigV4HttpClient();
-    private final AwsCredentialsProvider credentialsProvider = LazyAwsCredentialsProvider.create(EnvironmentVariableCredentialsProvider::create);
-    private final AwsRegionProvider regionProvider = new LazyAwsRegionProvider(SystemSettingsRegionProvider::new);
+    private final SigV4HttpClient sigV4HttpClient = new SigV4HttpClient(AppContext.get());
 
     private static final String ERR_SHORTENER_REQUEST_FAILED = "An error occurred while generating the URL for this request";
 
@@ -47,11 +46,7 @@ public class UrlShortenerClient {
 
         try {
             SigV4HttpResponse response = sigV4HttpClient.post(
-                    shortenerApiUri,
-                    newUrlRequest.toString(),
-                    "execute-api",
-                    regionProvider.getRegion(),
-                    credentialsProvider.resolveCredentials()
+                    shortenerApiUri, newUrlRequest.toString(), "execute-api"
             );
             if (response.getStatusCode() < 200 || response.getStatusCode() > 299) {
                 logger.error("Non-2xx response ({}) from shortener API, message: '{}'",

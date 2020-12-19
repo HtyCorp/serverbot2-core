@@ -3,6 +3,8 @@ package io.mamish.serverbot2.workflows;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.google.gson.Gson;
+import io.mamish.serverbot2.sharedutil.AppContext;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import io.mamish.serverbot2.workflows.model.ExecutionState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +16,11 @@ import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
 public class LambdaHandler implements RequestStreamHandler {
+
+    static {
+        XrayUtils.setServiceName("WorkflowsHandler");
+        AppContext.setLambda();
+    }
 
     private final Logger logger = LogManager.getLogger(LambdaHandler.class);
 

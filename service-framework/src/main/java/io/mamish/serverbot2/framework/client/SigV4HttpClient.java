@@ -3,6 +3,7 @@ package io.mamish.serverbot2.framework.client;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Entity;
 import com.amazonaws.xray.entities.TraceHeader;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.Utils;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
@@ -21,10 +22,15 @@ import java.util.Optional;
 
 public class SigV4HttpClient {
 
-    private final SdkHttpClient httpClient = UrlConnectionHttpClient.create();
     private final Aws4Signer requestSigner = Aws4Signer.create();
 
-    public SigV4HttpResponse post(String uri, String body, String serviceName, Region signingRegion, AwsCredentials credentials)
+    private final AppContext appContext;
+
+    public SigV4HttpClient(AppContext appContext) {
+        this.appContext = appContext;
+    }
+
+    public SigV4HttpResponse post(String uri, String body, String serviceName)
             throws IOException {
 
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
@@ -45,15 +51,15 @@ public class SigV4HttpClient {
                 .build();
 
         Aws4SignerParams signerParams = Aws4SignerParams.builder()
-                .awsCredentials(credentials)
+                .awsCredentials(appContext.resolveCredentials())
                 .doubleUrlEncode(false)
                 .signingName(serviceName)
-                .signingRegion(signingRegion)
+                .signingRegion(appContext.getRegion())
                 .build();
 
         SdkHttpFullRequest signedRequest = requestSigner.sign(baseRequest, signerParams);
 
-        HttpExecuteResponse response = httpClient.prepareRequest(HttpExecuteRequest.builder()
+        HttpExecuteResponse response = appContext.getHttpClient().prepareRequest(HttpExecuteRequest.builder()
                 .request(signedRequest)
                 .contentStreamProvider(bodyProvider)
                 .build()

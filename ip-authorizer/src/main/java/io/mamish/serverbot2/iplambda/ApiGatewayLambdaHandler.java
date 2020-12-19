@@ -18,6 +18,7 @@ import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.LogUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,6 +29,10 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
+    static {
+        XrayUtils.setServiceName("IpAuthorizer");
+    }
 
     // Used to choose the time unit displayed for time until expiry in /check handler.
     // Uses a list-of-pairs to make it clear that insertion/iteration order matters.

@@ -9,6 +9,7 @@ import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
 import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
@@ -40,10 +41,7 @@ public class RootCommandHandler implements ICommandService {
                 networkSecurityServiceClient, urlShortenerClient);
 
         logger.trace("Initialising EC2 client");
-        Ec2Client ec2Client = Ec2Client.builder()
-                .credentialsProvider(ContainerCredentialsProvider.builder().build())
-                .httpClient(UrlConnectionHttpClient.create())
-                .build();
+        Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
 
         logger.trace("Creating admin command handler...");
         adminCommandHandler = new AdminCommandHandler(ec2Client, gameMetadataServiceClient,

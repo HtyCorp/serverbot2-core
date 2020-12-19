@@ -10,6 +10,7 @@ import io.mamish.serverbot2.framework.exception.client.ApiClientException;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.LogUtils;
 import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,9 +33,9 @@ import java.util.concurrent.TimeUnit;
 public class DiscordRelay {
 
     public static void main(String[] args) {
-        System.out.println("Launching Discord relay...");
         XrayUtils.setIgnoreMissingContext();
         XrayUtils.setServiceName("DiscordRelay");
+        AppContext.setContainer();
         new DiscordRelay();
     }
 

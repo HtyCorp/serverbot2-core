@@ -4,12 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.GetFederationTokenResponse;
@@ -26,9 +26,7 @@ public class SsmConsoleSession {
 
     // Would be nice if we could reuse the STS client's URL HTTP client, but no good sources on whether it's possible
     private static final HttpClient httpClient = HttpClient.newBuilder().build();
-    private static final StsClient stsClient = StsClient.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .build();
+    private static final StsClient stsClient = SdkUtils.client(StsClient.builder());
 
     private final Logger logger = LogManager.getLogger(SsmConsoleSession.class);
 

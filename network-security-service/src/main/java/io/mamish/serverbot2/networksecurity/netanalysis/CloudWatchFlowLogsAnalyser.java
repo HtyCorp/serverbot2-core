@@ -7,6 +7,7 @@ import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,10 +28,7 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
     private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
     private static final long QUERY_CHECK_INTERVAL_MILLIS = 2000;
 
-    private final CloudWatchLogsClient logsClient = CloudWatchLogsClient.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .credentialsProvider(ContainerCredentialsProvider.builder().build())
-            .build();
+    private final CloudWatchLogsClient logsClient = SdkUtils.client(CloudWatchLogsClient.builder());
 
     private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
 

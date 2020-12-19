@@ -16,6 +16,7 @@ import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.workflows.model.ExecutionState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,8 +36,8 @@ public class StepHandler {
 
     private final Logger logger = LogManager.getLogger(StepHandler.class);
 
-    private final Ec2Client ec2Client = Ec2Client.create();
-    private final SqsClient sqsClient = SqsClient.create();
+    private final Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
+    private final SqsClient sqsClient = SdkUtils.client(SqsClient.builder());
     private final AppDnsRecordManager dnsRecordManager = new AppDnsRecordManager();
     private final UbuntuAmiLocator amiLocator = new UbuntuAmiLocator();
     private final IGameMetadataService gameMetadataService = ApiClient.http(IGameMetadataService.class);

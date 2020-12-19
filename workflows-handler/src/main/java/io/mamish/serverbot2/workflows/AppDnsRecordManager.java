@@ -1,10 +1,11 @@
 package io.mamish.serverbot2.workflows;
 
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.route53.Route53Client;
 import software.amazon.awssdk.services.route53.model.*;
 
@@ -12,9 +13,7 @@ public class AppDnsRecordManager {
 
     private static final String HOSTED_ZONE_ID = CommonConfig.APP_ROOT_DOMAIN_ZONE_ID.getValue();
 
-    private final Route53Client route53Client = Route53Client.builder()
-            .region(Region.AWS_GLOBAL)
-            .build();
+    private final Route53Client route53Client = SdkUtils.globalClient(Route53Client.builder());
 
     private final Logger logger = LogManager.getLogger(AppDnsRecordManager.class);
 

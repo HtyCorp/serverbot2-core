@@ -14,6 +14,7 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
@@ -34,10 +35,7 @@ import java.util.stream.Collectors;
 
 public class Ec2GroupManager implements IGroupManager {
 
-    private final Ec2Client ec2Client = Ec2Client.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .credentialsProvider(ContainerCredentialsProvider.builder().build())
-            .build();
+    private final Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
 

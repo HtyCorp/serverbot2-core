@@ -188,6 +188,12 @@
             <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
         </dependency>
 
+        <!-- This is a dependency of shared-util and by extension everything else -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
