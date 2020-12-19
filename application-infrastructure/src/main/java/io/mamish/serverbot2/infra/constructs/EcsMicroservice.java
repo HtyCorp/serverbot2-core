@@ -58,8 +58,8 @@ public class EcsMicroservice extends Construct implements IGrantable {
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
                 .compatibility(Compatibility.EC2)
                 .networkMode(NetworkMode.AWS_VPC)
-                .cpu("256")
-                .memoryMiB("1024") // Note this has specific allowed values in Fargate: not arbitrary
+                .cpu("256") // CPU and mem chosen to allow 8 tasks on an m5.large (2048 CPU, ~7764 MB)
+                .memoryMiB("960")
                 .taskRole(taskRole)
                 .build();
 

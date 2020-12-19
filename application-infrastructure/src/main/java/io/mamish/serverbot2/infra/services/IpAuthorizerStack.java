@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.IpAuthConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -39,7 +40,7 @@ public class IpAuthorizerStack extends Stack {
         )).build();
 
         Util.addConfigPathReadPermission(this, functionRole, CommonConfig.PATH);
-        Util.addLambdaInvokePermission(this, functionRole, NetSecConfig.FUNCTION_NAME);
+        Util.addExecuteApiPermission(this, functionRole, INetworkSecurity.class);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
                 "io.mamish.serverbot2.iplambda.ApiGatewayLambdaHandler",

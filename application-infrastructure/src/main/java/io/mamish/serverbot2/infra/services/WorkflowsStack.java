@@ -1,7 +1,9 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -37,11 +39,9 @@ public class WorkflowsStack extends Stack {
         )).build();
 
         Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH);
-
-        Util.addLambdaInvokePermission(this, taskRole,
-                GameMetadataConfig.FUNCTION_NAME,
-                NetSecConfig.FUNCTION_NAME);
-
+        Util.addExecuteApiPermission(this, taskRole,
+                IGameMetadataService.class,
+                INetworkSecurity.class);
         taskRole.addToPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("iam:PassRole"))
                 .resources(List.of("*"))
