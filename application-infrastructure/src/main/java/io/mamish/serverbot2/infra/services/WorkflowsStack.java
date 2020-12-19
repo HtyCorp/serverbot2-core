@@ -49,7 +49,7 @@ public class WorkflowsStack extends Stack {
                 .build());
 
         Alias taskFunctionAlias = Util.highMemJavaFunction(this, "WorkflowFunction",
-                "workflows-handler", "io.mamish.serverbot2.workflow.LambdaHandler",
+                "workflows-handler", "io.mamish.serverbot2.workflows.LambdaHandler",
                 b -> b.timeout(Duration.seconds(WorkflowsConfig.STEP_LAMBDA_TIMEOUT_SECONDS)).role(taskRole));
 
         final long TIMEOUT_READY = WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS;

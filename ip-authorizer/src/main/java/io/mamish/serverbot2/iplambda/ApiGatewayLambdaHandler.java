@@ -16,6 +16,7 @@ import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.LogUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
 import io.mamish.serverbot2.sharedutil.XrayUtils;
@@ -32,6 +33,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     static {
         XrayUtils.setServiceName("IpAuthorizer");
+        AppContext.setLambda();
     }
 
     // Used to choose the time unit displayed for time until expiry in /check handler.
