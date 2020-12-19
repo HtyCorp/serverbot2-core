@@ -9,6 +9,8 @@ public class ApiConfig {
 
     public static final String JSON_RESPONSE_CONTENT_KEY = "response";
     public static final String JSON_RESPONSE_ERROR_KEY = "error";
+    // API Gateway returns this one automatically, e.g. if a request fails IAM authorization
+    public static final String JSON_RESPONSE_GATEWAY_MESSAGE_KEY = "message";
 
     public static final int CLIENT_DEFAULT_TIMEOUT = 20;
 

@@ -2,7 +2,11 @@ package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.TraceHeader;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import io.mamish.serverbot2.framework.common.ApiHttpMethod;
+import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +16,7 @@ import spark.Spark;
 public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
     private final Logger logger = LogManager.getLogger(HttpApiServer.class);
+    private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     public HttpApiServer() {
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
@@ -55,7 +60,11 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
                 AWSXRay.getCurrentSegment().addException(e);
 
                 response.status(500);
-                return "Internal server error";
+
+                JsonObject jsonErrorResponse = new JsonObject();
+                jsonErrorResponse.add(ApiConfig.JSON_RESPONSE_CONTENT_KEY, null);
+                jsonErrorResponse.addProperty(ApiConfig.JSON_RESPONSE_ERROR_KEY, "Internal error");
+                return gson.toJson(jsonErrorResponse);
 
             } finally {
 
