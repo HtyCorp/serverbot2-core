@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 
 import java.io.IOException;
@@ -90,12 +91,7 @@ public class UbuntuAmiLocator {
             return "ap-southeast-2";
         }
 
-        String region = System.getenv("AWS_REGION");
-        if (region == null) {
-            throw new IllegalStateException("Region environment variable missing: ensure this runs on Lambda");
-        }
-
-        return region;
+        return AppContext.get().getRegion().toString();
 
     }
 

@@ -12,7 +12,7 @@ public class XrayUtils {
     }
 
     public static void setInstrumentationEnabled(boolean enabled) {
-        setProperty("com.amazonaws.xray.tracingEnabled", Boolean.toString(enabled));
+        setProperty("com.amazonaws.xray.tracingEnabled", xrayBoolString(enabled));
     }
 
     enum XrayMissingContextStrategy {
@@ -29,6 +29,10 @@ public class XrayUtils {
 
     private static void setProperty(String name, String value) {
         System.getProperties().setProperty(name, value);
+    }
+
+    private static String xrayBoolString(boolean value) {
+        return value ? "True": "False";
     }
 
 }

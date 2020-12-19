@@ -47,7 +47,9 @@ public class StepHandler {
     void createGameMetadata(ExecutionState executionState) {
         String name = executionState.getGameName();
 
-        if (gameMetadataService.describeGame(new DescribeGameRequest(name)).isPresent()) {
+        logger.debug("GMS client: {}", gameMetadataService);
+        DescribeGameResponse game = gameMetadataService.describeGame(new DescribeGameRequest(name));
+        if (game.isPresent()) {
             appendMessage(executionState.getInitialMessageUuid(), "Error: game '" + name + "' already exists.");
             throw new RequestValidationException("Game already exists in metadata service");
         }

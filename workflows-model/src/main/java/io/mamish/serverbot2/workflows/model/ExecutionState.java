@@ -21,6 +21,15 @@ public class ExecutionState {
         this.laterMessageUuid = laterMessageUuid;
     }
 
+    public ExecutionState(String requesterDiscordId, String gameName, String initialMessageUuid, String laterMessageUuid, Tasks taskName, String taskToken) {
+        this.requesterDiscordId = requesterDiscordId;
+        this.gameName = gameName;
+        this.initialMessageUuid = initialMessageUuid;
+        this.laterMessageUuid = laterMessageUuid;
+        this.taskName = taskName;
+        this.taskToken = taskToken;
+    }
+
     public String getRequesterDiscordId() {
         return requesterDiscordId;
     }

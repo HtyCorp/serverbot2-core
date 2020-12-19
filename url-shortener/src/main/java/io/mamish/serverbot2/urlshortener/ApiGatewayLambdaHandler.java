@@ -11,17 +11,16 @@ import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.sharedutil.XrayUtils;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1TokenProcessor;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1UrlInfoBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URLEncoder;
@@ -40,11 +39,8 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
     private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
 
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
-            .dynamoDbClient(DynamoDbClient.builder()
-                    .httpClient(UrlConnectionHttpClient.create())
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                    .build()
-            ).build();
+            .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
+            .build();
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
             TableSchema.fromBean(V1UrlInfoBean.class));

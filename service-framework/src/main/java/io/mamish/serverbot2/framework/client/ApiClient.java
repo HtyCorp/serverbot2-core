@@ -20,6 +20,7 @@ import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -48,10 +49,6 @@ public final class ApiClient {
 
     private static final Gson gson = new Gson();
     private static final SqsRequestResponseClient sqsRequestResponse = new SqsRequestResponseClient();
-    private static final LambdaClient lambdaClient = LambdaClient.builder()
-            .overrideConfiguration(r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)))
-            .httpClient(UrlConnectionHttpClient.create())
-            .build();
 
     private ApiClient() {}
 
@@ -74,7 +71,7 @@ public final class ApiClient {
                 if (response.getBody().isEmpty()) {
                     throw new ApiClientException("Service sent an empty response");
                 }
-                // Note: not checking response status at this status since non-2xx code might be thrown as part of an
+                // Note: not checking response status at this step since non-2xx code might be thrown as part of an
                 // error that would be parsed into a useful ApiServerException, so should pass it back from this method.
                 return response.getBody().get();
             } catch (IOException e) {
@@ -84,6 +81,8 @@ public final class ApiClient {
     }
 
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
+        LambdaClient lambdaClient = SdkUtils.client(LambdaClient.builder(),
+                r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)));
         return makeProxyInstance(modelInterfaceClass, request -> {
             SdkBytes lambdaPayload = SdkBytes.fromUtf8String(request.getPayload());
             String functionLiveAlias = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);

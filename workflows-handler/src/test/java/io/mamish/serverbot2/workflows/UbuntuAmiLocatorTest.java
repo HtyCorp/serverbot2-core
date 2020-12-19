@@ -1,6 +1,5 @@
-package io.mamiosh.serverbot2.workflow;
+package io.mamish.serverbot2.workflows;
 
-import io.mamish.serverbot2.workflows.UbuntuAmiLocator;
 import org.junit.jupiter.api.Test;
 
 public class UbuntuAmiLocatorTest {

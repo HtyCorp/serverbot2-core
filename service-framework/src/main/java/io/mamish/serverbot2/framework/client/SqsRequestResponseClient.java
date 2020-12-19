@@ -6,9 +6,9 @@ import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -23,9 +23,7 @@ import java.util.stream.Collectors;
 
 public class SqsRequestResponseClient {
 
-    private final SqsClient realSqsClient = SqsClient.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .build();
+    private final SqsClient realSqsClient = SdkUtils.client(SqsClient.builder());
     private final Map<String, Queue<String>> requestIdToSync =
             Collections.synchronizedMap(new HashMap<>());
 

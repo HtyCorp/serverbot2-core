@@ -1,5 +1,7 @@
 package io.mamish.serverbot2.sharedutil;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -7,7 +9,11 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.regions.providers.InstanceProfileRegionProvider;
 
+import java.util.function.Supplier;
+
 public class AppContext {
+
+    private static final Logger logger = LogManager.getLogger(AppContext.class);
 
     private static AppContext globalContext;
 
@@ -28,19 +34,34 @@ public class AppContext {
     }
 
     public static void setLambda() {
-        globalContext = lambdaContext();
+        setGlobalContextIfUnset(AppContext::lambdaContext, true);
     }
 
     public static void setContainer() {
-        globalContext = containerContext();
+        setGlobalContextIfUnset(AppContext::containerContext, true);
     }
 
     public static void setInstance() {
-        globalContext = instanceContext();
+        setGlobalContextIfUnset(AppContext::instanceContext, true);
+    }
+
+    public static void setDev() {
+        setGlobalContextIfUnset(AppContext::devContext, false);
     }
 
     public static void setDefault() {
-        globalContext = defaultContext();
+        setGlobalContextIfUnset(AppContext::defaultContext, false);
+    }
+
+    private static void setGlobalContextIfUnset(Supplier<AppContext> context, boolean disregardAlreadySetError) {
+        if (globalContext == null) {
+            logger.info("Set new global app context");
+            globalContext = context.get();
+        } else if (disregardAlreadySetError) {
+            logger.info("Ignoring requested global app context, since one is already set");
+        } else {
+            throw new IllegalStateException("A global app context is already set");
+        }
     }
 
     private static AppContext lambdaContext() {
@@ -73,6 +94,14 @@ public class AppContext {
         return new AppContext(
                 new DefaultAwsRegionProviderChain().getRegion(),
                 DefaultCredentialsProvider.create(),
+                UrlConnectionHttpClient.create()
+        );
+    }
+
+    private static AppContext devContext() {
+        return new AppContext(
+                Region.AP_SOUTHEAST_2,
+                ProfileCredentialsProvider.create("devfrozen"),
                 UrlConnectionHttpClient.create()
         );
     }
