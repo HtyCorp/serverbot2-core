@@ -48,7 +48,7 @@ public final class ApiClient {
 
     public static <ModelType> ModelType http(Class<ModelType> modelInterfaceClass) {
         final SigV4HttpClient httpClient = new SigV4HttpClient(AppContext.get());
-        return makeProxyInstance(modelInterfaceClass, request -> {
+        return makeProxyInstance(modelInterfaceClass, true, request -> {
             ApiEndpointInfo endpoint = request.getEndpointInfo();
             if (endpoint.httpMethod() != ApiHttpMethod.POST) {
                 throw new IllegalArgumentException("Only HTTP POST is supported");
@@ -75,7 +75,7 @@ public final class ApiClient {
     public static <ModelType> ModelType lambda(Class<ModelType> modelInterfaceClass, String functionName) {
         LambdaClient lambdaClient = SdkUtils.client(LambdaClient.builder(),
                 r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)));
-        return makeProxyInstance(modelInterfaceClass, request -> {
+        return makeProxyInstance(modelInterfaceClass, false, request -> {
             SdkBytes lambdaPayload = SdkBytes.fromUtf8String(request.getPayload());
             String functionLiveAlias = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
@@ -87,7 +87,7 @@ public final class ApiClient {
     public static <ModelType> ModelType localLambda(Class<ModelType> modelInterfaceClass, LambdaApiServer<ModelType> localFunction) {
         final int outputCapacity = 262144; // 256KB
         final Charset UTF8 = StandardCharsets.UTF_8;
-        return makeProxyInstance(modelInterfaceClass, request -> {
+        return makeProxyInstance(modelInterfaceClass, false, request -> {
             InputStream inputStream = new ByteArrayInputStream(request.getPayload().getBytes(UTF8));
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream(outputCapacity);
             try {
@@ -101,7 +101,7 @@ public final class ApiClient {
 
     public static <ModelType> ModelType sqs(Class<ModelType> modelInterfaceClass, String queueName) {
         final String queueUrl = sqsRequestResponse.getQueueUrl(queueName);
-        return makeProxyInstance(modelInterfaceClass, request -> {
+        return makeProxyInstance(modelInterfaceClass, false, request -> {
             String sqsResponse = sqsRequestResponse.sendAndReceive(
                     queueUrl,
                     request.getPayload(),
@@ -118,8 +118,8 @@ public final class ApiClient {
      * 2) Definition set is not missing any definitions for the interface.
      */
     private static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
-                Function<ClientRequest,ServerResponse> requestSender) {
-        ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass, true);
+               boolean requiresEndpointInfo, Function<ClientRequest,ServerResponse> requestSender) {
+        ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass, requiresEndpointInfo);
         @SuppressWarnings("unchecked")
         ModelType modelType = (ModelType) Proxy.newProxyInstance(
                 ApiClient.class.getClassLoader(),
