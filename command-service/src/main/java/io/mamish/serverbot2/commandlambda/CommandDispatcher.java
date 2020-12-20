@@ -29,13 +29,7 @@ public class CommandDispatcher<ModelType> extends AbstractApiRequestDispatcher<M
     };
 
     public CommandDispatcher(ModelType handler, Class<ModelType> modelTypeClass) {
-        super(handler, modelTypeClass);
-    }
-
-    @Override
-    protected boolean requiresEndpointInfo() {
-        // Endpoint info not required - command interfaces are used internally so don't have endpoint info associated
-        return false;
+        super(handler, modelTypeClass, false);
     }
 
     @Override

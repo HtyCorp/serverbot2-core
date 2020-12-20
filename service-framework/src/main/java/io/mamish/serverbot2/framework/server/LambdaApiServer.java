@@ -18,6 +18,11 @@ public abstract class LambdaApiServer<ModelType> extends AbstractApiServer<Model
     private final Logger logger = LogManager.getLogger(LambdaApiServer.class);
 
     @Override
+    protected boolean requiresEndpointInfo() {
+        return false;
+    }
+
+    @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
         // Note: This does not use context.getLogger() for logging since I haven't mocked it in ApiClient.localLambda
         // (which passes a null context at the moment).

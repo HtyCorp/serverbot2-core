@@ -18,6 +18,11 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
     private final Logger logger = LogManager.getLogger(HttpApiServer.class);
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
+    @Override
+    protected boolean requiresEndpointInfo() {
+        return true;
+    }
+
     public HttpApiServer() {
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
             throw new IllegalArgumentException("HTTP APIs only support POST method currently");

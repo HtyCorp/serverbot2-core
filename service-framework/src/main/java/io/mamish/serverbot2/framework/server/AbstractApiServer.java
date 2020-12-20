@@ -32,6 +32,10 @@ public abstract class AbstractApiServer<ModelType> {
      */
     protected abstract ModelType createHandlerInstance();
 
+    /* @return Whether this class should require ApiEndpointInfo on the requested service interface.
+     */
+    protected abstract boolean requiresEndpointInfo();
+
     private final JsonApiRequestDispatcher<ModelType> requestDispatcher;
     private final ApiEndpointInfo apiEndpointInfo;
     private final String simpleServiceName;
@@ -47,7 +51,7 @@ public abstract class AbstractApiServer<ModelType> {
         // Make a new service handler and a dispatcher for it, so subclasses can route requests
 
         ModelType serviceRequestHandler = createHandlerInstance();
-        requestDispatcher = new JsonApiRequestDispatcher<>(serviceRequestHandler,getModelClass());
+        requestDispatcher = new JsonApiRequestDispatcher<>(serviceRequestHandler,getModelClass(), requiresEndpointInfo());
         apiEndpointInfo = getModelClass().getAnnotation(ApiEndpointInfo.class);
 
     }
