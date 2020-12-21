@@ -1,6 +1,5 @@
 package io.mamish.serverbot2.infra.constructs;
 
-import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
@@ -66,7 +65,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
         // Prepare Docker dir for CDK
 
         Path jarSrc = Util.mavenJarPath(internalName);
-        InputStream dockerfileSrc = generateDockerfileStream(appStage.getEnv());
+        InputStream dockerfileSrc = generateDockerfileStream();
 
         Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "target", "docker", internalName);
         Path jarDst = serviceDockerDir.resolve("service-worker.jar");
@@ -162,12 +161,12 @@ public class EcsMicroservice extends Construct implements IGrantable {
         return taskRole;
     }
 
-    private InputStream generateDockerfileStream(ApplicationEnv env) {
-        // Assumes the current account and region have a mirror repository ready, hence we need to sub those values in.
+    private InputStream generateDockerfileStream() {
+        // Assumes the pipeline account and region have a mirror repository ready, hence we need to sub those values in.
         InputStream templateStream = getClass().getResourceAsStream("/EcsServiceDockerfile.template");
         String template = SdkBytes.fromInputStream(templateStream).asUtf8String();
-        String reified = template.replace("${accountId}", env.getAccountId())
-                .replace("${region}", env.getRegion());
+        String reified = template.replace("${accountId}", Util.defaultAccount())
+                .replace("${region}", Util.defaultRegion());
         return SdkBytes.fromUtf8String(reified).asInputStream();
     }
 
