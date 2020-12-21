@@ -24,9 +24,9 @@ import java.util.Map;
 
 public class IpAuthorizerStack extends Stack {
 
+    // This is left over from a subdomain migration where a second 'legacy' domain was also required
     private final static Map<String,String> SUBDOMAINS = Map.of(
-            "primary", NetSecConfig.AUTHORIZER_SUBDOMAIN,
-            "legacy", NetSecConfig.AUTHORIZER_SUBDOMAIN_LEGACY
+            "primary", NetSecConfig.AUTHORIZER_SUBDOMAIN
     );
 
     public IpAuthorizerStack(ApplicationStage parent, String id) {
