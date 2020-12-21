@@ -88,27 +88,26 @@
     </build>
 
     <modules>
-        <module>app-daemon</module>
-        <module>app-daemon-model</module>
-        <module>discord-relay</module>
-        <module>discord-relay-model</module>
-        <module>command-service</module>
-        <module>command-service-model</module>
-        <module>ip-authorizer</module>
-        <module>shared-configuration</module>
-        <module>shared-util</module>
-        <module>application-infrastructure</module>
-        <module>game-metadata-service-model</module>
-        <module>game-metadata-service</module>
-        <module>service-framework</module>
-        <module>resource-reaper</module>
-        <module>network-security-service-model</module>
-        <module>network-security-service</module>
-        <module>workflows-handler</module>
-        <module>workflows-model</module>
-        <module>test-utilities</module>
-        <module>url-shortener</module>
-        <module>lambda-warmer</module>
+        <module>agents/app-daemon</module>
+        <module>common/service-framework</module>
+        <module>common/shared-configuration</module>
+        <module>common/shared-util</module>
+        <module>common/test-utilities</module>
+        <module>deployment/application-infrastructure</module>
+        <module>models/app-daemon-model</module>
+        <module>models/command-service-model</module>
+        <module>models/discord-relay-model</module>
+        <module>models/game-metadata-service-model</module>
+        <module>models/network-security-service-model</module>
+        <module>models/workflows-model</module>
+        <module>services/command-service</module>
+        <module>services/discord-relay</module>
+        <module>services/game-metadata-service</module>
+        <module>services/ip-authorizer</module>
+        <module>services/network-security-service</module>
+        <module>services/resource-reaper</module>
+        <module>services/url-shortener</module>
+        <module>services/workflows-handler</module>
     </modules>
 
     <dependencyManagement>
