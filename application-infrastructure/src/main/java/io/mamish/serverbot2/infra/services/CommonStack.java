@@ -117,15 +117,18 @@ public class CommonStack extends Stack {
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
+        // Note this needs to match the immutable properties of the existing prod subnets since migrating subnets is
+        // difficult to do safely.
+        // Hence its name is 'main' (rather than 'public') and its CIDR mask has to stay at 24.
         SubnetConfiguration publicSubnet = SubnetConfiguration.builder()
-                .name("public")
+                .name("main")
                 .subnetType(SubnetType.PUBLIC)
-                .cidrMask(20)
+                .cidrMask(24)
                 .build();
         SubnetConfiguration privateSubnet = SubnetConfiguration.builder()
                 .name("private")
                 .subnetType(SubnetType.PRIVATE)
-                .cidrMask(20)
+                .cidrMask(24)
                 .build();
 
         serviceVpc = Vpc.Builder.create(this, "ServiceVpc")
