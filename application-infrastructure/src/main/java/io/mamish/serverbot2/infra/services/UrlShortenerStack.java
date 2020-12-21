@@ -1,12 +1,11 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -26,7 +25,7 @@ import java.util.List;
 
 public class UrlShortenerStack extends Stack {
 
-    public UrlShortenerStack(Construct parent, String id, CommonStack commonStack, ApplicationEnv env) {
+    public UrlShortenerStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // Configure the DDB table to store URL information
@@ -53,7 +52,7 @@ public class UrlShortenerStack extends Stack {
                 ManagedPolicies.DYNAMODB_FULL_ACCESS
         )).build();
 
-        Util.addConfigPathReadPermissionToRole(this, lambdaRole, CommonConfig.PATH);
+        Util.addConfigPathReadPermission(this, lambdaRole, CommonConfig.PATH);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "HandlerFunction", "url-shortener",
                 "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler",
@@ -100,13 +99,13 @@ public class UrlShortenerStack extends Stack {
         // Register in system DNS zone
 
         restApi.addDomainName("UrlRestApiDomainName", DomainNameOptions.builder()
-                .domainName(IDUtils.dot(UrlShortenerConfig.SUBDOMAIN, env.getSystemRootDomainName()))
-                .certificate(commonStack.getSystemWildcardCertificate())
+                .domainName(IDUtils.dot(UrlShortenerConfig.SUBDOMAIN, parent.getEnv().getSystemRootDomainName()))
+                .certificate(parent.getCommonResources().getSystemWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());
 
         ARecord apiAliasRecord = ARecord.Builder.create(this, "UrlApiAliasRecord")
-                .zone(commonStack.getSystemRootHostedZone())
+                .zone(parent.getCommonResources().getSystemRootHostedZone())
                 .recordName(UrlShortenerConfig.SUBDOMAIN)
                 .target(RecordTarget.fromAlias(new ApiGateway(restApi)))
                 .ttl(Duration.minutes(5))

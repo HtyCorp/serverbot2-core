@@ -1,14 +1,15 @@
 package io.mamish.serverbot2.infra.services;
 
+import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
-import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedconfig.WorkflowsConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import io.mamish.serverbot2.workflow.model.Machines;
-import io.mamish.serverbot2.workflow.model.Tasks;
+import io.mamish.serverbot2.workflows.model.Machines;
+import io.mamish.serverbot2.workflows.model.Tasks;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
@@ -36,12 +37,11 @@ public class WorkflowsStack extends Stack {
                 ManagedPolicies.ROUTE_53_FULL_ACCESS
         )).build();
 
-        Util.addConfigPathReadPermissionToRole(this, taskRole, CommonConfig.PATH);
-
-        Util.addLambdaInvokePermissionToRole(this, taskRole,
-                GameMetadataConfig.FUNCTION_NAME,
-                NetSecConfig.FUNCTION_NAME);
-
+        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH);
+        Util.addExecuteApiPermission(this, taskRole,
+                IGameMetadataService.class,
+                INetworkSecurity.class,
+                IDiscordService.class);
         taskRole.addToPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("iam:PassRole"))
                 .resources(List.of("*"))
@@ -49,7 +49,7 @@ public class WorkflowsStack extends Stack {
                 .build());
 
         Alias taskFunctionAlias = Util.highMemJavaFunction(this, "WorkflowFunction",
-                "workflow-service", "io.mamish.serverbot2.workflow.LambdaHandler",
+                "workflows-handler", "io.mamish.serverbot2.workflows.LambdaHandler",
                 b -> b.timeout(Duration.seconds(WorkflowsConfig.STEP_LAMBDA_TIMEOUT_SECONDS)).role(taskRole));
 
         final long TIMEOUT_READY = WorkflowsConfig.NEW_INSTANCE_TIMEOUT_SECONDS;

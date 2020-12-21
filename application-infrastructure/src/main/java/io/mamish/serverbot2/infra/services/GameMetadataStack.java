@@ -1,19 +1,17 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.util.ManagedPolicies;
-import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
+import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
+import io.mamish.serverbot2.infra.constructs.ServiceApi;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.dynamodb.*;
-import software.amazon.awscdk.services.iam.Role;
-
-import java.util.List;
 
 public class GameMetadataStack extends Stack {
 
-    public GameMetadataStack(Construct parent, String id) {
+    public GameMetadataStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // DDB table
@@ -40,15 +38,11 @@ public class GameMetadataStack extends Stack {
                 .projectionType(ProjectionType.ALL)
                 .build());
 
-        // Function and attached role
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "game-metadata-service");
+        metadataTable.grantFullAccess(service);
 
-        Role functionRole = Util.standardLambdaRole(this, "ServiceRole", List.of(
-                ManagedPolicies.DYNAMODB_FULL_ACCESS
-        )).build();
-
-        Util.highMemJavaFunction(this, "ServiceFunction", "game-metadata-service",
-                "io.mamish.serverbot2.gamemetadata.LambdaHandler",
-                b -> b.functionName(GameMetadataConfig.FUNCTION_NAME).role(functionRole));
+        ServiceApi api = new ServiceApi(this, "Api", parent, IGameMetadataService.class);
+        api.addEcsRoute(IGameMetadataService.class, service);
 
     }
 

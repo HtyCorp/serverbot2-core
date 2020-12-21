@@ -9,17 +9,18 @@ import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.LambdaWarmerConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1TokenProcessor;
 import io.mamish.serverbot2.urlshortener.tokenv1.V1UrlInfoBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URLEncoder;
@@ -30,14 +31,16 @@ import java.util.regex.Pattern;
 
 public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
+    static {
+        XrayUtils.setServiceName("UrlShortener");
+        AppContext.setLambda();
+    }
+
     private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
 
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
-            .dynamoDbClient(DynamoDbClient.builder()
-                    .httpClient(UrlConnectionHttpClient.create())
-                    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-                    .build()
-            ).build();
+            .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
+            .build();
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
             TableSchema.fromBean(V1UrlInfoBean.class));
@@ -125,7 +128,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             return generateHttpRawError("Body params are missing or invalid", 400);
         }
 
-        if (!isUrlValid(urlParam)) {
+        if (isInvalidUrl(urlParam)) {
             logger.error("URL requested for storage is not valid/allowed");
             return generateHttpRawError("Provided URL is invalid or not allowed", 400);
         }
@@ -212,7 +215,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         }
         logger.info("ID '{}' URL is '{}'", id, fullUrl);
 
-        if (!isUrlValid(fullUrl)) {
+        if (isInvalidUrl(fullUrl)) {
             logger.error("Stored URL is somehow invalid. Should never occur due to validation on store ('{}')", fullUrl);
             return generateHttpError("Sorry, this URL has been revoked."
                     + " Try getting a new link from wherever you got this one.",
@@ -223,18 +226,18 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
     }
 
-    private boolean isUrlValid(String url) {
+    private boolean isInvalidUrl(String url) {
 
         if (url.length() > UrlShortenerConfig.MAX_URL_LENGTH) {
             logger.warn("URL size ({}) exceeds shortener limit of {}",
                     url.length(), UrlShortenerConfig.MAX_URL_LENGTH);
-            return false;
+            return true;
         }
 
         Matcher m = basicValidUrlPattern.matcher(url);
         if (!m.matches()) {
             logger.warn("URL does not match regex ({})", url);
-            return false;
+            return true;
         }
 
         String schema = m.group("schema");
@@ -244,22 +247,22 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
 
         if (!schema.equals("https")) {
             logger.warn("URL validation failure: not HTTPS");
-            return false;
+            return true;
         }
 
         String[] requestedLabels = domain.split("\\.");
         if (Arrays.stream(requestedLabels).anyMatch(String::isEmpty)) {
             logger.warn("URL validation failure: bad label separation");
-            return false;
+            return true;
         }
 
         if (getAllowedApexDomains().stream().noneMatch(allowedDomain ->
                 domain.endsWith("."+allowedDomain) || domain.equals(allowedDomain))) {
             logger.warn("URL validation failure: not an allowed apex domain");
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
 
     }
 

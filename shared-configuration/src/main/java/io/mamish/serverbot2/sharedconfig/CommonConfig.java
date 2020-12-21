@@ -14,7 +14,7 @@ public class CommonConfig {
     // workflow-service/src/main/resources/NewInstanceUserdata.txt
     public static final Parameter S3_DEPLOYED_ARTIFACTS_BUCKET = new Parameter(PATH, "deployed-artifacts-bucket");
 
-    public static final String APPLICATION_VPC_CIDR = "10.0.0.0/16";
+    public static final String STANDARD_VPC_CIDR = "10.0.0.0/16";
     public static final Parameter APPLICATION_VPC_ID = new Parameter(PATH, "app-vpc-id");
     public static final String APPLICATION_VPC_FLOW_LOGS_GROUP_NAME = "serverbot2/app/flowlogs";
 
@@ -27,6 +27,11 @@ public class CommonConfig {
     public static final String COMMAND_SIGIL_CHARACTER = "!";
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
+
+    public static final String SERVICES_SYSTEM_SUBDOMAIN = "services";
+
+    public static final int SERVICES_INTERNAL_HTTP_PORT = 8080;
+    public static final int SERVICES_INTERNAL_DNS_TTL_SECONDS = 15;
 
     public static final String LAMBDA_LIVE_ALIAS_NAME = "LIVE";
     public static final int LAMBDA_MEMORY_MB_FOR_PROVISIONED = 512;

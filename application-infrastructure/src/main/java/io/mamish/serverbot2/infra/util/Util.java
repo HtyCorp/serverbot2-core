@@ -1,5 +1,6 @@
 package io.mamish.serverbot2.infra.util;
 
+import io.mamish.serverbot2.framework.common.ApiEndpointInfo;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.Parameter;
 import io.mamish.serverbot2.sharedconfig.Secret;
@@ -11,6 +12,7 @@ import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.secretsmanager.CfnSecret;
 import software.amazon.awscdk.services.ssm.StringParameter;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,9 +23,9 @@ import java.util.stream.Stream;
 
 public class Util {
 
-    public static String codeBuildPath(String... path) {
+    public static Path codeBuildPath(String... segments) {
         String codeBuildDir = System.getenv("CODEBUILD_SRC_DIR");
-        return Paths.get(codeBuildDir, path).toString();
+        return Paths.get(codeBuildDir, segments);
     }
 
     public static String environmentManifestPath() {
@@ -51,14 +53,14 @@ public class Util {
                 .managedPolicies(combinedPolicies);
     }
 
-    public static void addConfigPathReadPermissionToRole(Stack stack, IRole role, String... paths) {
+    public static void addConfigPathReadPermission(Stack stack, IGrantable grantee, String... paths) {
         List<String> secretAndParameterArns = Arrays.stream(paths)
                 .flatMap(path -> Stream.of(
                         arn(stack, null, null, "ssm", "parameter/"+path+"/*"),
                         arn(stack, null, null, "secretsmanager", "secret:"+path+"/*")
                 )).collect(Collectors.toList());
 
-        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
+        grantee.getGrantPrincipal().addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of(
                         "ssm:GetParameter",
                         "secretsmanager:GetSecretValue")
@@ -66,25 +68,45 @@ public class Util {
                 .build());
     }
 
-    public static void addLambdaInvokePermissionToRole(Stack stack, IRole role, String... functionNames) {
+    public static void addExecuteApiPermission(Stack stack, IGrantable grantee, Class<?>... interfaceClasses) {
+        List<String> stageArns = Arrays.stream(interfaceClasses)
+                .map(cls -> {
+                    ApiEndpointInfo endpointInfo = cls.getAnnotation(ApiEndpointInfo.class);
+                    // Resource segment format is "api-id/stage-name/http-method/api-resource"
+                    // Full example ARN: "arn:aws:execute-api:us-east-1:*:a123456789/test/POST/mydemoresource/*"
+                    String resource = IDUtils.slash("*", endpointInfo.serviceName(), endpointInfo.httpMethod().name(), "*");
+                    return arn(stack, null, null, "execute-api", resource);
+                }).collect(Collectors.toList());
+
+        grantee.getGrantPrincipal().addToPrincipalPolicy(PolicyStatement.Builder.create()
+                .actions(List.of("execute-api:Invoke"))
+                .resources(stageArns)
+                .build());
+    }
+
+    // TODO: Compatibility method for certain APIs since not everything is standardised to a service interface yet.
+    public static void addFullExecuteApiPermission(Stack stack, IGrantable grantee) {
+        String wildcardArnApisInAccountAndRegion = arn(stack, null, null, "execute-api", "*");
+        grantee.getGrantPrincipal().addToPrincipalPolicy(PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of("execute-api:Invoke"))
+                .resources(List.of(wildcardArnApisInAccountAndRegion))
+                .build());
+    }
+
+    public static void addManagedPoliciesToRole(IRole role, IManagedPolicy... policies) {
+        Arrays.stream(policies).forEach(role::addManagedPolicy);
+    }
+
+    public static void addLambdaInvokePermission(Stack stack, IGrantable grantee, String... functionNames) {
         List<String> lambdaArns = Arrays.stream(functionNames)
                 .map(name -> IDUtils.colon("function", name, CommonConfig.LAMBDA_LIVE_ALIAS_NAME))
                 .map(resource -> arn(stack, null, null, "lambda", resource))
                 .collect(Collectors.toList());
 
-        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
+        grantee.getGrantPrincipal().addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("lambda:InvokeFunction"))
                 .resources(lambdaArns)
-                .build());
-    }
-
-    // This is tricky to make better since the ARN uses the APIGW ID rather than any friendly/predictable ID.
-    public static void addFullExecuteApiPermissionToRole(Stack stack, IRole role) {
-        String wildcardArnApisInAccountAndRegion = arn(stack, null, null, "execute-api", "*");
-        role.addToPrincipalPolicy(PolicyStatement.Builder.create()
-                .effect(Effect.ALLOW)
-                .actions(List.of("execute-api:Invoke"))
-                .resources(List.of(wildcardArnApisInAccountAndRegion))
                 .build());
     }
 
@@ -104,7 +126,7 @@ public class Util {
                                              Consumer<Function.Builder> functionEditor, Consumer<Alias.Builder> aliasEditor) {
         Function.Builder functionBuilder = Function.Builder.create(parent, id)
                 .runtime(Runtime.JAVA_11)
-                .code(mavenJarAsset(moduleName))
+                .code(Code.fromAsset(mavenJarPath(moduleName).toString()))
                 .memorySize(memory)
                 .handler(handler)
                 .tracing(Tracing.ACTIVE)
@@ -124,15 +146,10 @@ public class Util {
 
     }
 
-    public static Code mavenJarAsset(String moduleName) {
-        // Should make this refer to home or maybe current working directory if env not found
-        String rootPath = System.getenv("CODEBUILD_SRC_DIR");
+    public static Path mavenJarPath(String moduleName) {
         final String projectVersion = System.getProperty("serverbot2.version");
-        final String assemblyDescriptor = "jar-with-dependencies";
-        String baseFileName = IDUtils.kebab(moduleName, projectVersion, assemblyDescriptor);
-        String fullFileName = baseFileName + ".jar";
-        String jarPath = IDUtils.slash( rootPath, moduleName, "target", fullFileName);
-        return Code.fromAsset(jarPath);
+        String shadedJarFilename = moduleName + "-" + projectVersion + ".jar";
+        return codeBuildPath(moduleName, "target", shadedJarFilename);
     }
 
     public static StringParameter instantiateConfigSsmParameter(Construct parent, String id, Parameter parameter, String value) {

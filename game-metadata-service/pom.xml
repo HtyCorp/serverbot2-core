@@ -12,14 +12,14 @@
     <artifactId>game-metadata-service</artifactId>
     
     <properties>
-        <module.assemblyJarMainClass>io.mamish.serverbot2.gamemetadata.LambdaHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>io.mamish.serverbot2.gamemetadata.MainServer</module.assemblyJarMainClass>
     </properties>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
+                <artifactId>maven-shade-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

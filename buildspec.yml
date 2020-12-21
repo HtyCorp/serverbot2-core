@@ -5,21 +5,14 @@ phases:
     runtime-versions:
       java: corretto11
     commands:
-      - "npm install -g aws-cdk@1.70.0"
+      - "npm install -g aws-cdk@1.76.0"
   build:
     commands:
       - "mkdir gen"
       - "mvn clean install -Dmaven.test.skip=true"
-      # Prepare docker directory for Discord relay
-      - "mkdir gen/relay-docker"
-      - "cp discord-relay/target/discord-relay-1.0-SNAPSHOT-jar-with-dependencies.jar gen/relay-docker/discord-relay.jar"
-      - "cp application-infrastructure/src/main/resources/RelayDockerfile gen/relay-docker/Dockerfile"
-      # Copy app daemon jar with simplified name
-      - "mkdir gen/app-daemon"
-      - "cp app-daemon/target/app-daemon-1.0-SNAPSHOT-jar-with-dependencies.jar gen/app-daemon/app-daemon.jar"
       # Synthesize application/service CDK stacks for application deployment
       - "mkdir gen/cloud-assembly"
-      - "(cd application-infrastructure/ && cdk synth -o ../gen/cloud-assembly > /dev/null)"
+      - "(cd application-infrastructure/ && cdk synth -o ../gen/cloud-assembly)"
       - "echo \"Generated $(cat gen/cloud-assembly/*.template.json | wc -l) template lines\""
   post_build:
     commands:

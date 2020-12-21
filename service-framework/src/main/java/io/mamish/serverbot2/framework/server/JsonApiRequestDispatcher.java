@@ -14,8 +14,9 @@ public class JsonApiRequestDispatcher<HandlerType> extends
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
-    public JsonApiRequestDispatcher(HandlerType handler, Class<HandlerType> handlerInterfaceClass) {
-        super(handler, handlerInterfaceClass);
+    public JsonApiRequestDispatcher(HandlerType handler, Class<HandlerType> handlerInterfaceClass,
+                                    boolean requiresEndpointInfo) {
+        super(handler, handlerInterfaceClass, requiresEndpointInfo);
     }
 
     @Override

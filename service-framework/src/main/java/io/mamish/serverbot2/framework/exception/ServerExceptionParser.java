@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 public class ServerExceptionParser {
 
+    // Note this doesn't include either Gateway* exception since these are generated from APIGW status codes, so a
+    // response from our APIs will never return them directly.
     private static final List<Class<? extends ApiServerException>> exceptionClassList = List.of(
             FrameworkInternalException.class,
             NoSuchResourceException.class,

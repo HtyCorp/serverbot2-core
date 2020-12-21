@@ -1,7 +1,6 @@
 package io.mamish.serverbot2.discordrelay;
 
 import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import io.mamish.serverbot2.commandlambda.model.ICommandService;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandRequest;
 import io.mamish.serverbot2.commandlambda.model.ProcessUserCommandResponse;
@@ -9,10 +8,11 @@ import io.mamish.serverbot2.discordrelay.model.service.MessageChannel;
 import io.mamish.serverbot2.framework.client.ApiClient;
 import io.mamish.serverbot2.framework.exception.client.ApiClientException;
 import io.mamish.serverbot2.framework.exception.server.ApiServerException;
-import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
@@ -33,8 +33,9 @@ import java.util.concurrent.TimeUnit;
 public class DiscordRelay {
 
     public static void main(String[] args) {
-        System.out.println("Launching Discord relay...");
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+        XrayUtils.setIgnoreMissingContext();
+        XrayUtils.setServiceName("DiscordRelay");
+        AppContext.setContainer();
         new DiscordRelay();
     }
 
@@ -66,7 +67,7 @@ public class DiscordRelay {
         messageHandlerExecutor = Executors.newCachedThreadPool();
 
         logger.info("Building CommandService client...");
-        commandServiceClient = ApiClient.lambda(ICommandService.class, CommandLambdaConfig.FUNCTION_NAME);
+        commandServiceClient = ApiClient.http(ICommandService.class);
 
         logger.info("Logging in to Discord API...");
         String apiToken = DiscordConfig.API_TOKEN.getValue();
@@ -83,7 +84,7 @@ public class DiscordRelay {
         logger.info("Building DDB message table");
         messageTable = new DynamoMessageTable();
 
-        logger.info("Starting SQS service handler...");
+        logger.info("Starting API service handler...");
         new DiscordServiceHandler(discordApi, channelMap, messageTable);
 
         logger.info("Registering Javacord message listener...");

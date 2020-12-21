@@ -4,7 +4,7 @@ import io.mamish.serverbot2.discordrelay.model.service.*;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingRuntimeException;
 import io.mamish.serverbot2.framework.exception.server.RequestValidationException;
-import io.mamish.serverbot2.framework.server.SqsApiServer;
+import io.mamish.serverbot2.framework.server.HttpApiServer;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedutil.Utils;
 import org.javacord.api.DiscordApi;
@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-public class DiscordServiceHandler extends SqsApiServer<IDiscordService> implements IDiscordService {
+public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
 
     private final DiscordApi discordApi;
     private final ChannelMap channelMap;
@@ -40,7 +40,6 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
     }
 
     public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap, DynamoMessageTable messageTable) {
-        super(DiscordConfig.SQS_QUEUE_NAME);
         this.discordApi = discordApi;
         this.channelMap = channelMap;
         this.messageTable = messageTable;
@@ -163,7 +162,9 @@ public class DiscordServiceHandler extends SqsApiServer<IDiscordService> impleme
         String roleId = DiscordConfig.CHANNEL_ROLE_MAIN.getValue();
 
         User targetUser = discordApi.getUserById(modifyRoleMembershipRequest.getUserDiscordId()).join();
-        Role targetRole = discordApi.getRoleById(roleId).get();
+        Role targetRole = discordApi.getRoleById(roleId).orElseThrow(() -> new IllegalStateException(
+                "Role with ID '"+roleId+"' could not be located to modify"
+        ));
 
         Function<User, CompletableFuture<Void>> operation;
         if (modifyOperation == RoleModifyOperation.ADD_USER) operation = targetRole::addUser;

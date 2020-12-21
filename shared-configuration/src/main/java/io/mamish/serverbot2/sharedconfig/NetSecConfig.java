@@ -4,6 +4,8 @@ import java.time.Duration;
 
 public class NetSecConfig {
 
+    public static final String PATH_PUBLIC = "network-security/public";
+
     public static final String FUNCTION_NAME = "NetworkSecurityService";
 
     public static final String SG_NAME_PREFIX = "NetSecSG";
@@ -16,7 +18,7 @@ public class NetSecConfig {
      * list plus 10 left over as spare.
      */
     public static final String USER_IP_PREFIX_LIST_NAME = "DiscordUserIpList";
-    public static final int MAX_USER_IP_ADDRESSES = 80;
+    public static final Parameter USER_IP_PREFIX_LIST_SIZE = new Parameter(PATH_PUBLIC, "prefix-list-size");
 
     public static final String APP_INSTANCE_COMMON_SG_NAME = "AppInstanceCommon";
     // Uses custom SFTP port to avoid needing root access for privileged port

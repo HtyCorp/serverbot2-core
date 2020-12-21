@@ -21,10 +21,10 @@ public class ApplicationEnv {
     private String discordRelayChannelIdWelcome;
     private String discordRelayChannelIdMain;
     private String discordRelayChannelIdAdmin;
-    private String discordRelayChannelIdDebug;
 
     private String discordRelayRoleIdMain;
-    private String discordRelayRoleIdDebug;
+
+    private int prefixListCapacity;
 
     public boolean isEnabled() {
         return enabled;
@@ -82,15 +82,11 @@ public class ApplicationEnv {
         return discordRelayChannelIdAdmin;
     }
 
-    public String getDiscordRelayChannelIdDebug() {
-        return discordRelayChannelIdDebug;
-    }
-
     public String getDiscordRelayRoleIdMain() {
         return discordRelayRoleIdMain;
     }
 
-    public String getDiscordRelayRoleIdDebug() {
-        return discordRelayRoleIdDebug;
+    public int getPrefixListCapacity() {
+        return prefixListCapacity;
     }
 }

@@ -55,4 +55,11 @@ public class IDUtils {
         return Long.toString(Instant.now().toEpochMilli());
     }
 
+    public static String stripLeadingICharIfPresent(String className) {
+        if (className.startsWith("I") && Character.isUpperCase(className.charAt(1))) {
+            return className.substring(1);
+        }
+        return className;
+    }
+
 }

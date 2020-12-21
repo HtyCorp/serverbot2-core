@@ -1,39 +1,47 @@
 package io.mamish.serverbot2.framework.client;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.Entity;
+import com.amazonaws.xray.entities.TraceHeader;
+import io.mamish.serverbot2.sharedutil.AppContext;
+import io.mamish.serverbot2.sharedutil.Utils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.*;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.Region;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class SigV4HttpClient {
 
-    private static final String XRAY_LAMBDA_ENV_TRACE_ID_KEY = "_X_AMZN_TRACE_ID";
-    private static final String XRAY_TRACE_ID_HEADER_NAME = "X-Amzn-Trace-Id";
-
-    private final SdkHttpClient httpClient = UrlConnectionHttpClient.create();
     private final Aws4Signer requestSigner = Aws4Signer.create();
 
-    public SigV4HttpResponse post(String uri, String body, String serviceName, Region signingRegion, AwsCredentials credentials)
+    private final AppContext appContext;
+
+    private static final Logger logger = LogManager.getLogger(SigV4HttpClient.class);
+
+    public SigV4HttpClient(AppContext appContext) {
+        Objects.requireNonNull(appContext, "SigV4HttpClient requires a non-null app context");
+        this.appContext = appContext;
+    }
+
+    public SigV4HttpResponse post(String uri, String body, String serviceName)
             throws IOException {
 
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
         ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
 
-        Map<String, List<String>> extraHeaders = new HashMap<>();
-        String traceIdFromLambda = System.getenv(XRAY_LAMBDA_ENV_TRACE_ID_KEY);
-        if (traceIdFromLambda != null) {
-            extraHeaders.put(XRAY_TRACE_ID_HEADER_NAME, List.of(traceIdFromLambda));
-        }
+        // Propagate Xray trace ID into request headers if one is found
+        Map<String, List<String>> extraHeaders = new HashMap<>(1);
+        Utils.ifNotNull(AWSXRay.getTraceEntity(), Entity::getTraceId, traceId -> {
+            logger.debug("Adding discovered Trace ID to HTTP headers");
+            extraHeaders.put(TraceHeader.HEADER_KEY, List.of(traceId.toString()));
+        });
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
                 .uri(URI.create(uri))
@@ -42,16 +50,19 @@ public class SigV4HttpClient {
                 .contentStreamProvider(bodyProvider)
                 .build();
 
+        AwsCredentials credentials = appContext.resolveCredentials();
+        logger.debug("Signing HTTP request with access key ID {}", credentials.accessKeyId());
+
         Aws4SignerParams signerParams = Aws4SignerParams.builder()
                 .awsCredentials(credentials)
                 .doubleUrlEncode(false)
                 .signingName(serviceName)
-                .signingRegion(signingRegion)
+                .signingRegion(appContext.getRegion())
                 .build();
 
         SdkHttpFullRequest signedRequest = requestSigner.sign(baseRequest, signerParams);
 
-        HttpExecuteResponse response = httpClient.prepareRequest(HttpExecuteRequest.builder()
+        HttpExecuteResponse response = appContext.getHttpClient().prepareRequest(HttpExecuteRequest.builder()
                 .request(signedRequest)
                 .contentStreamProvider(bodyProvider)
                 .build()

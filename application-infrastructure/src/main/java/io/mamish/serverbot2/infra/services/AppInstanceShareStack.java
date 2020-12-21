@@ -1,13 +1,13 @@
 package io.mamish.serverbot2.infra.services;
 
-import io.mamish.serverbot2.infra.customresource.S3Artifact;
-import io.mamish.serverbot2.infra.customresource.S3ArtifactProps;
+import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
+import io.mamish.serverbot2.infra.constructs.S3Artifact;
+import io.mamish.serverbot2.infra.constructs.S3ArtifactProps;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
 import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
-import io.mamish.serverbot2.sharedconfig.GameMetadataConfig;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
@@ -18,18 +18,18 @@ import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(Construct parent, String id, CommonStack commonStack) {
+    public AppInstanceShareStack(ApplicationStage parent, String id) {
         super(parent, id);
 
         // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer
         // looking S3 bucket from the CDK asset staging bucket.
 
-        String appDaemonJarPath = Util.codeBuildPath( "gen", "app-daemon", "app-daemon.jar");
+        String appDaemonJarPath = Util.mavenJarPath("app-daemon").toString();
         Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
                 .path(appDaemonJarPath)
                 .build();
         S3Artifact appDaemonArtifact = new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
-                appDaemonJarAsset, commonStack.getDeployedArtifactBucket(), "app-daemon",
+                appDaemonJarAsset, parent.getCommonResources().getDeployedArtifactBucket(), "app-daemon",
                 ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
         ));
 
@@ -46,11 +46,12 @@ public class AppInstanceShareStack extends Stack {
                         ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS
                 )).build();
 
-        Util.addConfigPathReadPermissionToRole(this, commonRole, AppInstanceConfig.PATH_ALL);
+        Util.addConfigPathReadPermission(this, commonRole,
+                AppInstanceConfig.PATH_ALL);
 
-        Util.addLambdaInvokePermissionToRole(this, commonRole,
-                GameMetadataConfig.FUNCTION_NAME,
-                NetSecConfig.FUNCTION_NAME);
+        Util.addExecuteApiPermission(this, commonRole,
+                IGameMetadataService.class,
+                INetworkSecurity.class);
 
         CfnInstanceProfile commonInstanceProfile = CfnInstanceProfile.Builder.create(this, "AppInstanceCommonProfile")
                 .instanceProfileName(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME)

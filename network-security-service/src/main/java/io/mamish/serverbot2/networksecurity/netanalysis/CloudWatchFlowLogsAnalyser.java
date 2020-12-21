@@ -1,14 +1,17 @@
 package io.mamish.serverbot2.networksecurity.netanalysis;
 
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.xray.AWSXRay;
 import io.mamish.serverbot2.framework.exception.server.RequestHandlingException;
 import io.mamish.serverbot2.networksecurity.model.GetNetworkUsageResponse;
 import io.mamish.serverbot2.networksecurity.model.PortPermission;
 import io.mamish.serverbot2.networksecurity.model.PortProtocol;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import io.mamish.serverbot2.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.GetQueryResultsResponse;
@@ -25,9 +28,7 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
     private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
     private static final long QUERY_CHECK_INTERVAL_MILLIS = 2000;
 
-    private final CloudWatchLogsClient logsClient = CloudWatchLogsClient.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .build();
+    private final CloudWatchLogsClient logsClient = SdkUtils.client(CloudWatchLogsClient.builder());
 
     private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
 
@@ -55,6 +56,8 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
             QueryStatus status = QueryStatus.SCHEDULED;
             while (Utils.equalsAny(status, QueryStatus.SCHEDULED, QueryStatus.RUNNING)) {
                 try {
+
+                    //noinspection BusyWait
                     Thread.sleep(QUERY_CHECK_INTERVAL_MILLIS);
                 } catch (InterruptedException e) {
                     logger.error("Unexpected thread interrupt while polling for query result", e);

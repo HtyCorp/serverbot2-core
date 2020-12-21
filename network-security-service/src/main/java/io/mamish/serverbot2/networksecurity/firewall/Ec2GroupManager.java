@@ -14,13 +14,13 @@ import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
 import io.mamish.serverbot2.sharedutil.Pair;
+import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-import software.amazon.awssdk.regions.providers.SystemSettingsRegionProvider;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 
@@ -35,11 +35,7 @@ import java.util.stream.Collectors;
 
 public class Ec2GroupManager implements IGroupManager {
 
-    private final Ec2Client ec2Client = Ec2Client.builder()
-            .httpClient(UrlConnectionHttpClient.create())
-            .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-            .region(new SystemSettingsRegionProvider().getRegion())
-            .build();
+    private final Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
     private final String VPCID = CommonConfig.APPLICATION_VPC_ID.getValue();
     private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
 
@@ -160,7 +156,8 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     private boolean listIsFull(DecryptedPrefixList userList) {
-        return userList.getEntries().size() >= NetSecConfig.MAX_USER_IP_ADDRESSES;
+        int prefixListCapacity = Integer.parseInt(NetSecConfig.USER_IP_PREFIX_LIST_SIZE.getValue());
+        return userList.getEntries().size() >= prefixListCapacity;
     }
 
     private String getRemovalCandidateCidr(DecryptedPrefixList userList) {

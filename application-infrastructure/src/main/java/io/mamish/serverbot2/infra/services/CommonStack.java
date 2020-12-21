@@ -1,15 +1,16 @@
 package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
+import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.DiscordConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
 import io.mamish.serverbot2.sharedutil.IDUtils;
-import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.services.apigatewayv2.VpcLink;
 import software.amazon.awscdk.services.certificatemanager.CertificateValidation;
 import software.amazon.awscdk.services.certificatemanager.DnsValidatedCertificate;
 import software.amazon.awscdk.services.ec2.*;
@@ -20,6 +21,7 @@ import software.amazon.awscdk.services.route53.HostedZone;
 import software.amazon.awscdk.services.route53.HostedZoneAttributes;
 import software.amazon.awscdk.services.route53.IHostedZone;
 import software.amazon.awscdk.services.s3.Bucket;
+import software.amazon.awscdk.services.servicediscovery.PrivateDnsNamespace;
 
 import java.util.List;
 import java.util.Map;
@@ -32,8 +34,11 @@ public class CommonStack extends Stack {
     private final IHostedZone systemRootHostedZone;
     private final IHostedZone appRootHostedZone;
     private final DnsValidatedCertificate systemWildcardCertificate;
+    private final DnsValidatedCertificate systemServicesWildcardCertificate;
     private final DnsValidatedCertificate appWildcardCertificate;
     private final Key netSecKmsKey;
+    private final VpcLink apiVpcLink;
+    private final PrivateDnsNamespace apiVpcNamespace;
 
     public Bucket getDeployedArtifactBucket() {
         return deployedArtifactBucket;
@@ -59,6 +64,10 @@ public class CommonStack extends Stack {
         return systemWildcardCertificate;
     }
 
+    public DnsValidatedCertificate getSystemServicesWildcardCertificate() {
+        return systemServicesWildcardCertificate;
+    }
+
     public DnsValidatedCertificate getAppWildcardCertificate() {
         return appWildcardCertificate;
     }
@@ -67,8 +76,18 @@ public class CommonStack extends Stack {
         return netSecKmsKey;
     }
 
-    public CommonStack(Construct parent, String id, ApplicationEnv env) {
+    public VpcLink getApiVpcLink() {
+        return apiVpcLink;
+    }
+
+    public PrivateDnsNamespace getInternalServiceNamespace() {
+        return apiVpcNamespace;
+    }
+
+    public CommonStack(ApplicationStage parent, String id) {
         super(parent, id);
+
+        ApplicationEnv env = parent.getEnv();
 
         SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretArn());
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
@@ -90,22 +109,30 @@ public class CommonStack extends Stack {
                 DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
         Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
                 DiscordConfig.CHANNEL_ROLE_MAIN, env.getDiscordRelayRoleIdMain());
+        Util.instantiateConfigSsmParameter(this, "PrefixListSizeParam",
+                NetSecConfig.USER_IP_PREFIX_LIST_SIZE, Integer.toString(env.getPrefixListCapacity()));
 
         deployedArtifactBucket = Bucket.Builder.create(this, "DeployedArtifactBucket")
                 .bucketName(env.getArtifactBucketName())
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
 
-        List<SubnetConfiguration> singlePublicSubnet = List.of(SubnetConfiguration.builder()
-                .name("main")
+        SubnetConfiguration publicSubnet = SubnetConfiguration.builder()
+                .name("public")
                 .subnetType(SubnetType.PUBLIC)
-                .cidrMask(24)
-                .build());
+                .cidrMask(20)
+                .build();
+        SubnetConfiguration privateSubnet = SubnetConfiguration.builder()
+                .name("private")
+                .subnetType(SubnetType.PRIVATE)
+                .cidrMask(20)
+                .build();
 
         serviceVpc = Vpc.Builder.create(this, "ServiceVpc")
-                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                .cidr(CommonConfig.STANDARD_VPC_CIDR)
                 .maxAzs(3)
-                .subnetConfiguration(singlePublicSubnet)
+                .subnetConfiguration(List.of(publicSubnet, privateSubnet))
+                .natGateways(1)
                 .build();
 
         LogGroup appFlowLogsGroup = LogGroup.Builder.create(this, "AppFlowLogsGroup")
@@ -120,10 +147,10 @@ public class CommonStack extends Stack {
                 .build();
 
         applicationVpc = Vpc.Builder.create(this, "ApplicationVpc")
-                .cidr(CommonConfig.APPLICATION_VPC_CIDR)
+                .cidr(CommonConfig.STANDARD_VPC_CIDR)
                 .flowLogs(Map.of("default", appFlowLogsOptions))
                 .maxAzs(3)
-                .subnetConfiguration(singlePublicSubnet)
+                .subnetConfiguration(List.of(publicSubnet))
                 .build();
 
         Util.instantiateConfigSsmParameter(this, "AppVpcIdParameter",
@@ -149,6 +176,12 @@ public class CommonStack extends Stack {
                 .hostedZone(systemRootHostedZone)
                 .build();
 
+        systemServicesWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "SystemServicesWildcardCertificate")
+                .validation(CertificateValidation.fromDns(systemRootHostedZone))
+                .domainName(IDUtils.dot("*", CommonConfig.SERVICES_SYSTEM_SUBDOMAIN, env.getSystemRootDomainName()))
+                .hostedZone(systemRootHostedZone)
+                .build();
+
         appWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "AppDomainWildcardCertificate")
                 .validation(CertificateValidation.fromDns(appRootHostedZone))
                 .domainName(IDUtils.dot("*", env.getAppRootDomainName()))
@@ -159,6 +192,22 @@ public class CommonStack extends Stack {
                 .trustAccountIdentities(true)
                 .alias(NetSecConfig.KMS_ALIAS)
                 .description("Used by NetSec service to encrypt user IDs and IP auth tokens")
+                .build();
+
+        SecurityGroup apiVpcLinkSecurityGroup = SecurityGroup.Builder.create(this, "ApiVpcLinkSecurityGroup")
+                .vpc(serviceVpc)
+                .allowAllOutbound(false)
+                .build();
+        apiVpcLinkSecurityGroup.addEgressRule(Peer.ipv4(serviceVpc.getVpcCidrBlock()), Port.allTraffic());
+        apiVpcLink = VpcLink.Builder.create(this, "ApiVpcLink")
+                .vpc(serviceVpc)
+                .subnets(serviceVpc.getPublicSubnets())
+                .securityGroups(List.of(apiVpcLinkSecurityGroup))
+                .build();
+
+        apiVpcNamespace = PrivateDnsNamespace.Builder.create(this, "ApiVpcNamespace")
+                .vpc(serviceVpc)
+                .name(IDUtils.dot("services.vpc.admiralbot.com"))
                 .build();
 
     }

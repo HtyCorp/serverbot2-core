@@ -2,11 +2,11 @@ package io.mamish.serverbot2.framework.server;
 
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.TraceHeader;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import com.google.gson.Gson;
 import io.mamish.serverbot2.sharedconfig.ApiConfig;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedutil.LogUtils;
+import io.mamish.serverbot2.sharedutil.XrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -16,12 +16,9 @@ import software.amazon.awssdk.services.sqs.model.*;
 import java.util.List;
 import java.util.Map;
 
-public abstract class SqsApiServer<ModelType> {
+public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
     private static final String THREAD_NAME = "SqsApiRequestReceiverThread";
-
-    private final ModelType handlerInstance = createHandlerInstance();
-    private final JsonApiRequestDispatcher<ModelType> jsonApiHandler = new JsonApiRequestDispatcher<>(handlerInstance,getModelClass());
 
     private final SqsClient sqsClient = SqsClient.create();
     private final String serviceInterfaceName = getModelClass().getSimpleName();
@@ -30,31 +27,10 @@ public abstract class SqsApiServer<ModelType> {
     private final Logger logger = LogManager.getLogger(SqsApiServer.class);
     private final Gson gson = new Gson();
 
-    /**
-     * <p>
-     * Must return the class of generic parameter <code>ModelType</code>.
-     * <p>
-     * Due to type erasure, the class corresponding to a given generic parameter can't be retrieved dynamically at
-     * runtime, so it needs to be explicitly provided by the subclass.
-     *
-     * @return The class of generic parameter <code>ModelType</code>
-     */
-    protected abstract Class<ModelType> getModelClass();
-
-    /**
-     * <p>
-     * Create a new instance of <code>ModelType</code> to handle API requests for the given service model.
-     * <p>
-     * Warning: this is called during the super constructor in LambdaApiServer, which runs <b>before</b> any instance
-     * field initialization in the subclass. You cannot refer to any instance fields since they will be null at this
-     * point.
-     * <p>
-     * This class will attempt to parse the payload of Lambda invocations as requests in the given service, and dispatch
-     * them to the provided handler.
-     *
-     * @return An instance of <code>ModelType</code> to handle API requests
-     */
-    protected abstract ModelType createHandlerInstance();
+    @Override
+    protected boolean requiresEndpointInfo() {
+        return false;
+    }
 
     public SqsApiServer(String receiveQueueName) {
         // Don't run as daemon: this is intended as a forever-running server thread.
@@ -77,7 +53,7 @@ public abstract class SqsApiServer<ModelType> {
             // used outside a trace due to missing Xray context. This lines sets the Xray recorder to ignore these.
             // This is only required because automatic client instrumentation is enabled (and can't be selectively
             // disabled per-client like I hoped...).
-            AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
+            XrayUtils.setIgnoreMissingContext();
 
             final String receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(receiveQueueName)).queueUrl();
 
@@ -102,9 +78,9 @@ public abstract class SqsApiServer<ModelType> {
                         // Propagate Xray trace information if available in message attributes
                         TraceHeader trace = extractTraceHeaderIfAvailable(message);
                         if (trace != null) {
-                            AWSXRay.beginSegment(serviceInterfaceName+"Server", trace.getRootTraceId(), trace.getParentId());
+                            AWSXRay.beginSegment("HandleRequest", trace.getRootTraceId(), trace.getParentId());
                         } else {
-                            AWSXRay.beginSegment(serviceInterfaceName+"Server");
+                            AWSXRay.beginSegment("HandleRequest");
                         }
 
                         try {
@@ -131,7 +107,7 @@ public abstract class SqsApiServer<ModelType> {
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
                             AWSXRay.beginSubsegment("DispatchRequest");
-                            String responseString = jsonApiHandler.handleRequest(message.body());
+                            String responseString = getRequestDispatcher().handleRequest(message.body());
                             AWSXRay.endSubsegment();
 
                             logger.info("Response payload:\n" + responseString);

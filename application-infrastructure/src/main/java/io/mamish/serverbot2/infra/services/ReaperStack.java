@@ -25,7 +25,7 @@ public class ReaperStack extends Stack {
         )).build();
 
         // NetSec permission required to invoke RevokeExpiredIps
-        Util.addLambdaInvokePermissionToRole(this, functionRole, NetSecConfig.FUNCTION_NAME);
+        Util.addLambdaInvokePermission(this, functionRole, NetSecConfig.FUNCTION_NAME);
 
         Alias scheduledFunctionAlias = Util.highMemJavaFunction(this, "ReaperFunction", "resource-reaper",
                 "io.mamish.serverbot2.resourcereaper.ScheduledLambdaHandler",
