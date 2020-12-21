@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.mamish.serverbot2.sharedconfig.CommandLambdaConfig;
+import io.mamish.serverbot2.sharedutil.AppContext;
 import io.mamish.serverbot2.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -98,7 +99,7 @@ public class SsmConsoleSession {
 
         // TODO: Set up some simple static page explain how to re-auth
         String issuer = "https://www.notarealwebsitedontclickthis.com";
-        String region = System.getenv("AWS_REGION");
+        String region = AppContext.get().getRegion().toString();
         String destination = String.format("https://%s.console.aws.amazon.com/systems-manager/session-manager/%s?region=%s",
                 region, instanceId, region);
 
