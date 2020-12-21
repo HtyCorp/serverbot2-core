@@ -4,7 +4,7 @@ import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
 import io.mamish.serverbot2.infra.constructs.ServiceApi;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
-import io.mamish.serverbot2.infra.util.Util;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.NetSecConfig;
@@ -39,9 +39,9 @@ public class NetSecStack extends Stack {
         EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security-service");
 
         Role taskRole = service.getTaskRole();
-        Util.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);
-        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH, NetSecConfig.PATH_PUBLIC);
-        Util.addFullExecuteApiPermission(this, taskRole);
+        Permissions.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);
+        Permissions.addConfigPathRead(this, taskRole, CommonConfig.PATH, NetSecConfig.PATH_PUBLIC);
+        Permissions.addFullExecuteApi(this, taskRole);
         parent.getCommonResources().getNetSecKmsKey().grant(taskRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
 
         ServiceApi api = new ServiceApi(this, "Api", parent, INetworkSecurity.class);

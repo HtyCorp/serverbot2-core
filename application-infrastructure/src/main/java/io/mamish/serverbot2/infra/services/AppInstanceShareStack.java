@@ -5,6 +5,7 @@ import io.mamish.serverbot2.infra.constructs.S3Artifact;
 import io.mamish.serverbot2.infra.constructs.S3ArtifactProps;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
@@ -46,10 +47,10 @@ public class AppInstanceShareStack extends Stack {
                         ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS
                 )).build();
 
-        Util.addConfigPathReadPermission(this, commonRole,
+        Permissions.addConfigPathRead(this, commonRole,
                 AppInstanceConfig.PATH_ALL);
 
-        Util.addExecuteApiPermission(this, commonRole,
+        Permissions.addExecuteApi(this, commonRole,
                 IGameMetadataService.class,
                 INetworkSecurity.class);
 

@@ -6,8 +6,6 @@ public class NetSecConfig {
 
     public static final String PATH_PUBLIC = "network-security/public";
 
-    public static final String FUNCTION_NAME = "NetworkSecurityService";
-
     public static final String SG_NAME_PREFIX = "NetSecSG";
 
     /* "If you reference a customer-managed prefix list in a security group rule, the maximum number of entries for the

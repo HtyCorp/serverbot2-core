@@ -16,9 +16,7 @@ public class LambdaWarmerConfig {
     public static final int WARMER_PING_INTERVAL_SECONDS = 10 * 60;
 
     public static final List<String> FUNCTION_NAMES_TO_WARM = List.of(
-            CommandLambdaConfig.FUNCTION_NAME,
-            GameMetadataConfig.FUNCTION_NAME,
-            NetSecConfig.FUNCTION_NAME
+        // Empty: function prewarming is unnecessary since we use ECS now
     );
 
     public static final List<String> API_SUBDOMAINS_TO_WARM = List.of(

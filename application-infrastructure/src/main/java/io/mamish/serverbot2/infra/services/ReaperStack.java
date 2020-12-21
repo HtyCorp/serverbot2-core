@@ -1,8 +1,9 @@
 package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
-import io.mamish.serverbot2.sharedconfig.NetSecConfig;
+import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.ReaperConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
@@ -25,7 +26,7 @@ public class ReaperStack extends Stack {
         )).build();
 
         // NetSec permission required to invoke RevokeExpiredIps
-        Util.addLambdaInvokePermission(this, functionRole, NetSecConfig.FUNCTION_NAME);
+        Permissions.addExecuteApi(this, functionRole, INetworkSecurity.class);
 
         Alias scheduledFunctionAlias = Util.highMemJavaFunction(this, "ReaperFunction", "resource-reaper",
                 "io.mamish.serverbot2.resourcereaper.ScheduledLambdaHandler",

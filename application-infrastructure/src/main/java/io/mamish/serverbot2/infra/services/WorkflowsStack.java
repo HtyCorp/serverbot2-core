@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.services;
 import io.mamish.serverbot2.discordrelay.model.service.IDiscordService;
 import io.mamish.serverbot2.gamemetadata.model.IGameMetadataService;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
@@ -37,8 +38,8 @@ public class WorkflowsStack extends Stack {
                 ManagedPolicies.ROUTE_53_FULL_ACCESS
         )).build();
 
-        Util.addConfigPathReadPermission(this, taskRole, CommonConfig.PATH);
-        Util.addExecuteApiPermission(this, taskRole,
+        Permissions.addConfigPathRead(this, taskRole, CommonConfig.PATH);
+        Permissions.addExecuteApi(this, taskRole,
                 IGameMetadataService.class,
                 INetworkSecurity.class,
                 IDiscordService.class);

@@ -6,6 +6,7 @@ import io.mamish.serverbot2.infra.constructs.EcsMicroservice;
 import io.mamish.serverbot2.infra.constructs.ServiceApi;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.networksecurity.model.INetworkSecurity;
 import io.mamish.serverbot2.sharedconfig.AppInstanceConfig;
@@ -63,20 +64,20 @@ public class CommandStack extends Stack {
 
         EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "command-service");
 
-        Util.addManagedPoliciesToRole(service.getTaskRole(),
+        Permissions.addManagedPoliciesToRole(service.getTaskRole(),
                 ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
                 ManagedPolicies.SQS_FULL_ACCESS,
                 ManagedPolicies.EC2_FULL_ACCESS
         );
-        Util.addExecuteApiPermission(this, service,
+        Permissions.addExecuteApi(this, service,
                 IGameMetadataService.class,
                 INetworkSecurity.class
         );
-        Util.addConfigPathReadPermission(this, service,
+        Permissions.addConfigPathRead(this, service,
                 CommandLambdaConfig.PATH,
                 CommonConfig.PATH
         );
-        Util.addFullExecuteApiPermission(this, service);
+        Permissions.addFullExecuteApi(this, service);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, ICommandService.class);
         api.addEcsRoute(ICommandService.class, service);

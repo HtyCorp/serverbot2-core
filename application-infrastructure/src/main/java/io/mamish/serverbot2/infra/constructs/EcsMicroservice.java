@@ -3,6 +3,7 @@ package io.mamish.serverbot2.infra.constructs;
 import io.mamish.serverbot2.infra.deploy.ApplicationEnv;
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import software.amazon.awscdk.core.Construct;
@@ -53,7 +54,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 ))
                 .build();
 
-        Util.addConfigPathReadPermission(parent, taskRole, CommonConfig.PATH);
+        Permissions.addConfigPathRead(parent, taskRole, CommonConfig.PATH);
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
                 .compatibility(Compatibility.EC2)

@@ -2,6 +2,7 @@ package io.mamish.serverbot2.infra.services;
 
 import io.mamish.serverbot2.infra.deploy.ApplicationStage;
 import io.mamish.serverbot2.infra.util.ManagedPolicies;
+import io.mamish.serverbot2.infra.util.Permissions;
 import io.mamish.serverbot2.infra.util.Util;
 import io.mamish.serverbot2.sharedconfig.CommonConfig;
 import io.mamish.serverbot2.sharedconfig.UrlShortenerConfig;
@@ -52,7 +53,7 @@ public class UrlShortenerStack extends Stack {
                 ManagedPolicies.DYNAMODB_FULL_ACCESS
         )).build();
 
-        Util.addConfigPathReadPermission(this, lambdaRole, CommonConfig.PATH);
+        Permissions.addConfigPathRead(this, lambdaRole, CommonConfig.PATH);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "HandlerFunction", "url-shortener",
                 "io.mamish.serverbot2.urlshortener.ApiGatewayLambdaHandler",

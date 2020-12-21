@@ -29,6 +29,4 @@ public class DiscordConfig {
     public static final String MESSAGE_TABLE_NAME = "DiscordRelayMessages";
     public static final String MESSAGE_TABLE_PKEY = "externalMessageId";
 
-    public static final String SQS_QUEUE_NAME = "DiscordRelayRequestsQueue";
-
 }
