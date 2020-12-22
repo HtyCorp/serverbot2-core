@@ -56,11 +56,17 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         Permissions.addConfigPathRead(parent, taskRole, CommonConfig.PATH);
 
+        // Important ref: https://aws.amazon.com/blogs/containers/how-amazon-ecs-manages-cpu-and-memory-resources/
+        // Setting a task size restricts tasks to a hard CPU quota/limit when we want them to use any spare CPU
+        // capacity available; instead, memory limits are set at container level.
+        // Note capacity of an m5.large is approx. 2048 CPU, ~7764 MB.
+        // Good divisor is 8 tasks each running at 960MB limit (and 256 CPU though this is optional).
+
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
                 .compatibility(Compatibility.EC2)
                 .networkMode(NetworkMode.AWS_VPC)
-                .cpu("256") // CPU and mem chosen to allow 8 tasks on an m5.large (2048 CPU, ~7764 MB)
-                .memoryMiB("960")
+                //.cpu("256")
+                //.memoryMiB("960")
                 .taskRole(taskRole)
                 .build();
 
@@ -93,7 +99,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .streamPrefix(internalName)
                 .build());
         ContainerDefinition serviceContainer = taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
-                .memoryReservationMiB(768)
+                .memoryLimitMiB(896)
                 .essential(true)
                 .image(ContainerImage.fromAsset(serviceDockerDir.toString()))
                 .logging(serverLogDriver)
@@ -115,7 +121,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .streamPrefix("xray-daemon")
                 .build());
         ContainerDefinition xrayContainer = taskDefinition.addContainer("XrayDaemonContainer", ContainerDefinitionOptions.builder()
-                .memoryReservationMiB(32)
+                .memoryLimitMiB(64)
                 .image(ContainerImage.fromRegistry("amazon/aws-xray-daemon"))
                 .logging(xrayLogDriver)
                 .build());
