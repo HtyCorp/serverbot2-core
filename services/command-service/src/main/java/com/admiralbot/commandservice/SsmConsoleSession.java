@@ -39,7 +39,7 @@ public class SsmConsoleSession {
         this.sessionName = sessionName;
     }
 
-    String getSessionUrl() throws IOException, InterruptedException {
+    public String getSessionUrl() throws IOException, InterruptedException {
 
         // TODO: Come up with a better way to write JSON - SDKv2 doesn't appear to have policy builders
 

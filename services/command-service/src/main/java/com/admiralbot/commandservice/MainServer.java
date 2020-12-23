@@ -1,5 +1,6 @@
 package com.admiralbot.commandservice;
 
+import com.admiralbot.commandservice.handlers.RootCommandHandler;
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.framework.server.HttpApiServer;
 import com.admiralbot.sharedutil.AppContext;

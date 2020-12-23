@@ -1,5 +1,6 @@
 package com.admiralbot.commandservice;
 
+import com.admiralbot.commandservice.handlers.RootCommandHandler;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
 import com.admiralbot.discordrelay.model.service.MessageChannel;

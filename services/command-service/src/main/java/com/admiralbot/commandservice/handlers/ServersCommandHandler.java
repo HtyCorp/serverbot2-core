@@ -1,5 +1,8 @@
-package com.admiralbot.commandservice;
+package com.admiralbot.commandservice.handlers;
 
+import com.admiralbot.commandservice.AbstractCommandHandler;
+import com.admiralbot.commandservice.IpAuthMessageHelper;
+import com.admiralbot.commandservice.SfnRunner;
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
 import com.admiralbot.commandservice.commands.servers.*;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;

@@ -1,5 +1,7 @@
-package com.admiralbot.commandservice;
+package com.admiralbot.commandservice.handlers;
 
+import com.admiralbot.commandservice.IpAuthMessageHelper;
+import com.admiralbot.commandservice.UrlShortenerClient;
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;

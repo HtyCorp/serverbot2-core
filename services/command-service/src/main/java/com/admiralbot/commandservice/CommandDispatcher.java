@@ -70,14 +70,35 @@ public class CommandDispatcher<ModelType> extends AbstractApiRequestDispatcher<M
 
             for (int i = 0; i < arguments.size() && i < definition.getOrderedFields().size(); i++) {
                 Field field = definition.getOrderedFieldsFieldView().get(i);
-                String value = arguments.get(i);
-                field.set(requestDto, value);
+                trySetField(requestDto, field, arguments.get(i));
             }
 
             return requestDto;
 
         } catch (ReflectiveOperationException e) {
             throw new UnparsableInputException("Unknown error while processing command.", e);
+        }
+    }
+
+    private void trySetField(AbstractCommandDto object, Field field, String argumentString) throws IllegalAccessException{
+        Class<?> fieldType = field.getType();
+        if (fieldType.equals(String.class)) {
+            field.set(object, argumentString);
+        } else if (fieldType.equals(Integer.TYPE)) {
+            try {
+                int parsedArgument = Integer.parseInt(argumentString);
+                field.set(object, parsedArgument);
+            } catch (NumberFormatException e) {
+                throw new RequestValidationException(String.format(
+                    "Validation error: input '%s' for argument %s isn't a valid whole number.",
+                    argumentString, field.getName()
+                ));
+            }
+        } else {
+            throw new RequestHandlingException(String.format(
+                    "Internal error: field %s isn't a valid parseable type",
+                    field.getName()
+            ));
         }
     }
 
