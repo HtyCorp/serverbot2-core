@@ -166,7 +166,7 @@ public class ServiceHandler implements IAppDaemon {
                 // Get the partition mounted in filesystem root ("/")
                 .map(device -> {
                     LsblkBlockDevice rootPartition = device.children.stream()
-                            .filter(child -> Objects.equals(child.mountpoint, "/"))
+                            .filter(child -> "/".equals(child.mountpoint))
                             .findFirst().orElseThrow();
                     return new Pair<>(device.name, rootPartition.name);
                 }).findFirst().orElseThrow();
@@ -176,10 +176,10 @@ public class ServiceHandler implements IAppDaemon {
         int rootPartitionNumber = Integer.parseInt(getLastChar(rootPartitionName));
 
         String growPartitionCommand = Joiner.space(
-                "sudo", "growpart", rootDeviceName, rootPartitionNumber
+                "sudo", "growpart", "/dev/"+rootDeviceName, rootPartitionNumber
         );
         String resizeFilesystemCommand = Joiner.space(
-                "sudo", "resize2fs", rootPartitionName
+                "sudo", "resize2fs", "/dev/"+rootPartitionName
         );
         runBashCommand(growPartitionCommand, 3);
         runBashCommand(resizeFilesystemCommand, 3);
@@ -192,7 +192,7 @@ public class ServiceHandler implements IAppDaemon {
         LsblkBlockDevice modifiedRootPartition = modifiedLsblk.blockDevices.stream()
                 .filter(device -> device.children != null)
                 .flatMap(device -> device.children.stream())
-                .filter(child -> Objects.equals(child.name, rootPartitionName))
+                .filter(child -> rootPartitionName.equals(child.name))
                 .findFirst().orElseThrow();
 
         return new ExtendDiskResponse(modifiedRootPartition.name, modifiedRootPartition.size);

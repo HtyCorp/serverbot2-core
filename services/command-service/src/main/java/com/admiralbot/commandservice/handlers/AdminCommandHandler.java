@@ -298,6 +298,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         try {
             ec2Client.modifyVolume(r -> r.volumeId(rootVolume.volumeId()).size(requestedSize));
         } catch (Ec2Exception e) {
+            logger.error("Got error code '{}' for ModifyVolume", e.awsErrorDetails().errorCode());
             switch (e.awsErrorDetails().errorCode()) {
                 case "IncorrectModificationState":
                     logger.error("Disk modification already in progress", e);
@@ -328,7 +329,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
             IAppDaemon instanceAppDaemon = ApiClient.sqs(IAppDaemon.class, gameMetadata.getInstanceQueueName());
             ExtendDiskResponse extendDiskResponse = instanceAppDaemon.extendDisk(new ExtendDiskRequest());
             String successfulExtendMessage = String.format(
-                    "Finished extending server root disk partition (%s) to %s. The new space is usable immediately.",
+                    "Finished extending server root disk partition (/dev/%s) to %s. The new space is usable immediately.",
                     extendDiskResponse.getRootPartitionName(), extendDiskResponse.getModifiedSize()
             );
             return new ProcessUserCommandResponse(successfulExtendMessage);
