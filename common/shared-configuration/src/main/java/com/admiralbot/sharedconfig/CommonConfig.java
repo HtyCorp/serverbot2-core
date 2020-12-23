@@ -2,6 +2,7 @@ package com.admiralbot.sharedconfig;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Common configuration values across the project.
@@ -49,6 +50,11 @@ public class CommonConfig {
             "/dev/xvda",
             "/dev/nvme0n1"
     );
+    // Most tools/APIs expect device names to be prefixed with "/dev/", but a handful do not -
+    // `lsblk` is the big one in our use case.
+    public static final List<String> EBS_ROOT_DEVICE_NAMES_NO_DEV_PREFIX = EBS_ROOT_DEVICE_NAMES.stream()
+            .map(name -> name.substring("/dev/".length()))
+            .collect(Collectors.toUnmodifiableList());
 
     public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z0-9]{2,32}");
     public static final List<String> RESERVED_APP_NAMES = List.of(

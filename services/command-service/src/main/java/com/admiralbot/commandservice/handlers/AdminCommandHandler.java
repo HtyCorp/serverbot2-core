@@ -298,12 +298,22 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         try {
             ec2Client.modifyVolume(r -> r.volumeId(rootVolume.volumeId()).size(requestedSize));
         } catch (Ec2Exception e) {
-            if (e.awsErrorDetails().errorCode().equals("IncorrectModificationState")) {
-                logger.error("Disk modification already in progress", e);
-                throw new RequestHandlingException("This game's root disk is already being modified. Try again later.");
-            } else {
-                logger.error("Unexpected EC2 API error on ModifyVolume", e);
-                throw new RequestHandlingException("Couldn't modify this game's root disk due to an unexpected error.");
+            switch (e.awsErrorDetails().errorCode()) {
+                case "IncorrectModificationState":
+                    logger.error("Disk modification already in progress", e);
+                    throw new RequestHandlingException(
+                            "This game's root disk is already being modified. Try again in a few hours."
+                    );
+                case "RequestLimitExceeded":
+                    logger.error("Request rate exceeded for ModifyVolume on this volume", e);
+                    throw new RequestHandlingException(
+                            "This game's root disk has already been recently modified. Try again in a few hours."
+                    );
+                default:
+                    logger.error("Unknown ModifyVolume API error", e);
+                    throw new RequestHandlingException(
+                            "Couldn't modify this game's root disk due to an unexpected internal error."
+                    );
             }
         }
 

@@ -161,7 +161,8 @@ public class ServiceHandler implements IAppDaemon {
         LsblkOutput lsblk = gson.fromJson(lsblkJson, LsblkOutput.class);
         Pair<String,String> rootDeviceAndPartition = lsblk.blockDevices.stream()
                 // Only get root devices with partitions
-                .filter(device -> device.children != null && CommonConfig.EBS_ROOT_DEVICE_NAMES.contains(device.name))
+                .filter(device -> device.children != null
+                        && CommonConfig.EBS_ROOT_DEVICE_NAMES_NO_DEV_PREFIX.contains(device.name))
                 // Get the partition mounted in filesystem root ("/")
                 .map(device -> {
                     LsblkBlockDevice rootPartition = device.children.stream()
