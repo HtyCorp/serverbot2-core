@@ -15,7 +15,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <awscdk.version>1.76.0</awscdk.version>
-        <awssdk.version>2.15.17</awssdk.version>
+        <awssdk.version>2.15.50</awssdk.version>
     </properties>
 
     <build>

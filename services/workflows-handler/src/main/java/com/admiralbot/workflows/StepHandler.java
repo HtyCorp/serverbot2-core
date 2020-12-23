@@ -16,6 +16,8 @@ import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
 import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
+import com.admiralbot.sharedutil.Poller;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.workflows.model.ExecutionState;
 import org.apache.logging.log4j.LogManager;
@@ -28,8 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class StepHandler {
@@ -43,6 +43,11 @@ public class StepHandler {
     private final IGameMetadataService gameMetadataService = ApiClient.http(IGameMetadataService.class);
     private final INetworkSecurity networkSecurityService = ApiClient.http(INetworkSecurity.class);
     private final IDiscordService discordService = ApiClient.http(IDiscordService.class);
+    private final Poller<String,Instance> instanceIdPoller = new Poller<>(
+            instanceId -> ec2Client.describeInstances(r -> r.instanceIds(instanceId))
+                    .reservations().get(0).instances().get(0),
+            3000, 20
+    );
 
     void createGameMetadata(ExecutionState executionState) {
         String name = executionState.getGameName();
@@ -70,7 +75,7 @@ public class StepHandler {
     void createGameResources(ExecutionState executionState) {
 
         String gameName = executionState.getGameName();
-        String instanceFriendlyName = IDUtils.kebab(AppInstanceConfig.INSTANCE_NAME_PREFIX, gameName);
+        String instanceFriendlyName = Joiner.kebab(AppInstanceConfig.INSTANCE_NAME_PREFIX, gameName);
 
         Map<String,String> tagMap = Map.of(
                 "Name", instanceFriendlyName,
@@ -107,11 +112,19 @@ public class StepHandler {
             String finalUserdata = userdataTemplate.replace("${SB2::OsUserName}", AppInstanceConfig.MANAGED_OS_USER_NAME);
             String encodedUserdata = Base64.getEncoder().encodeToString(finalUserdata.getBytes(StandardCharsets.UTF_8));
 
+            BlockDeviceMapping defaultRootDevice = BlockDeviceMapping.builder()
+                    .deviceName(CommonConfig.EBS_ROOT_DEVICE_NAME_DEFAULT)
+                    .ebs(ebs -> ebs.deleteOnTermination(true)
+                            .volumeType(VolumeType.GP3)
+                            .volumeSize(CommonConfig.EBS_ROOT_DEVICE_DEFAULT_SIZE_GB)
+                    ).build();
+
             RunInstancesResponse runInstancesResponse = ec2Client.runInstances(r ->
                     r.imageId(amiLocator.getIdealAmi().getAmiId())
                             .subnetId(subnetId)
                             .securityGroupIds(commonGroupId, newSecurityGroup.getGroupId())
                             .instanceType(InstanceType.M5_LARGE)
+                            .blockDeviceMappings(defaultRootDevice)
                             .tagSpecifications(instanceAndVolumeTags(tagMap))
                             .iamInstanceProfile(spec -> spec.name(AppInstanceConfig.COMMON_INSTANCE_PROFILE_NAME))
                             .minCount(1)
@@ -122,7 +135,7 @@ public class StepHandler {
             throw new RuntimeException("Failed to read instance userdata resource file", e);
         }
 
-        String queueName = IDUtils.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName, IDUtils.randomIdShort());
+        String queueName = Joiner.kebab(AppInstanceConfig.QUEUE_NAME_PREFIX, gameName, IDUtils.randomIdShort());
         sqsClient.createQueue(r -> r.queueName(queueName));
 
         gameMetadataService.updateGame(new UpdateGameRequest(gameName, null, null,
@@ -142,7 +155,7 @@ public class StepHandler {
         appendMessage(executionState.getInitialMessageUuid(), "Waiting for host startup...");
 
         GameMetadata gameMetadata = getGameMetadata(name);
-        String publicIp = pollInstanceIdUntil(gameMetadata.getInstanceId(),
+        String publicIp = instanceIdPoller.pollUntil(gameMetadata.getInstanceId(),
                 instance -> instance.publicIpAddress() != null,
                 Instance::publicIpAddress);
         dnsRecordManager.updateAppRecord(name, publicIp);
@@ -194,9 +207,8 @@ public class StepHandler {
         sqsClient.purgeQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
         ec2Client.stopInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
 
-        pollInstanceIdUntil(gameMetadata.getInstanceId(),
-                instance -> instance.state().name() == InstanceStateName.STOPPED,
-                null);
+        instanceIdPoller.pollUntil(gameMetadata.getInstanceId(),
+                instance -> instance.state().name() == InstanceStateName.STOPPED);
 
         setGameStateOrTaskToken(executionState.getGameName(), GameReadyState.STOPPED, null);
 
@@ -211,9 +223,8 @@ public class StepHandler {
         ec2Client.terminateInstances(r -> r.instanceIds(gameMetadata.getInstanceId()));
         sqsClient.deleteQueue(r -> r.queueUrl(getQueueUrl(gameMetadata.getInstanceQueueName())));
 
-        pollInstanceIdUntil(gameMetadata.getInstanceId(),
-                instance -> instance.state().name() == InstanceStateName.TERMINATED,
-                null);
+        instanceIdPoller.pollUntil(gameMetadata.getInstanceId(),
+                instance -> instance.state().name() == InstanceStateName.TERMINATED);
 
         networkSecurityService.deleteSecurityGroup(new DeleteSecurityGroupRequest(name));
         gameMetadataService.deleteGame(new DeleteGameRequest(name));
@@ -259,42 +270,6 @@ public class StepHandler {
 
     private void appendMessage(String messageExternalId, String newContent) {
         discordService.editMessage(new EditMessageRequest(newContent, messageExternalId, EditMode.APPEND));
-    }
-
-    private <T> T pollInstanceIdUntil(String instanceId, Predicate<Instance> condition,
-                                                   Function<Instance,T> mapper) {
-
-        Instance instance;
-
-        while (true) {
-            try {
-                //noinspection BusyWait
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                logger.error("Unexpected thread interrupt while polling EC2 instance condition", e);
-                Thread.currentThread().interrupt();
-            }
-
-            logger.debug("Condition poll: describing EC2 instance");
-
-            // Since this class is the only thing calling this and will have recently created/deleted/changed the
-            // instance it's polling, reasonable to assume this won't ever fail due to instance-not-found
-            instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
-                    .reservations().get(0).instances().get(0);
-            if (condition.test(instance)) {
-                logger.debug("Condition poll: condition satisfied, exiting loop");
-                break;
-            }
-        }
-
-        if (mapper == null) {
-            logger.debug("Condition poll: no map function provided, returning null");
-            return null;
-        } else {
-            logger.debug("Condition poll: getting result data and returning");
-            return mapper.apply(instance);
-        }
-
     }
 
 }

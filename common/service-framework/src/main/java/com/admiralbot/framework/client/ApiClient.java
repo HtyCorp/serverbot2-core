@@ -16,10 +16,7 @@ import com.admiralbot.framework.exception.server.SerializationException;
 import com.admiralbot.framework.server.LambdaApiServer;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
-import com.admiralbot.sharedutil.AppContext;
-import com.admiralbot.sharedutil.IDUtils;
-import com.admiralbot.sharedutil.SdkUtils;
-import com.admiralbot.sharedutil.Utils;
+import com.admiralbot.sharedutil.*;
 import com.amazonaws.xray.AWSXRay;
 import com.google.gson.*;
 import software.amazon.awssdk.core.SdkBytes;
@@ -77,7 +74,7 @@ public final class ApiClient {
                 r -> r.apiCallTimeout(Duration.ofSeconds(ApiConfig.CLIENT_DEFAULT_TIMEOUT)));
         return makeProxyInstance(modelInterfaceClass, false, request -> {
             SdkBytes lambdaPayload = SdkBytes.fromUtf8String(request.getPayload());
-            String functionLiveAlias = IDUtils.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
+            String functionLiveAlias = Joiner.colon(functionName, CommonConfig.LAMBDA_LIVE_ALIAS_NAME);
             InvokeResponse response = lambdaClient.invoke(r -> r.payload(lambdaPayload)
                     .functionName(functionLiveAlias));
             return new ServerResponse(response.payload().asUtf8String(), null);

@@ -38,6 +38,18 @@ public class CommonConfig {
     public static final int LAMBDA_MEMORY_MB_FOR_STANDARD = 2048;
     public static final int STANDARD_LAMBDA_TIMEOUT = 20;
 
+    public static final int EBS_ROOT_DEVICE_DEFAULT_SIZE_GB = 12;
+    public static final int EBS_ROOT_DEVICE_MAX_SIZE_GB = 48;
+
+    // For EC2 API we use a standard device name, but commands on instances might see any of these listed,
+    // depending on AMI/arch/OS.
+    public static final String EBS_ROOT_DEVICE_NAME_DEFAULT = "/dev/sda1";
+    public static final List<String> EBS_ROOT_DEVICE_NAMES = List.of(
+            EBS_ROOT_DEVICE_NAME_DEFAULT,
+            "/dev/xvda",
+            "/dev/nvme0n1"
+    );
+
     public static final Pattern APP_NAME_REGEX = Pattern.compile("[a-z0-9]{2,32}");
     public static final List<String> RESERVED_APP_NAMES = List.of(
             // Empty: this is currently unused since there are now separate 'app' and 'system' domain names,

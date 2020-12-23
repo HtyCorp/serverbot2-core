@@ -10,7 +10,7 @@ import com.admiralbot.networksecurity.model.PortPermission;
 import com.admiralbot.networksecurity.model.PortProtocol;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Pair;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.google.gson.Gson;
@@ -354,7 +354,7 @@ public class Ec2GroupManager implements IGroupManager {
     }
 
     private String prependSgPrefix(String name) {
-        return IDUtils.kebab(NetSecConfig.SG_NAME_PREFIX, name);
+        return Joiner.kebab(NetSecConfig.SG_NAME_PREFIX, name);
     }
 
 }

@@ -1,6 +1,6 @@
 package com.admiralbot.networksecurity.crypto;
 
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awssdk.core.SdkBytes;
 
 import javax.crypto.Cipher;
@@ -34,7 +34,7 @@ public class LocalAes {
             String ivB64 = b64Encoder.encodeToString(ivBytes);
             String ciphertextB64 = b64Encoder.encodeToString(ciphertextBytes);
 
-            return IDUtils.colon(ivB64, ciphertextB64);
+            return Joiner.colon(ivB64, ciphertextB64);
         } catch (GeneralSecurityException e) {
             throw new RuntimeException("Cipher error during local encryption", e);
         }

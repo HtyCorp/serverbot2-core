@@ -5,6 +5,7 @@ import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.ReaperConfig;
 import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
@@ -164,7 +165,7 @@ public class SqsRequestResponseClient {
 
     private static String generateQueueName() {
         // Should be < 70 chars, so within the 80-char limit for SQS queue names.
-        return IDUtils.kebab(ApiConfig.TEMP_QUEUE_URL_PREFIX, IDUtils.epochSeconds(), IDUtils.randomUUIDJoined());
+        return Joiner.kebab(ApiConfig.TEMP_QUEUE_URL_PREFIX, IDUtils.epochSeconds(), IDUtils.randomUUIDJoined());
     }
 
     private void updateQueueReaperHeartbeat() {

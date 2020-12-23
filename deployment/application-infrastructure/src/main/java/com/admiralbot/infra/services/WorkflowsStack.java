@@ -8,7 +8,7 @@ import com.admiralbot.infra.util.Util;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.WorkflowsConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.workflows.model.Machines;
 import com.admiralbot.workflows.model.Tasks;
 import software.amazon.awscdk.core.Construct;
@@ -116,7 +116,7 @@ public class WorkflowsStack extends Stack {
 
         StateMachine endSuccess() {
             Succeed succeed = Succeed.Builder.create(WorkflowsStack.this,
-                    IDUtils.kebab(machineName, "EndSucceed")).build();
+                    Joiner.kebab(machineName, "EndSucceed")).build();
             addToChain(succeed);
             return makeStateMachine(machineName, outputTaskChain);
         }
@@ -134,7 +134,7 @@ public class WorkflowsStack extends Stack {
     private LambdaInvoke makeSynchronousTask(Machines machine, IFunction function, Tasks task) {
         TaskInput payload = TaskInput.fromObject(basePayloadMap(task));
 
-        String scopedId = IDUtils.kebab(machine, "Task", task);
+        String scopedId = Joiner.kebab(machine, "Task", task);
         return LambdaInvoke.Builder.create(this, scopedId)
                 .lambdaFunction(function)
                 .resultPath("DISCARD")
@@ -148,7 +148,7 @@ public class WorkflowsStack extends Stack {
         payloadMap.put("taskToken", JsonPath.getTaskToken());
         TaskInput payload = TaskInput.fromObject(payloadMap);
 
-        String scopedId = IDUtils.kebab(machine, "Task", task);
+        String scopedId = Joiner.kebab(machine, "Task", task);
         return LambdaInvoke.Builder.create(this, scopedId)
                 .lambdaFunction(function)
                 .resultPath("DISCARD")

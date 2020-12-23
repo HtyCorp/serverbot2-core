@@ -1,9 +1,6 @@
 package com.admiralbot.commandservice;
 
-import com.admiralbot.appdaemon.model.IAppDaemon;
-import com.admiralbot.appdaemon.model.SftpSession;
-import com.admiralbot.appdaemon.model.StartSftpServerRequest;
-import com.admiralbot.appdaemon.model.StartSftpServerResponse;
+import com.admiralbot.appdaemon.model.*;
 import com.admiralbot.commandservice.commands.admin.*;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
 import com.admiralbot.discordrelay.model.service.IDiscordService;
@@ -22,13 +19,17 @@ import com.admiralbot.networksecurity.model.PortProtocol;
 import com.admiralbot.sharedconfig.CommandLambdaConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
+import com.admiralbot.sharedutil.Poller;
+import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
-import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.DescribeVolumesResponse;
+import software.amazon.awssdk.services.ec2.model.Filter;
+import software.amazon.awssdk.services.ec2.model.Volume;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,8 +37,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHandler> implements IAdminCommandHandler {
-
-    private static final String STANDARD_ROOT_DEVICE_NAME = "/dev/sda1";
 
     private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
 
@@ -47,8 +46,8 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final IDiscordService discordServiceClient;
     private final UrlShortenerClient urlShortenerClient;
     private final Pattern portRangePattern;
-
-    private final SfnRunner sfnRunner = new SfnRunner();
+    private final SfnRunner sfnRunner;
+    private final Poller<String,Volume> volumeIdPoller;
 
     public AdminCommandHandler(Ec2Client ec2Client, IGameMetadataService gameMetadataServiceClient,
                                INetworkSecurity networkSecurityServiceClient, IDiscordService discordServiceClient,
@@ -59,6 +58,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         this.discordServiceClient = discordServiceClient;
         this.urlShortenerClient = urlShortenerClient;
         this.portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
+        sfnRunner = new SfnRunner();
+        volumeIdPoller = new Poller<>(volumeId -> ec2Client.describeVolumes(r -> r.volumeIds(volumeId))
+                .volumes().get(0),
+                1000, 6);
     }
 
     @Override
@@ -195,22 +198,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         String name = commandBackupNow.getGameName();
         GameMetadata gameMetadata = fetchGameMetadata(name);
 
-        String instanceId = gameMetadata.getInstanceId();
-        Instance instance = ec2Client.describeInstances(r -> r.instanceIds(instanceId))
-                .reservations().get(0).instances().get(0);
-        String volumeId = instance.blockDeviceMappings().stream()
-                .filter(mapping -> mapping.deviceName().equals(STANDARD_ROOT_DEVICE_NAME))
-                .map(mapping -> mapping.ebs().volumeId())
-                .findFirst()
-                .orElseThrow(() -> {
-                    logger.error("No block device found for instance {} with device name {}",
-                            instanceId, STANDARD_ROOT_DEVICE_NAME);
-                    return new RequestHandlingException("Couldn't find root volume for this game's server");
-                });
-
-        String snapshotName = IDUtils.kebab("AppInstance", "ManualBackup", name,
+        String rootVolumeId = fetchRootVolume(gameMetadata).volumeId();
+        String snapshotName = Joiner.kebab("AppInstance", "ManualBackup", name,
                 "m"+commandBackupNow.getContext().getMessageId());
-        String snapshotId = ec2Client.createSnapshot(r -> r.volumeId(volumeId).description(snapshotName)).snapshotId();
+        String snapshotId = ec2Client.createSnapshot(r -> r.volumeId(rootVolumeId).description(snapshotName)).snapshotId();
 
         logger.info("Created new snapshot {} for game {}", snapshotId, name);
 
@@ -261,6 +252,68 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                 + ";" + fingerprintParam;
     }
 
+    @Override
+    public ProcessUserCommandResponse onCommandExtendDisk(CommandExtendDisk commandExtendDisk) {
+
+        String name = commandExtendDisk.getGameName();
+        GameMetadata gameMetadata = fetchGameMetadata(name);
+
+        // Prevent modifications while instance is starting up: need to only edit while it's stopped (where the boot
+        // process will resize FS automatically on next boot) or when it's running (so we can issue a resize through
+        // app daemon).
+
+        if (!Utils.equalsAny(gameMetadata.getGameReadyState(), GameReadyState.STOPPED, GameReadyState.RUNNING)) {
+            throw new RequestValidationException(
+                    "Can't modify a game's root disk while it's starting up or shutting down."
+            );
+        }
+
+        // Check that the requested size is basically valid
+
+        int requestedSize = commandExtendDisk.getSizeGB();
+        if (requestedSize <= 0) {
+            throw new RequestValidationException("You can't have negative disk space, what are you doing.");
+        }
+        final int MAX = CommonConfig.EBS_ROOT_DEVICE_MAX_SIZE_GB;
+        if (requestedSize > MAX) {
+            throw new RequestValidationException("Requested size can't be more than "+MAX+"GB.");
+        }
+
+        // Get the root volume and make sure we're not trying to shrink it
+
+        Volume rootVolume = fetchRootVolume(gameMetadata);
+        if (rootVolume.size() >= requestedSize) {
+            throw new RequestValidationException(
+                    "This game's root volume is already this size or larger ("+rootVolume.size()+"GB)."
+            );
+        }
+
+        // Expand the root volume via EC2 API and wait until API shows the new size is in effect
+
+        ec2Client.modifyVolume(r -> r.volumeId(rootVolume.volumeId()).size(requestedSize));
+        volumeIdPoller.pollUntil(rootVolume.volumeId(), volume -> volume.size() == requestedSize);
+
+        // If the game is running, issue a filesystem resize command.
+
+        if (gameMetadata.getGameReadyState().equals(GameReadyState.RUNNING)) {
+            IAppDaemon instanceAppDaemon = ApiClient.sqs(IAppDaemon.class, gameMetadata.getInstanceQueueName());
+            ExtendDiskResponse extendDiskResponse = instanceAppDaemon.extendDisk(new ExtendDiskRequest());
+            String successfulExtendMessage = String.format(
+                    "Finished extending server root disk partition (%s) to %s. The new space is usable immediately.",
+                    extendDiskResponse.getRootPartitionName(), extendDiskResponse.getModifiedSize()
+            );
+            return new ProcessUserCommandResponse(successfulExtendMessage);
+        } else {
+            String pendingExtendMessage = String.format(
+                    "Finished expanding server root volume to %dGB. The new space will be usable on next launch.",
+                    requestedSize
+            );
+            return new ProcessUserCommandResponse(pendingExtendMessage);
+        }
+
+
+    }
+
     private GameMetadata fetchGameMetadata(String name) {
         DescribeGameResponse describeResponse = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
 
@@ -271,6 +324,32 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         return describeResponse.getGame();
     }
+
+    private Volume fetchRootVolume(GameMetadata gameMetadata) {
+        String instanceId = gameMetadata.getInstanceId();
+
+        logger.info("Searching for root volumes of instance {}", instanceId);
+
+        DescribeVolumesResponse volumesResponse = ec2Client.describeVolumes(r -> r.filters(
+                Filter.builder().name("attachment.instance-id").values(instanceId).build(),
+                Filter.builder().name("attachment.device").values(CommonConfig.EBS_ROOT_DEVICE_NAMES).build()
+        ));
+        List<Volume> volumes = volumesResponse.volumes();
+
+        if (volumes.isEmpty()) {
+            logger.error("No volumes returned by filtered DescribeVolumes search");
+            throw new RequestHandlingException("Couldn't locate the root disk for this game");
+        }
+        if (volumes.size() > 1) {
+            logger.error("Got multiple possible root volumes. Dumping volumes response...");
+            logger.error(volumesResponse.toString());
+            throw new RequestHandlingException("Found multiple possible root disks for this game");
+        }
+
+        return volumes.get(0);
+    }
+
+
 
     private String makeSessionName(String userId, String gameName) {
         // Ref: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-limits.html#reference_iam-limits-entity-length

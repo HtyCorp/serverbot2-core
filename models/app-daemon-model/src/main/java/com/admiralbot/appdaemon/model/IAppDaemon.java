@@ -7,5 +7,7 @@ public interface IAppDaemon {
     StartAppResponse startApp(StartAppRequest request);
     StopAppResponse stopApp(StopAppRequest request);
     StartSftpServerResponse startSftpServer(StartSftpServerRequest request);
+    ExtendDiskResponse extendDisk(ExtendDiskRequest request);
+
 
 }

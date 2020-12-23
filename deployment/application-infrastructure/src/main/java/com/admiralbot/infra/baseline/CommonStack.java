@@ -6,7 +6,7 @@ import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.SecretValue;
 import software.amazon.awscdk.core.Stack;
@@ -175,19 +175,19 @@ public class CommonStack extends Stack {
 
         systemWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "SystemDomainWildcardCertificate")
                 .validation(CertificateValidation.fromDns(systemRootHostedZone))
-                .domainName(IDUtils.dot("*", env.getSystemRootDomainName()))
+                .domainName(Joiner.dot("*", env.getSystemRootDomainName()))
                 .hostedZone(systemRootHostedZone)
                 .build();
 
         systemServicesWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "SystemServicesWildcardCertificate")
                 .validation(CertificateValidation.fromDns(systemRootHostedZone))
-                .domainName(IDUtils.dot("*", CommonConfig.SERVICES_SYSTEM_SUBDOMAIN, env.getSystemRootDomainName()))
+                .domainName(Joiner.dot("*", CommonConfig.SERVICES_SYSTEM_SUBDOMAIN, env.getSystemRootDomainName()))
                 .hostedZone(systemRootHostedZone)
                 .build();
 
         appWildcardCertificate = DnsValidatedCertificate.Builder.create(this, "AppDomainWildcardCertificate")
                 .validation(CertificateValidation.fromDns(appRootHostedZone))
-                .domainName(IDUtils.dot("*", env.getAppRootDomainName()))
+                .domainName(Joiner.dot("*", env.getAppRootDomainName()))
                 .hostedZone(appRootHostedZone)
                 .build();
 
@@ -210,7 +210,7 @@ public class CommonStack extends Stack {
 
         apiVpcNamespace = PrivateDnsNamespace.Builder.create(this, "ApiVpcNamespace")
                 .vpc(serviceVpc)
-                .name(IDUtils.dot("services.vpc.admiralbot.com"))
+                .name(Joiner.dot("services.vpc.admiralbot.com"))
                 .build();
 
     }

@@ -12,7 +12,7 @@ import com.admiralbot.gamemetadata.model.GameReadyState;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.gamemetadata.model.ListGamesRequest;
 import com.admiralbot.sharedconfig.CommonConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Utils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,7 +115,7 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
             if (ip == null) {
                 outputBuilder.append("server is still starting up");
             } else {
-                String dnsName = IDUtils.dot(name, CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());
+                String dnsName = Joiner.dot(name, CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());
                 outputBuilder.append(ip).append(" (").append(dnsName).append(")");
             }
             outputBuilder.append("\n");

@@ -2,6 +2,7 @@ package com.admiralbot.infra.constructs;
 
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.CustomResource;
 import software.amazon.awscdk.core.Duration;
@@ -21,7 +22,7 @@ public class S3Artifact extends Construct {
         super(scope, id);
 
         String targetKeyRandomSuffix = props.getArtifactKeyPrefix() + "-" + IDUtils.randomIdShort() + props.getArtifactKeySuffix();
-        String targetS3Url = IDUtils.slash("s3:/", props.getTargetBucket().getBucketName(), targetKeyRandomSuffix);
+        String targetS3Url = Joiner.slash("s3:/", props.getTargetBucket().getBucketName(), targetKeyRandomSuffix);
 
         StringParameter urlParameter = StringParameter.Builder.create(this, "UrlParameter")
                 .parameterName(props.getArtifactS3UrlParameterName())

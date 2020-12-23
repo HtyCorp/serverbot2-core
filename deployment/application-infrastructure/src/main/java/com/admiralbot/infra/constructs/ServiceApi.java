@@ -4,7 +4,7 @@ import com.admiralbot.framework.common.ApiAuthType;
 import com.admiralbot.framework.common.ApiEndpointInfo;
 import com.admiralbot.infra.deploy.ApplicationStage;
 import com.admiralbot.sharedconfig.CommonConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
@@ -63,7 +63,7 @@ public class ServiceApi extends Construct {
         CfnApi cfnApi = (CfnApi) api.getNode().getDefaultChild();
         Objects.requireNonNull(cfnApi).setDisableExecuteApiEndpoint(true);
 
-        String fqdn = IDUtils.dot(serviceName, CommonConfig.SERVICES_SYSTEM_SUBDOMAIN,
+        String fqdn = Joiner.dot(serviceName, CommonConfig.SERVICES_SYSTEM_SUBDOMAIN,
                 appStage.getEnv().getSystemRootDomainName());
         DomainName serviceDomainName = DomainName.Builder.create(this, "CustomDomainName")
                 .certificate(appStage.getCommonResources().getSystemServicesWildcardCertificate())

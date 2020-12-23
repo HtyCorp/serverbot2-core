@@ -1,7 +1,7 @@
 package com.admiralbot.appdaemon;
 
 import com.admiralbot.sharedconfig.AppInstanceConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import org.apache.logging.log4j.LogManager;
@@ -45,8 +45,8 @@ public class CloudWatchLogsUploader {
     public CloudWatchLogsUploader(InputStream inputStream, String appName, Instant when, String outputType) {
         this.streamReader = new BufferedReader(new InputStreamReader(inputStream));
 
-        this.logGroupName = IDUtils.slash(AppInstanceConfig.APP_LOGS_GROUP_PREFIX, appName);
-        this.logStreamName = IDUtils.slash(timeFormatter.format(when), outputType);
+        this.logGroupName = Joiner.slash(AppInstanceConfig.APP_LOGS_GROUP_PREFIX, appName);
+        this.logStreamName = Joiner.slash(timeFormatter.format(when), outputType);
 
         logger.debug("Creating log group '" + logGroupName + "' with log stream '" + logStreamName + "'");
 

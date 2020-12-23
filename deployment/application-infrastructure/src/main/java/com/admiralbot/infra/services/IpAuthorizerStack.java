@@ -8,7 +8,7 @@ import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.IpAuthConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -76,7 +76,7 @@ public class IpAuthorizerStack extends Stack {
         SUBDOMAINS.forEach((name, subdomain) -> {
 
             DomainName domain = restApi.addDomainName(name+"RestApi", DomainNameOptions.builder()
-                    .domainName(IDUtils.dot(subdomain, parent.getEnv().getSystemRootDomainName()))
+                    .domainName(Joiner.dot(subdomain, parent.getEnv().getSystemRootDomainName()))
                     .certificate(parent.getCommonResources().getSystemWildcardCertificate())
                     .endpointType(EndpointType.REGIONAL)
                     .build());

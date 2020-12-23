@@ -6,7 +6,7 @@ import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -100,7 +100,7 @@ public class UrlShortenerStack extends Stack {
         // Register in system DNS zone
 
         restApi.addDomainName("UrlRestApiDomainName", DomainNameOptions.builder()
-                .domainName(IDUtils.dot(UrlShortenerConfig.SUBDOMAIN, parent.getEnv().getSystemRootDomainName()))
+                .domainName(Joiner.dot(UrlShortenerConfig.SUBDOMAIN, parent.getEnv().getSystemRootDomainName()))
                 .certificate(parent.getCommonResources().getSystemWildcardCertificate())
                 .endpointType(EndpointType.REGIONAL)
                 .build());

@@ -14,5 +14,6 @@ public interface IAdminCommandHandler {
     ProcessUserCommandResponse onCommandTerminal(CommandTerminal commandTerminal);
     ProcessUserCommandResponse onCommandBackupNow(CommandBackupNow commandBackupNow);
     ProcessUserCommandResponse onCommandFiles(CommandFiles commandFiles);
+    ProcessUserCommandResponse onCommandExtendDisk(CommandExtendDisk commandExtendDisk);
 
 }

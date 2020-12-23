@@ -2,7 +2,7 @@ package com.admiralbot.infra.util;
 
 import com.admiralbot.framework.common.ApiEndpointInfo;
 import com.admiralbot.sharedconfig.CommonConfig;
-import com.admiralbot.sharedutil.IDUtils;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.*;
 
@@ -36,7 +36,7 @@ public class Permissions {
                     ApiEndpointInfo endpointInfo = cls.getAnnotation(ApiEndpointInfo.class);
                     // Resource segment format is "api-id/stage-name/http-method/api-resource"
                     // Full example ARN: "arn:aws:execute-api:us-east-1:*:a123456789/test/POST/mydemoresource/*"
-                    String resource = IDUtils.slash("*", endpointInfo.serviceName(), endpointInfo.httpMethod().name(), "*");
+                    String resource = Joiner.slash("*", endpointInfo.serviceName(), endpointInfo.httpMethod().name(), "*");
                     return Util.arn(stack, null, null, "execute-api", resource);
                 }).collect(Collectors.toList());
 
@@ -62,7 +62,7 @@ public class Permissions {
 
     public static void addLambdaInvoke(Stack stack, IGrantable grantee, String... functionNames) {
         List<String> lambdaArns = Arrays.stream(functionNames)
-                .map(name -> IDUtils.colon("function", name, CommonConfig.LAMBDA_LIVE_ALIAS_NAME))
+                .map(name -> Joiner.colon("function", name, CommonConfig.LAMBDA_LIVE_ALIAS_NAME))
                 .map(resource -> Util.arn(stack, null, null, "lambda", resource))
                 .collect(Collectors.toList());
 

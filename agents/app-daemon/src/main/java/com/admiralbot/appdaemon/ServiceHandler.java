@@ -4,16 +4,22 @@ import com.admiralbot.appdaemon.model.*;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.sharedconfig.AppInstanceConfig;
+import com.admiralbot.sharedconfig.CommonConfig;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.LogUtils;
+import com.admiralbot.sharedutil.Pair;
 import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.amazon.awssdk.core.SdkBytes;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class ServiceHandler implements IAppDaemon {
@@ -131,4 +137,99 @@ public class ServiceHandler implements IAppDaemon {
                 sessionSftpServer.getSessionKeyPairFingerprint()
         ));
     }
+
+    @Override
+    public ExtendDiskResponse extendDisk(ExtendDiskRequest request) {
+
+        /* Example `lsblk --json` output from Ubuntu 18.04 LTS on m5.large, with added EBS volume (9G):
+         * {
+         *     "blockdevices": [
+         *         {"name": "loop0", "maj:min": "7:0", "rm": "0", "size": "97.8M", "ro": "1", "type": "loop", "mountpoint": "/snap/core/10185"},
+         *         {"name": "loop1", "maj:min": "7:1", "rm": "0", "size": "28.1M", "ro": "1", "type": "loop", "mountpoint": "/snap/amazon-ssm-agent/2012"},
+         *         {"name": "loop2", "maj:min": "7:2", "rm": "0", "size": "240K", "ro": "1", "type": "loop", "mountpoint": "/snap/jq/6"},
+         *         {"name": "nvme1n1", "maj:min": "259:0", "rm": "0", "size": "9G", "ro": "0", "type": "disk", "mountpoint": null},
+         *         {"name": "nvme0n1", "maj:min": "259:1", "rm": "0", "size": "8G", "ro": "0", "type": "disk", "mountpoint": null,
+         *            "children": [
+         *               {"name": "nvme0n1p1", "maj:min": "259:2", "rm": "0", "size": "8G", "ro": "0", "type": "part", "mountpoint": "/"}
+         *            ]
+         *         }
+         *      ]
+         *   }
+         */
+
+        String lsblkJson = runBashCommand("lsblk --json", 2);
+        LsblkOutput lsblk = gson.fromJson(lsblkJson, LsblkOutput.class);
+        Pair<String,String> rootDeviceAndPartition = lsblk.blockDevices.stream()
+                // Only get root devices with partitions
+                .filter(device -> device.children != null && CommonConfig.EBS_ROOT_DEVICE_NAMES.contains(device.name))
+                // Get the partition mounted in filesystem root ("/")
+                .map(device -> {
+                    LsblkBlockDevice rootPartition = device.children.stream()
+                            .filter(child -> Objects.equals(device.mountpoint, "/"))
+                            .findFirst().orElseThrow();
+                    return new Pair<>(device.name, rootPartition.name);
+                }).findFirst().orElseThrow();
+
+        String rootDeviceName = rootDeviceAndPartition.a();
+        String rootPartitionName = rootDeviceAndPartition.b();
+        int rootPartitionNumber = Integer.parseInt(getLastChar(rootPartitionName));
+
+        String growPartitionCommand = Joiner.space(
+                "sudo", "growpart", rootDeviceName, rootPartitionNumber
+        );
+        String resizeFilesystemCommand = Joiner.space(
+                "sudo", "resize2fs", rootPartitionName
+        );
+        runBashCommand(growPartitionCommand, 3);
+        runBashCommand(resizeFilesystemCommand, 3);
+
+        // Do lsblk again to get actual expanded partition size - if there were other partitions this won't actually be
+        // all of the space on the disk.
+
+        String modifiedLsblkJson = runBashCommand("lsblk --json", 2);
+        LsblkOutput modifiedLsblk = gson.fromJson(modifiedLsblkJson, LsblkOutput.class);
+        LsblkBlockDevice modifiedRootPartition = modifiedLsblk.blockDevices.stream()
+                .filter(device -> device.children != null)
+                .flatMap(device -> device.children.stream())
+                .filter(child -> Objects.equals(child.name, rootPartitionName))
+                .findFirst().orElseThrow();
+
+        return new ExtendDiskResponse(modifiedRootPartition.name, modifiedRootPartition.size);
+
+    }
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private static class LsblkOutput {
+        @SerializedName("blockdevices")
+        private List<LsblkBlockDevice> blockDevices;
+    }
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private static class LsblkBlockDevice {
+        String name;
+        @SerializedName("maj:min")
+        String version;
+        String rm, size, ro, type, mountpoint;
+        List<LsblkBlockDevice> children;
+    }
+
+    private String getLastChar(String input) {
+        int len = input.length();
+        return input.substring(len-1, len);
+    }
+
+    private String runBashCommand(String command, int waitSecondsMax) {
+        try {
+            Process p = new ProcessBuilder("bash", "-c", command).start();
+            p.waitFor(waitSecondsMax, TimeUnit.SECONDS);
+            if (p.exitValue() == 0) {
+                return SdkBytes.fromInputStream(p.getInputStream()).asUtf8String();
+            } else {
+                throw new RuntimeException("Bash command exited with non-zero status code");
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to run bash command `"+command+"`", e);
+        }
+    }
+
 }
