@@ -32,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.DescribeVolumesResponse;
+import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.Volume;
 
@@ -65,7 +66,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         sfnRunner = new SfnRunner();
         volumeIdPoller = new Poller<>(volumeId -> ec2Client.describeVolumes(r -> r.volumeIds(volumeId))
                 .volumes().get(0),
-                1000, 6);
+                1000, 8);
     }
 
     @Override
@@ -288,13 +289,27 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         Volume rootVolume = fetchRootVolume(gameMetadata);
         if (rootVolume.size() >= requestedSize) {
             throw new RequestValidationException(
-                    "This game's root volume is already this size or larger ("+rootVolume.size()+"GB)."
+                    "This game's root disk is already this size or larger ("+rootVolume.size()+"GB)."
             );
         }
 
         // Expand the root volume via EC2 API and wait until API shows the new size is in effect
 
-        ec2Client.modifyVolume(r -> r.volumeId(rootVolume.volumeId()).size(requestedSize));
+        try {
+            ec2Client.modifyVolume(r -> r.volumeId(rootVolume.volumeId()).size(requestedSize));
+        } catch (Ec2Exception e) {
+            if (e.awsErrorDetails().errorCode().equals("IncorrectModificationState")) {
+                logger.error("Disk modification already in progress", e);
+                throw new RequestHandlingException("This game's root disk is already being modified. Try again later.");
+            } else {
+                logger.error("Unexpected EC2 API error on ModifyVolume", e);
+                throw new RequestHandlingException("Couldn't modify this game's root disk due to an unexpected error.");
+            }
+        }
+
+        // TODO: Should poll the instance instead of EC2 API: API eventual consistency means we might be waiting longer
+        // than actually necessary to issue the resize on the instance.
+
         volumeIdPoller.pollUntil(rootVolume.volumeId(), volume -> volume.size() == requestedSize);
 
         // If the game is running, issue a filesystem resize command.
