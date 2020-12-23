@@ -301,14 +301,14 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
             logger.error("Got error code '{}' for ModifyVolume", e.awsErrorDetails().errorCode());
             switch (e.awsErrorDetails().errorCode()) {
                 case "IncorrectModificationState":
-                    logger.error("Disk modification already in progress", e);
+                    logger.error("Disk modification/optimization already in progress", e);
                     throw new RequestHandlingException(
-                            "This game's root disk is already being modified. Try again in a few hours."
+                            "This game's root disk is already being modified/optimized. Try again in a few hours."
                     );
-                case "RequestLimitExceeded":
+                case "VolumeModificationRateExceeded":
                     logger.error("Request rate exceeded for ModifyVolume on this volume", e);
                     throw new RequestHandlingException(
-                            "This game's root disk has already been recently modified. Try again in a few hours."
+                            "This game's root disk has already been modified recently. Try again in a few hours."
                     );
                 default:
                     logger.error("Unknown ModifyVolume API error", e);
@@ -329,7 +329,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
             IAppDaemon instanceAppDaemon = ApiClient.sqs(IAppDaemon.class, gameMetadata.getInstanceQueueName());
             ExtendDiskResponse extendDiskResponse = instanceAppDaemon.extendDisk(new ExtendDiskRequest());
             String successfulExtendMessage = String.format(
-                    "Finished extending server root disk partition (/dev/%s) to %s. The new space is usable immediately.",
+                    "Extended server root disk partition (/dev/%s) to %s. The new space is usable immediately.",
                     extendDiskResponse.getRootPartitionName(), extendDiskResponse.getModifiedSize()
             );
             return new ProcessUserCommandResponse(successfulExtendMessage);
