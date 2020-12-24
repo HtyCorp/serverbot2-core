@@ -48,19 +48,16 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;
     private final INetworkSecurity networkSecurityServiceClient;
-    private final IDiscordService discordServiceClient;
     private final UrlShortenerClient urlShortenerClient;
     private final Pattern portRangePattern;
     private final SfnRunner sfnRunner;
     private final Poller<String,Volume> volumeIdPoller;
 
     public AdminCommandHandler(Ec2Client ec2Client, IGameMetadataService gameMetadataServiceClient,
-                               INetworkSecurity networkSecurityServiceClient, IDiscordService discordServiceClient,
-                               UrlShortenerClient urlShortenerClient) {
+                               INetworkSecurity networkSecurityServiceClient, UrlShortenerClient urlShortenerClient) {
         this.ec2Client = ec2Client;
         this.gameMetadataServiceClient = gameMetadataServiceClient;
         this.networkSecurityServiceClient = networkSecurityServiceClient;
-        this.discordServiceClient = discordServiceClient;
         this.urlShortenerClient = urlShortenerClient;
         this.portRangePattern = Pattern.compile("(?<proto>[a-z]+):(?<portFrom>\\d{1,5})(?:-(?<portTo>\\d{1,5}))?");
         sfnRunner = new SfnRunner();
@@ -175,20 +172,15 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
             String shortTerminalUrl = urlShortenerClient.getShortenedUrl(fullTerminalUrl,
                     CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds());
 
-            String messageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
+            String privateMessageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
             SimpleEmbed terminalUrlEmbed = new SimpleEmbed(shortTerminalUrl,
                     "Terminal login link",
                     "Opens a terminal session for the server running " + gameName);
 
-            discordServiceClient.newMessage(new NewMessageRequest(
-                    messageContent,
-                    null,
-                    null,
-                    commandTerminal.getContext().getSenderId(),
-                    terminalUrlEmbed
-            ));
             return new ProcessUserCommandResponse(
-                    "A login link has been sent to your private messages.");
+                    "A login link has been sent to your private messages.",
+                    privateMessageContent, terminalUrlEmbed
+            );
         } catch (InterruptedException | IOException e) {
             logger.error("Error during terminal session URL generate", e);
             return new ProcessUserCommandResponse(
@@ -233,12 +225,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                 + "Click this link to launch your client and view/edit files for "+name+":\n"
                 + "<"+sftpUri+">";
 
-        discordServiceClient.newMessage(new NewMessageRequest(
-                privateMessageContent, null, null,
-                commandFiles.getContext().getSenderId()
-        ));
-
-        return new ProcessUserCommandResponse("A connection URL has been sent to your private messages.");
+        return new ProcessUserCommandResponse(
+                "A connection URL has been sent to your private messages.",
+                privateMessageContent, null
+        );
 
     }
 

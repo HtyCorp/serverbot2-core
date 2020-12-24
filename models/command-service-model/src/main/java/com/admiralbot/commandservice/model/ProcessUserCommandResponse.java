@@ -1,51 +1,48 @@
 package com.admiralbot.commandservice.model;
 
-import java.util.Objects;
+import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 
 public class ProcessUserCommandResponse {
 
-    private String optionalMessageContent;
-    private String optionalMessageExternalId;
+    // All fields optional
+    private String messageContent;
+    private String messageExternalId;
+    private String privateMessageContent;
+    private SimpleEmbed privateMessageEmbed;
 
     @SuppressWarnings("unused")
     public ProcessUserCommandResponse() { }
 
-    public ProcessUserCommandResponse(String optionalMessageContent) {
-        this.optionalMessageContent = optionalMessageContent;
+    public ProcessUserCommandResponse(String messageContent) {
+        this.messageContent = messageContent;
     }
 
-    public ProcessUserCommandResponse(String optionalMessageContent, String optionalMessageExternalId) {
-        this.optionalMessageContent = optionalMessageContent;
-        this.optionalMessageExternalId = optionalMessageExternalId;
+    public ProcessUserCommandResponse(String messageContent, String messageExternalId) {
+        this.messageContent = messageContent;
+        this.messageExternalId = messageExternalId;
     }
 
-    public String getOptionalMessageContent() {
-        return optionalMessageContent;
+    public ProcessUserCommandResponse(String messageContent, String privateMessageContent,
+                                      SimpleEmbed privateMessageEmbed) {
+        this.messageContent = messageContent;
+        this.privateMessageContent = privateMessageContent;
+        this.privateMessageEmbed = privateMessageEmbed;
     }
 
-    public String getOptionalMessageExternalId() {
-        return optionalMessageExternalId;
+    public String getMessageContent() {
+        return messageContent;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ProcessUserCommandResponse that = (ProcessUserCommandResponse) o;
-        return Objects.equals(optionalMessageContent, that.optionalMessageContent) &&
-                Objects.equals(optionalMessageExternalId, that.optionalMessageExternalId);
+    public String getMessageExternalId() {
+        return messageExternalId;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(optionalMessageContent, optionalMessageExternalId);
+    public String getPrivateMessageContent() {
+        return privateMessageContent;
     }
 
-    @Override
-    public String toString() {
-        return "CommandServiceResponse{" +
-                "optionalMessageContent='" + optionalMessageContent + '\'' +
-                ", optionalMessageExternalId='" + optionalMessageExternalId + '\'' +
-                '}';
+    public SimpleEmbed getPrivateMessageEmbed() {
+        return privateMessageEmbed;
     }
+
 }

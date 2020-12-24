@@ -24,6 +24,13 @@ public class Utils {
         return number >= min && number <= max;
     }
 
+    public static <T,U> U mapNullable(T t, Function<T,U> mapper) {
+        if (t != null) {
+            return mapper.apply(t);
+        }
+        return null;
+    }
+
     public static <T,U> void ifNotNull(T tValue, Function<T,U> uGetter, Consumer<U> action) {
         if (tValue != null) {
             U uValue = uGetter.apply(tValue);

@@ -14,13 +14,11 @@ import com.admiralbot.sharedconfig.NetSecConfig;
 
 public class IpAuthMessageHelper {
 
-    private final IDiscordService discordServiceClient;
     private final INetworkSecurity networkSecurityServiceClient;
     private final UrlShortenerClient urlShortenerClient;
 
-    public IpAuthMessageHelper(IDiscordService discordServiceClient, INetworkSecurity networkSecurityServiceClient,
+    public IpAuthMessageHelper(INetworkSecurity networkSecurityServiceClient,
                                UrlShortenerClient urlShortenerClient) {
-        this.discordServiceClient = discordServiceClient;
         this.networkSecurityServiceClient = networkSecurityServiceClient;
         this.urlShortenerClient = urlShortenerClient;
     }
@@ -29,8 +27,6 @@ public class IpAuthMessageHelper {
         ProcessUserCommandRequest context = commandAddIp.getContext();
 
         GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getMessageId(), context.getSenderId());
-
-        String recipient = context.getSenderId();
 
         String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
 
@@ -43,7 +39,7 @@ public class IpAuthMessageHelper {
         String embedTitle = "Whitelist IP for " + context.getSenderName();
         String embedDescription = "Personal link to detect and whitelist your IP address for " + friendlyDomain;
 
-        return handleIpAuthRequest(generateUrlRequest, recipient, message, embedTitle, embedDescription);
+        return handleIpAuthRequest(generateUrlRequest, message, embedTitle, embedDescription);
     }
 
     public ProcessUserCommandResponse handleGuestIpAuthRequest(CommandAddGuestIp commandAddGuestIp) {
@@ -62,12 +58,11 @@ public class IpAuthMessageHelper {
         String embedTitle = "Shareable IP whitelist link for " + context.getSenderName();
         String embedDescription = "Temporary, shareable link to whitelist guest IP addresses for " + friendlyDomain;
 
-        return handleIpAuthRequest(generateUrlRequest, recipient, message, embedTitle, embedDescription);
+        return handleIpAuthRequest(generateUrlRequest, message, embedTitle, embedDescription);
     }
 
     private ProcessUserCommandResponse handleIpAuthRequest(
                 GenerateIpAuthUrlRequest generateUrlRequest,
-                String recipientDiscordUserId,
                 String message,
                 String embedTitle,
                 String embedDescription) {
@@ -75,14 +70,10 @@ public class IpAuthMessageHelper {
         String fullAuthUrl = networkSecurityServiceClient.generateIpAuthUrl(generateUrlRequest).getIpAuthUrl();
         String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_MEMBER_TTL.getSeconds());
 
-        // Send a message to the user privately before returning the standard channel message.
         SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl, embedTitle, embedDescription);
-        discordServiceClient.newMessage(new NewMessageRequest(
-                message, null, null, recipientDiscordUserId, authLinkEmbed
-        ));
-
         return new ProcessUserCommandResponse(
-                "A whitelist link has been sent to your private messages."
+                "A whitelist link has been sent to your private messages.",
+                message, authLinkEmbed
         );
     }
 

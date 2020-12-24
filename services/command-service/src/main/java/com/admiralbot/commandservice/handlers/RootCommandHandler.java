@@ -35,15 +35,14 @@ public class RootCommandHandler implements ICommandService {
         logger.trace("Initialising URLShortener client");
         UrlShortenerClient urlShortenerClient = new UrlShortenerClient();
 
-        IpAuthMessageHelper ipAuthMessageHelper = new IpAuthMessageHelper(discordServiceClient,
-                networkSecurityServiceClient, urlShortenerClient);
+        IpAuthMessageHelper ipAuthMessageHelper = new IpAuthMessageHelper(networkSecurityServiceClient, urlShortenerClient);
 
         logger.trace("Initialising EC2 client");
         Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
 
         logger.trace("Creating admin command handler...");
         adminCommandHandler = new AdminCommandHandler(ec2Client, gameMetadataServiceClient,
-                networkSecurityServiceClient, discordServiceClient, urlShortenerClient);
+                networkSecurityServiceClient, urlShortenerClient);
         logger.trace("Creating servers command handler...");
         serversCommandHandler = new ServersCommandHandler(gameMetadataServiceClient, ipAuthMessageHelper);
         logger.trace("Creating welcome command handler...");

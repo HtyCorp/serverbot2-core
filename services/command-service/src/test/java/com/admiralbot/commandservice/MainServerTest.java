@@ -77,7 +77,7 @@ public class MainServerTest {
 
         logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));
 
-        Assertions.assertEquals(expectedResponseMessage, response.getOptionalMessageContent());
+        Assertions.assertEquals(expectedResponseMessage, response.getMessageContent());
     }
 
 //    // For quicker test generation: print command output and fail, so it can be manually inspected and added in test.
