@@ -11,14 +11,16 @@ import com.admiralbot.networksecurity.model.GenerateIpAuthUrlRequest;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
+import com.admiralbot.urlshortener.model.CreateShortUrlRequest;
+import com.admiralbot.urlshortener.model.IUrlShortener;
 
 public class IpAuthMessageHelper {
 
     private final INetworkSecurity networkSecurityServiceClient;
-    private final UrlShortenerClient urlShortenerClient;
+    private final IUrlShortener urlShortenerClient;
 
     public IpAuthMessageHelper(INetworkSecurity networkSecurityServiceClient,
-                               UrlShortenerClient urlShortenerClient) {
+                               IUrlShortener urlShortenerClient) {
         this.networkSecurityServiceClient = networkSecurityServiceClient;
         this.urlShortenerClient = urlShortenerClient;
     }
@@ -68,7 +70,11 @@ public class IpAuthMessageHelper {
                 String embedDescription) {
         
         String fullAuthUrl = networkSecurityServiceClient.generateIpAuthUrl(generateUrlRequest).getIpAuthUrl();
-        String shortAuthUrl = urlShortenerClient.getShortenedUrl(fullAuthUrl, NetSecConfig.AUTH_URL_MEMBER_TTL.getSeconds());
+
+        CreateShortUrlRequest createShortUrlRequest = new CreateShortUrlRequest(
+                fullAuthUrl, NetSecConfig.AUTH_URL_MEMBER_TTL.getSeconds()
+        );
+        String shortAuthUrl = urlShortenerClient.createShortUrl(createShortUrlRequest).getShortUrl();
 
         SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl, embedTitle, embedDescription);
         return new ProcessUserCommandResponse(

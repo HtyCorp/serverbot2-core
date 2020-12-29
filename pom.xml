@@ -106,8 +106,9 @@
         <module>services/ip-authorizer</module>
         <module>services/network-security-service</module>
         <module>services/resource-reaper</module>
-        <module>services/url-shortener</module>
+        <module>services/url-shortener-service</module>
         <module>services/workflows-handler</module>
+        <module>models/url-shortener-service-model</module>
     </modules>
 
     <dependencyManagement>

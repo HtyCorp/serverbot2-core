@@ -4,11 +4,8 @@ import com.admiralbot.appdaemon.model.*;
 import com.admiralbot.commandservice.AbstractCommandHandler;
 import com.admiralbot.commandservice.SfnRunner;
 import com.admiralbot.commandservice.SsmConsoleSession;
-import com.admiralbot.commandservice.UrlShortenerClient;
 import com.admiralbot.commandservice.commands.admin.*;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
-import com.admiralbot.discordrelay.model.service.IDiscordService;
-import com.admiralbot.discordrelay.model.service.NewMessageRequest;
 import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 import com.admiralbot.framework.client.ApiClient;
 import com.admiralbot.framework.exception.server.ApiServerException;
@@ -26,6 +23,8 @@ import com.admiralbot.sharedconfig.NetSecConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Poller;
 import com.admiralbot.sharedutil.Utils;
+import com.admiralbot.urlshortener.model.CreateShortUrlRequest;
+import com.admiralbot.urlshortener.model.IUrlShortener;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
 import org.apache.logging.log4j.LogManager;
@@ -48,13 +47,13 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;
     private final INetworkSecurity networkSecurityServiceClient;
-    private final UrlShortenerClient urlShortenerClient;
+    private final IUrlShortener urlShortenerClient;
     private final Pattern portRangePattern;
     private final SfnRunner sfnRunner;
     private final Poller<String,Volume> volumeIdPoller;
 
     public AdminCommandHandler(Ec2Client ec2Client, IGameMetadataService gameMetadataServiceClient,
-                               INetworkSecurity networkSecurityServiceClient, UrlShortenerClient urlShortenerClient) {
+                               INetworkSecurity networkSecurityServiceClient, IUrlShortener urlShortenerClient) {
         this.ec2Client = ec2Client;
         this.gameMetadataServiceClient = gameMetadataServiceClient;
         this.networkSecurityServiceClient = networkSecurityServiceClient;
@@ -169,8 +168,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         try {
             String fullTerminalUrl = session.getSessionUrl();
-            String shortTerminalUrl = urlShortenerClient.getShortenedUrl(fullTerminalUrl,
-                    CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds());
+            CreateShortUrlRequest createShortUrlRequest = new CreateShortUrlRequest(
+                    fullTerminalUrl, CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds()
+            );
+            String shortTerminalUrl = urlShortenerClient.createShortUrl(createShortUrlRequest).getShortUrl();
 
             String privateMessageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
             SimpleEmbed terminalUrlEmbed = new SimpleEmbed(shortTerminalUrl,

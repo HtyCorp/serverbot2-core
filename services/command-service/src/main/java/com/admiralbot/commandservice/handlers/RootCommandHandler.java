@@ -1,7 +1,6 @@
 package com.admiralbot.commandservice.handlers;
 
 import com.admiralbot.commandservice.IpAuthMessageHelper;
-import com.admiralbot.commandservice.UrlShortenerClient;
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
@@ -12,6 +11,7 @@ import com.admiralbot.framework.exception.server.RequestHandlingRuntimeException
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedutil.SdkUtils;
+import com.admiralbot.urlshortener.model.IUrlShortener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -33,7 +33,7 @@ public class RootCommandHandler implements ICommandService {
         logger.trace("Initialising DiscordRelay client");
         IDiscordService discordServiceClient = ApiClient.http(IDiscordService.class);
         logger.trace("Initialising URLShortener client");
-        UrlShortenerClient urlShortenerClient = new UrlShortenerClient();
+        IUrlShortener urlShortenerClient = ApiClient.http(IUrlShortener.class);
 
         IpAuthMessageHelper ipAuthMessageHelper = new IpAuthMessageHelper(networkSecurityServiceClient, urlShortenerClient);
 
