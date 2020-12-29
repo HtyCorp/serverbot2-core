@@ -1,9 +1,6 @@
 package com.admiralbot.infra;
 
-import com.admiralbot.infra.deploy.ApplicationEnv;
-import com.admiralbot.infra.deploy.ApplicationStage;
-import com.admiralbot.infra.deploy.DeploymentManifest;
-import com.admiralbot.infra.deploy.PipelineStack;
+import com.admiralbot.infra.deploy.*;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.DeployConfig;
 import com.admiralbot.sharedconfig.Parameter;
@@ -13,10 +10,13 @@ import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -75,7 +75,7 @@ public class Main {
         Environment cdkEnv = Environment.builder().account(appEnv.getAccountId()).region(appEnv.getRegion()).build();
         StageProps stageProps = StageProps.builder().env(cdkEnv).build();
 
-        pipeline.addApplicationStage(new ApplicationStage(app, appEnv.getName(), stageProps, appEnv));
+        pipeline.addApplicationStage(new ApplicationRegionalStage(app, appEnv.getName(), stageProps, appEnv));
 
         app.synth();
     }
@@ -92,20 +92,35 @@ public class Main {
         // Add an application stage for every enabled environment in manifest.
         for (ApplicationEnv env: deploymentManifest.getEnvironments()) {
             if (env.isEnabled()) {
-                String stageId = env.getName() + "Deployment";
-                Environment stageEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
-                StageProps stageProps = StageProps.builder().env(stageEnv).build();
+                String stageRegionalId = env.getName() + "Deployment";
+                Environment stageRegionalEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
+                StageProps stageRegionalProps = StageProps.builder().env(stageRegionalEnv).build();
+
+                String stageGlobalId = env.getName() + "Global" + makeShortRegionName(env.getRegion());
+                Environment stageGlobalEnv = Environment.builder().account(env.getAccountId()).region("us-east-1").build();
+                StageProps stageGlobalProps = StageProps.builder().env(stageGlobalEnv).build();
 
                 if (env.requiresApproval()) {
                     // Not a fan of the built-in AddStageOptions approval setup (adds multiple approvals per stage),
                     // so just add a new stage with a single approval.
                     pipeline.addStage(env.getName()+"Approval").addManualApprovalAction();
                 }
-                pipeline.addApplicationStage(new ApplicationStage(app, stageId, stageProps, env));
+                pipeline.addApplicationStage(new ApplicationGlobalStage(app, stageGlobalId, stageGlobalProps, env));
+                pipeline.addApplicationStage(new ApplicationRegionalStage(app, stageRegionalId, stageRegionalProps, env));
             }
         }
 
         app.synth();
+    }
+
+    private static String makeShortRegionName(String regionName) {
+        Matcher m = Pattern.compile("(?<area>[a-z]{2})-(?<dir>[a-z]+)-(?<index>[1-9])").matcher(regionName);
+        if (!m.matches()) {
+            throw new IllegalArgumentException("Bad region name: " + regionName);
+        }
+
+        String shortLowercase = m.group("area").substring(0,2) + m.group("dir").substring(0) + m.group("index");
+        return shortLowercase.toUpperCase();
     }
 
     private static StackProps makeDefaultProps() {

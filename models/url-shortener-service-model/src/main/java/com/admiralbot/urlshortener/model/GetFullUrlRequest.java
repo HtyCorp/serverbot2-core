@@ -7,6 +7,8 @@ import com.admiralbot.framework.common.ApiRequestInfo;
         description = "Get the full URL that was previously shortened by CreateShortUrl")
 public class GetFullUrlRequest {
 
+    // CRITICAL: If changing this, update URL shortener CF edge function since it relies on this model
+
     @ApiArgumentInfo(order = 0, description = "Token version provided by CreateShortUrl")
     private int tokenVersion;
 

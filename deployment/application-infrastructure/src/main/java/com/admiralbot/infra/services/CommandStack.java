@@ -4,7 +4,7 @@ import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
@@ -24,7 +24,7 @@ import java.util.Objects;
 
 public class CommandStack extends Stack {
 
-    public CommandStack(ApplicationStage parent, String id) {
+    public CommandStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         // Terminal access user (federation doesn't work when chaining from the function role)

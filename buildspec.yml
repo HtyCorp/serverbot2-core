@@ -8,10 +8,12 @@ phases:
       - "npm install -g aws-cdk@1.76.0"
   build:
     commands:
-      - "mkdir gen"
+      # Compile Java modules
       - "mvn clean install -Dmaven.test.skip=true"
+      # Prep python dependencies (CDK will zip up the asset automatically)
+      - "(cd web/url-shortener-frontend/edge-function && pip3 install -t . -r requirements.txt)"
       # Synthesize application/service CDK stacks for application deployment
-      - "mkdir gen/cloud-assembly"
+      - "mkdir -p gen/cloud-assembly"
       - "(cd deployment/application-infrastructure/ && cdk synth -o ../../gen/cloud-assembly)"
       - "echo \"Generated $(cat gen/cloud-assembly/*.template.json | wc -l) template lines\""
   post_build:

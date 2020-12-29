@@ -1,6 +1,6 @@
 package com.admiralbot.infra.services;
 
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
@@ -30,7 +30,7 @@ public class IpAuthorizerStack extends Stack {
             "primary", NetSecConfig.AUTHORIZER_SUBDOMAIN
     );
 
-    public IpAuthorizerStack(ApplicationStage parent, String id) {
+    public IpAuthorizerStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         // Define function and associated role

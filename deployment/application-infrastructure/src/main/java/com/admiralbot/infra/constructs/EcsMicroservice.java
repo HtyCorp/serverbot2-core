@@ -1,7 +1,7 @@
 package com.admiralbot.infra.constructs;
 
 import com.admiralbot.infra.deploy.ApplicationEnv;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
@@ -44,7 +44,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
         return internalDiscoveryService;
     }
 
-    public EcsMicroservice(Stack parent, String id, ApplicationStage appStage, String internalName) {
+    public EcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String internalName) {
         super(parent, id);
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")

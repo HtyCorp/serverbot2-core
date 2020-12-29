@@ -2,7 +2,7 @@ package com.admiralbot.infra.constructs;
 
 import com.admiralbot.framework.common.ApiAuthType;
 import com.admiralbot.framework.common.ApiEndpointInfo;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Construct;
@@ -40,7 +40,7 @@ public class ServiceApi extends Construct {
     private final HttpApi api;
     private final VpcLink commonVpcLink;
 
-    public ServiceApi(Construct parent, String id, ApplicationStage appStage, Class<?> mainServiceInterfaceClass) {
+    public ServiceApi(Construct parent, String id, ApplicationRegionalStage appStage, Class<?> mainServiceInterfaceClass) {
         super(parent, id);
 
         serviceName = mainServiceInterfaceClass.getAnnotation(ApiEndpointInfo.class).serviceName();

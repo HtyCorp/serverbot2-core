@@ -3,7 +3,7 @@ package com.admiralbot.infra.services;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.infra.constructs.S3Artifact;
 import com.admiralbot.infra.constructs.S3ArtifactProps;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class AppInstanceShareStack extends Stack {
 
-    public AppInstanceShareStack(ApplicationStage parent, String id) {
+    public AppInstanceShareStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         // Distribute app daemon JAR file as an asset. Uses custom S3Artifact resource to copy to a separate, nicer

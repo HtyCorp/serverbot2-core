@@ -4,7 +4,7 @@ import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.discordrelay.model.service.IDiscordService;
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.sharedconfig.DiscordConfig;
@@ -17,7 +17,7 @@ import software.amazon.awscdk.services.dynamodb.Table;
 
 public class RelayStack extends Stack {
 
-    public RelayStack(ApplicationStage parent, String id) {
+    public RelayStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         // Data stores for relay

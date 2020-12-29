@@ -7,7 +7,7 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stage;
 import software.amazon.awscdk.core.StageProps;
 
-public class ApplicationStage extends Stage {
+public class ApplicationRegionalStage extends Stage {
 
     private final ApplicationEnv env;
     private final CommonStack commonStack;
@@ -25,7 +25,7 @@ public class ApplicationStage extends Stage {
         return serviceClusterStack;
     }
 
-    public ApplicationStage(Construct parent, String id, StageProps props, ApplicationEnv env) {
+    public ApplicationRegionalStage(Construct parent, String id, StageProps props, ApplicationEnv env) {
         super(parent, id, props);
 
         this.env = env;

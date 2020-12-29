@@ -1,6 +1,6 @@
 package com.admiralbot.infra.baseline;
 
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.sharedutil.Utils;
 import software.amazon.awscdk.core.Stack;
@@ -44,7 +44,7 @@ public class ServiceClusterStack extends Stack {
         return serviceCluster;
     }
 
-    public ServiceClusterStack(ApplicationStage parent, String id) {
+    public ServiceClusterStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         Role containerInstanceRole = Role.Builder.create(this, "ContainerInstanceRole")

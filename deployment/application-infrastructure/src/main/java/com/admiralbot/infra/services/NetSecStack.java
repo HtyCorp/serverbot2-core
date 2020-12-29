@@ -2,7 +2,7 @@ package com.admiralbot.infra.services;
 
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
@@ -17,7 +17,7 @@ import software.amazon.awscdk.services.iam.Role;
 
 public class NetSecStack extends Stack {
 
-    public NetSecStack(ApplicationStage parent, String id) {
+    public NetSecStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         CfnPrefixList userIpList = CfnPrefixList.Builder.create(this, "DiscordUserIpPrefixList")

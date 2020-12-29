@@ -3,7 +3,7 @@ package com.admiralbot.infra.services;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.GameMetadataConfig;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -11,7 +11,7 @@ import software.amazon.awscdk.services.dynamodb.*;
 
 public class GameMetadataStack extends Stack {
 
-    public GameMetadataStack(ApplicationStage parent, String id) {
+    public GameMetadataStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         // DDB table

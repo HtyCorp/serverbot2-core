@@ -1,7 +1,7 @@
 package com.admiralbot.infra.baseline;
 
 import com.admiralbot.infra.deploy.ApplicationEnv;
-import com.admiralbot.infra.deploy.ApplicationStage;
+import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.DiscordConfig;
@@ -84,7 +84,7 @@ public class CommonStack extends Stack {
         return apiVpcNamespace;
     }
 
-    public CommonStack(ApplicationStage parent, String id) {
+    public CommonStack(ApplicationRegionalStage parent, String id) {
         super(parent, id);
 
         ApplicationEnv env = parent.getEnv();
