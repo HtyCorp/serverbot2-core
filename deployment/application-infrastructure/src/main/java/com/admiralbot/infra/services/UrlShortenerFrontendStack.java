@@ -8,6 +8,7 @@ import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.urlshortener.model.IUrlShortener;
+import com.google.gson.Gson;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
@@ -20,11 +21,19 @@ import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
 import software.amazon.awscdk.services.route53.targets.CloudFrontTarget;
 import software.amazon.awscdk.services.s3.Bucket;
+import software.amazon.awssdk.core.SdkBytes;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
 public class UrlShortenerFrontendStack extends Stack {
+
+    private final Gson gson = new Gson();
 
     public UrlShortenerFrontendStack(ApplicationGlobalStage parent, String id) {
         super(parent, id);
@@ -48,17 +57,28 @@ public class UrlShortenerFrontendStack extends Stack {
                 urlShortenerServiceHost,
                 urlShortenerEndpointInfo.uriPath()
         );
-        Map<String,String> edgeFunctionEnvironment = Map.of(
+
+        // Edge functions don't support standard env vars, so we have to supply it by proxy as a file
+        Map<String,String> functionEnvironmentVariables = Map.of(
                 "SB2_TARGET_REGION", parent.getMainEnv().getRegion(),
                 "SB2_TARGET_HOST", urlShortenerServiceHost,
                 "SB2_TARGET_URL", urlShortenerServiceUrl
         );
+        String functionEnvironmentVariablesJson = gson.toJson(functionEnvironmentVariables);
+        InputStream envVarsFileInput = SdkBytes.fromUtf8String(gson.toJson(functionEnvironmentVariablesJson)).asInputStream();
+        Path codePath = Util.codeBuildPath("web", "url-shortener-frontend", "edge-function");
+        Path envVarsFileDest = codePath.resolve("environment.json");
+        try {
+            Files.copy(envVarsFileInput, envVarsFileDest, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't copy edge function env vars due to IO error", e);
+        }
 
         // Declare function
         Function edgeFunction = Function.Builder.create(this, "EdgeFunction")
                 .runtime(Runtime.PYTHON_3_8)
-                .environment(edgeFunctionEnvironment)
-                .code(Code.fromAsset(Util.codeBuildPath("web", "url-shortener-frontend", "edge-function").toString()))
+                .code(Code.fromAsset(codePath.toString()))
+                .handler("edge_function.lambda_handler")
                 .memorySize(512)
                 .build();
         Permissions.addExecuteApi(this, edgeFunction, IUrlShortener.class);

@@ -29,6 +29,10 @@ api_exception_default_message = (500, "Sorry, an unexpected error occurred.")
 
 gateway_exception_default_message = "Sorry, an unexpected gateway error occurred."
 
+# Load environment variables file (see UrlShortenerFrontendStack.java; we can't use standard Lambda env vars in Edge)
+for (key, value) in json.load(open("environment.json")).items():
+    environ[key] = value
+
 def lambda_handler(event, context):
     request = event["Records"][0]["cf"]["request"]
 
