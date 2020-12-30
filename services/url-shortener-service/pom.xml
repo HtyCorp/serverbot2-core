@@ -13,7 +13,7 @@
     <artifactId>url-shortener-service</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.urlshortener.ServiceHandler</module.assemblyJarMainClass>
+        <module.assemblyJarMainClass>com.admiralbot.urlshortener.MainServer</module.assemblyJarMainClass>
     </properties>
 
     <build>
