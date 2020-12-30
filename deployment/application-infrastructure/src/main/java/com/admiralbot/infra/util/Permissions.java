@@ -31,13 +31,17 @@ public class Permissions {
     }
 
     public static void addExecuteApi(Stack stack, IGrantable grantee, Class<?>... interfaceClasses) {
+        addExecuteApi(stack, null, grantee, interfaceClasses);
+    }
+
+    public static void addExecuteApi(Stack stack, String region, IGrantable grantee, Class<?>... interfaceClasses) {
         List<String> stageArns = Arrays.stream(interfaceClasses)
                 .map(cls -> {
                     ApiEndpointInfo endpointInfo = cls.getAnnotation(ApiEndpointInfo.class);
                     // Resource segment format is "api-id/stage-name/http-method/api-resource"
                     // Full example ARN: "arn:aws:execute-api:us-east-1:*:a123456789/test/POST/mydemoresource/*"
                     String resource = Joiner.slash("*", endpointInfo.serviceName(), endpointInfo.httpMethod().name(), "*");
-                    return Util.arn(stack, null, null, "execute-api", resource);
+                    return Util.arn(stack, null, region, "execute-api", resource);
                 }).collect(Collectors.toList());
 
         grantee.getGrantPrincipal().addToPrincipalPolicy(PolicyStatement.Builder.create()

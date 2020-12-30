@@ -64,8 +64,7 @@ public class UrlShortenerFrontendStack extends Stack {
                 "SB2_TARGET_HOST", urlShortenerServiceHost,
                 "SB2_TARGET_URL", urlShortenerServiceUrl
         );
-        String functionEnvironmentVariablesJson = gson.toJson(functionEnvironmentVariables);
-        InputStream envVarsFileInput = SdkBytes.fromUtf8String(gson.toJson(functionEnvironmentVariablesJson)).asInputStream();
+        InputStream envVarsFileInput = SdkBytes.fromUtf8String(gson.toJson(functionEnvironmentVariables)).asInputStream();
         Path codePath = Util.codeBuildPath("web", "url-shortener-frontend", "edge-function");
         Path envVarsFileDest = codePath.resolve("environment.json");
         try {
@@ -81,7 +80,7 @@ public class UrlShortenerFrontendStack extends Stack {
                 .handler("edge_function.lambda_handler")
                 .memorySize(512)
                 .build();
-        Permissions.addExecuteApi(this, edgeFunction, IUrlShortener.class);
+        Permissions.addExecuteApi(this, parent.getMainEnv().getRegion(), edgeFunction, IUrlShortener.class);
 
         // CloudFront distribution
 
