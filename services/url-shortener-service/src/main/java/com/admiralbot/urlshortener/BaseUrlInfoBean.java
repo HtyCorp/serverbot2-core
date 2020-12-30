@@ -7,32 +7,32 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @DynamoDbBean
 public abstract class BaseUrlInfoBean {
 
-    protected int schemaVersion;
     protected String id;
+    protected int schemaVersion;
 
     public BaseUrlInfoBean() { }
 
-    public BaseUrlInfoBean(int schemaVersion, String id) {
-        this.schemaVersion = schemaVersion;
+    public BaseUrlInfoBean(String id, int schemaVersion) {
         this.id = id;
+        this.schemaVersion = schemaVersion;
     }
 
     @DynamoDbPartitionKey
-    public int getSchemaVersion() {
-        return schemaVersion;
-    }
-
-    public void setSchemaVersion(int schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
-    @DynamoDbSortKey
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @DynamoDbSortKey
+    public int getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    public void setSchemaVersion(int schemaVersion) {
+        this.schemaVersion = schemaVersion;
     }
 
 }

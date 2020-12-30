@@ -74,8 +74,8 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
 
         // Generate storage item and return it with the encoded token
 
-        V1UrlInfoBean newInfoBean = new V1UrlInfoBean(1,
-                Long.toUnsignedString(newId),
+        V1UrlInfoBean newInfoBean = new V1UrlInfoBean(Long.toUnsignedString(newId),
+                1,
                 expiresAtEpochSeconds,
                 SdkBytes.fromByteArray(urlIvBytes),
                 SdkBytes.fromByteArray(urlCiphertextBytes),

@@ -110,7 +110,7 @@ public class ServiceHandler implements IUrlShortener {
             throw new NoSuchResourceException("Sorry, this URL is invalid. Ensure you are using the correct link.");
         }
 
-        V1UrlInfoBean urlInfoBean = v1table.getItem(Key.builder().partitionValue(1).sortValue(id).build());
+        V1UrlInfoBean urlInfoBean = v1table.getItem(Key.builder().partitionValue(id).sortValue(1).build());
         if (urlInfoBean == null) {
             logger.error("No DDB item found with schema version 1 and ID {}", id);
             throw new RequestValidationException("Sorry, this URL does not exist. It may be invalid or may have been deleted."

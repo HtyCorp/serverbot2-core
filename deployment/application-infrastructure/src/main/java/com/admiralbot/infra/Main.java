@@ -10,7 +10,6 @@ import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 
 import java.util.List;
@@ -33,7 +32,7 @@ public class Main {
 
             Parameter parameter = new Parameter(DeployConfig.DEV_ENVIRONMENT_PARAM_NAME);
             devEnvironmentJson = parameter.getValue();
-            ApplicationEnv devEnvironment = gson.fromJson(devEnvironmentJson, ApplicationEnv.class);
+            DeploymentManifestDev devEnvironment = gson.fromJson(devEnvironmentJson, DeploymentManifestDev.class);
 
             synthesizeDevPipeline(devEnvironment);
 
@@ -57,7 +56,8 @@ public class Main {
 
     }
 
-    private static void synthesizeDevPipeline(ApplicationEnv appEnv) {
+    private static void synthesizeDevPipeline(DeploymentManifestDev devManifest) {
+        ApplicationEnv appEnv = devManifest.getEnvironment();
 
         if (!appEnv.isEnabled()) {
             throw new IllegalStateException("Dev environment is set to disabled.");
@@ -69,7 +69,7 @@ public class Main {
 
         // Build dev CDK pipeline.
         PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
-                "ecs-api-migration", "DevEnvironmentPipeline");
+                devManifest.getRepoSourceBranch(), "DevEnvironmentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         Environment cdkEnv = Environment.builder().account(appEnv.getAccountId()).region(appEnv.getRegion()).build();
@@ -86,12 +86,15 @@ public class Main {
 
         // Build central CDK pipeline.
         PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
-                DeployConfig.GITHUB_DEPLOYMENT_SOURCE_BRANCH, "CDKDeploymentPipeline");
+                DeployConfig.GITHUB_DEPLOYMENT_MASTER_BRANCH, "CDKDeploymentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         // Add an application stage for every enabled environment in manifest.
         for (ApplicationEnv env: deploymentManifest.getEnvironments()) {
             if (env.isEnabled()) {
+                // I would like to rename this to get rid of the "Deployment" suffix,
+                // since it takes more room and makes it harder to read logical resource names,
+                // but it would take some thoughtful migration effort since renaming CFN stacks isn't possible.
                 String stageRegionalId = env.getName() + "Deployment";
                 Environment stageRegionalEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageRegionalProps = StageProps.builder().env(stageRegionalEnv).build();
@@ -119,7 +122,7 @@ public class Main {
             throw new IllegalArgumentException("Bad region name: " + regionName);
         }
 
-        String shortLowercase = m.group("area").substring(0,2) + m.group("dir").substring(0) + m.group("index");
+        String shortLowercase = m.group("area").substring(0,2) + m.group("dir").charAt(0) + m.group("index");
         return shortLowercase.toUpperCase();
     }
 

@@ -23,9 +23,9 @@ public class V1UrlInfoBean extends BaseUrlInfoBean {
 
     public V1UrlInfoBean() { }
 
-    public V1UrlInfoBean(int schemaVersion, String id, long expiresAtEpochSeconds, SdkBytes urlIv,
+    public V1UrlInfoBean(String id, int schemaVersion, long expiresAtEpochSeconds, SdkBytes urlIv,
                          SdkBytes urlCiphertext, SdkBytes urlSha256) {
-        super(schemaVersion, id);
+        super(id, schemaVersion);
         this.expiresAtEpochSeconds = expiresAtEpochSeconds;
         this.urlIv = urlIv;
         this.urlCiphertext = urlCiphertext;

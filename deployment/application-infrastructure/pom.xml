@@ -199,6 +199,11 @@
             <artifactId>servicediscovery</artifactId>
             <version>${awscdk.version}</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awscdk</groupId>
+            <artifactId>cloudfront-origins</artifactId>
+            <version>${awscdk.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

@@ -9,7 +9,7 @@ public class DeployConfig {
     public static final String GITHUB_OAUTH_TOKEN_SECRET_NAME = "GitHubRepoAccessToken";
     public static final String GITHUB_DEPLOYMENT_SOURCE_OWNER = "HtyCorp";
     public static final String GITHUB_DEPLOYMENT_SOURCE_REPO = "serverbot2-core";
-    public static final String GITHUB_DEPLOYMENT_SOURCE_BRANCH = "master";
+    public static final String GITHUB_DEPLOYMENT_MASTER_BRANCH = "master";
 
     // Simple-item form of the deploy env manifest for local development
     public static final String DEV_ENVIRONMENT_PARAM_NAME = "DevelopmentEnvironment";
