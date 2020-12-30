@@ -72,10 +72,16 @@ public class Main {
                 devManifest.getRepoSourceBranch(), "DevEnvironmentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
-        Environment cdkEnv = Environment.builder().account(appEnv.getAccountId()).region(appEnv.getRegion()).build();
-        StageProps stageProps = StageProps.builder().env(cdkEnv).build();
+        String stageGlobalId = appEnv.getName() + "G" + makeShortRegionName(appEnv.getRegion());
+        Environment stageGlobalEnv = Environment.builder().account(appEnv.getAccountId()).region("us-east-1").build();
+        StageProps stageGlobalProps = StageProps.builder().env(stageGlobalEnv).build();
 
-        pipeline.addApplicationStage(new ApplicationRegionalStage(app, appEnv.getName(), stageProps, appEnv));
+        String stageRegionalId = appEnv.getName();
+        Environment stageRegionalEnv = Environment.builder().account(appEnv.getAccountId()).region(appEnv.getRegion()).build();
+        StageProps stageRegionalProps = StageProps.builder().env(stageRegionalEnv).build();
+
+        pipeline.addApplicationStage(new ApplicationGlobalStage(app, stageGlobalId, stageGlobalProps, appEnv));
+        pipeline.addApplicationStage(new ApplicationRegionalStage(app, stageRegionalId, stageRegionalProps, appEnv));
 
         app.synth();
     }
@@ -99,7 +105,7 @@ public class Main {
                 Environment stageRegionalEnv = Environment.builder().account(env.getAccountId()).region(env.getRegion()).build();
                 StageProps stageRegionalProps = StageProps.builder().env(stageRegionalEnv).build();
 
-                String stageGlobalId = env.getName() + "Global" + makeShortRegionName(env.getRegion());
+                String stageGlobalId = env.getName() + "G" + makeShortRegionName(env.getRegion());
                 Environment stageGlobalEnv = Environment.builder().account(env.getAccountId()).region("us-east-1").build();
                 StageProps stageGlobalProps = StageProps.builder().env(stageGlobalEnv).build();
 
