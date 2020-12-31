@@ -9,13 +9,14 @@ import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.cloudfront.*;
+import software.amazon.awscdk.services.cloudfront.experimental.EdgeFunction;
 import software.amazon.awscdk.services.cloudfront.origins.S3Origin;
 import software.amazon.awscdk.services.lambda.Code;
-import software.amazon.awscdk.services.lambda.Function;
 import software.amazon.awscdk.services.lambda.Runtime;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
@@ -29,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 
 public class UrlShortenerFrontendStack extends Stack {
 
@@ -59,12 +59,12 @@ public class UrlShortenerFrontendStack extends Stack {
         );
 
         // Edge functions don't support standard env vars, so we have to supply it by proxy as a file
-        Map<String,String> functionEnvironmentVariables = Map.of(
-                "SB2_TARGET_REGION", parent.getMainEnv().getRegion(),
-                "SB2_TARGET_HOST", urlShortenerServiceHost,
-                "SB2_TARGET_URL", urlShortenerServiceUrl
-        );
-        InputStream envVarsFileInput = SdkBytes.fromUtf8String(gson.toJson(functionEnvironmentVariables)).asInputStream();
+        JsonObject envVars = new JsonObject();
+        envVars.addProperty("SB2_TARGET_REGION", parent.getMainEnv().getRegion());
+        envVars.addProperty("SB2_TARGET_HOST", urlShortenerServiceHost);
+        envVars.addProperty("SB2_TARGET_URL", urlShortenerServiceUrl);
+
+        InputStream envVarsFileInput = SdkBytes.fromUtf8String(envVars.toString()).asInputStream();
         Path codePath = Util.codeBuildPath("web", "url-shortener-frontend", "edge-function");
         Path envVarsFileDest = codePath.resolve("environment.json");
         try {
@@ -74,7 +74,7 @@ public class UrlShortenerFrontendStack extends Stack {
         }
 
         // Declare function
-        Function edgeFunction = Function.Builder.create(this, "EdgeFunction")
+        EdgeFunction edgeFunction = EdgeFunction.Builder.create(this, "EdgeFunction")
                 .runtime(Runtime.PYTHON_3_8)
                 .code(Code.fromAsset(codePath.toString()))
                 .handler("edge_function.lambda_handler")

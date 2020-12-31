@@ -66,8 +66,8 @@ def lambda_handler(event, context):
     url_response = url_response_http.json()
 
     # Handle success case
-    if "fullUrl" in url_response:
-        return handle_redirect(url_response["fullUrl"])
+    if "response" in url_response:
+        return handle_redirect(url_response["response"]["fullUrl"])
 
     # Handle case where error comes from API Gateway directly
     if "message" in url_response:
@@ -90,8 +90,14 @@ def handle_redirect(full_url):
     }
 
 def handle_error(url_response):
-    (code, message) = api_exceptions_to_messages.get(url_response["exceptionTypeName"], api_exception_default_message)
-    detail = url_response["exceptionMessage"]
+    exception_type = url_response.get("exceptionTypeName")
+    if exception_type:
+        (code, message) = api_exceptions_to_messages.get(exception_type, api_exception_default_message)
+        detail = url_response["exceptionMessage"]
+        return build_error_response(code, message, detail)
+    else:
+        (code, message) = api_exception_default_message
+        detail = "unexpected API JSON format"
     return build_error_response(code, message, detail)
 
 def build_error_response(code, message, detail):
