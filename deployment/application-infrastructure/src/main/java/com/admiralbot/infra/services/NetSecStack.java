@@ -39,7 +39,10 @@ public class NetSecStack extends Stack {
         EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security-service");
 
         Role taskRole = service.getTaskRole();
-        Permissions.addManagedPoliciesToRole(taskRole, ManagedPolicies.EC2_FULL_ACCESS);
+        Permissions.addManagedPoliciesToRole(taskRole,
+                ManagedPolicies.EC2_FULL_ACCESS,
+                ManagedPolicies.LOGS_FULL_ACCESS
+        );
         Permissions.addConfigPathRead(this, taskRole, CommonConfig.PATH, NetSecConfig.PATH_PUBLIC);
         Permissions.addFullExecuteApi(this, taskRole);
         parent.getCommonResources().getNetSecKmsKey().grant(taskRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
