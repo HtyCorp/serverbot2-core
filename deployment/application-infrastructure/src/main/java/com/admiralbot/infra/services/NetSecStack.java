@@ -15,6 +15,8 @@ import software.amazon.awscdk.services.ec2.Port;
 import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.iam.Role;
 
+import java.util.List;
+
 public class NetSecStack extends Stack {
 
     public NetSecStack(ApplicationRegionalStage parent, String id) {
@@ -24,6 +26,7 @@ public class NetSecStack extends Stack {
                 .addressFamily("IPv4")
                 .prefixListName(NetSecConfig.USER_IP_PREFIX_LIST_NAME)
                 .maxEntries(parent.getEnv().getPrefixListCapacity())
+                .entries(List.of()) // Temporary fix for CFN prefix list provider bug
                 .build();
 
         SecurityGroup commonGroup = SecurityGroup.Builder.create(this, "AppInstanceCommonGroup")
