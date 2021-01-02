@@ -44,7 +44,7 @@ public class IpAuthorizerStack extends Stack {
         Permissions.addExecuteApi(this, functionRole, INetworkSecurity.class);
 
         Alias proxyFunctionAlias = Util.highMemJavaFunction(this, "IpProxyFunction", "ip-authorizer",
-                "com.admiralbot.iplambda.ApiGatewayLambdaHandler",
+                "com.admiralbot.ipauth.ApiGatewayLambdaHandler",
                 b-> b.functionName(IpAuthConfig.FUNCTION_NAME).role(functionRole));
 
         // Logging for API deployment

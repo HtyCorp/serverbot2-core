@@ -1,0 +1,47 @@
+# In future, should distribute modularized JDK as part of app daemon artifact so separate JDK install not needed (and to save disk space)
+# Needs a few steps and workarounds for discovered issues:
+# 1) `jdeps` on uber jar fails, so need to copy dependencies separately
+
+# Commands/setup roughly as follows (assuming run from agents/app-daemon)
+
+# Copy dependencies
+mvn dependency:copy-dependencies -DoutputDirectory='${project.build.directory}/lib'
+# or use pom.xml equivalent
+<plugin>
+  <artifactId>maven-dependency-plugin</artifactId>
+  <executions>
+    <execution>
+      <phase>install</phase>
+      <goals>
+        <goal>copy-dependencies</goal>
+      </goals>
+      <configuration>
+        <outputDirectory>${project.build.directory}/lib</outputDirectory>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+# Result: dependencies as JARs in target/lib
+
+# Get required JDK modules (doesn't seem to work on uber jar)
+jdeps --print-module-deps --multi-release 11 --class-path target/lib/* original-app-daemon-1.0-SNAPSHOT.jar
+# Result: string like "java.base,java.compiler,java.desktop,java.instrument,java.management,java.naming,java.net.http,java.rmi,java.scripting,java.security.jgss,java.sql,jdk.unsupported"
+
+# Build JDK custom runtime image based on required modules
+jlink --verbose --no-header-files --no-man-pages --compress=2 --strip-debug --add-modules <jdeps-output> --output java-runtime-package
+
+# Copy uber jar into runtime folder
+# (Alternative approach: move copied dependencies folder and use it as classpath - need to specify main class manually)
+cp app-daemon-1.0-SNAPSHOT.jar java-runtime-package/app.jar
+# Note that `jlink` won't allow us to specify an existing dir so we can't build the image around the existing deps folder
+
+# Add run script to package root
+cat > java-runtime-package/run.sh <<EOF
+#!/bin/sh
+# Should add a "have CD'd into directory" check here
+bin/java -jar app.jar
+EOF
+
+# Modify pipeline to deploy zipped java-runtime-package as an S3 artifact
+
+# Update instance init template to download package, unzip and exec "run.sh" script
