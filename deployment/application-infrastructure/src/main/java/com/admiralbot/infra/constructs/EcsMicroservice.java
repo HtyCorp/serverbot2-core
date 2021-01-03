@@ -6,6 +6,8 @@ import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
+import com.admiralbot.sharedconfig.DeployConfig;
+import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
@@ -90,7 +92,9 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         // Main container: service instance built from above fat JAR
 
+        String friendlyLogGroupName = Joiner.slash(DeployConfig.SERVICE_LOGS_PREFIX, "ecs", internalName);
         LogGroup serverLogGroup = LogGroup.Builder.create(this, "ServerLogGroup")
+                .logGroupName(friendlyLogGroupName)
                 .retention(RetentionDays.ONE_YEAR)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();

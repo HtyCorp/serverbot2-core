@@ -12,6 +12,7 @@ import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedconfig.CommandLambdaConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
+import com.admiralbot.urlshortener.model.IUrlShortener;
 import software.amazon.awscdk.core.Fn;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.CfnAccessKey;
@@ -71,13 +72,13 @@ public class CommandStack extends Stack {
         );
         Permissions.addExecuteApi(this, service,
                 IGameMetadataService.class,
-                INetworkSecurity.class
+                INetworkSecurity.class,
+                IUrlShortener.class
         );
         Permissions.addConfigPathRead(this, service,
                 CommandLambdaConfig.PATH,
                 CommonConfig.PATH
         );
-        Permissions.addFullExecuteApi(this, service);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, ICommandService.class);
         api.addEcsRoute(ICommandService.class, service);

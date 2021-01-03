@@ -1,5 +1,6 @@
 package com.admiralbot.infra.services;
 
+import com.admiralbot.discordrelay.model.service.IDiscordService;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.infra.constructs.S3Artifact;
 import com.admiralbot.infra.constructs.S3ArtifactProps;
@@ -51,6 +52,7 @@ public class AppInstanceShareStack extends Stack {
                 AppInstanceConfig.PATH_ALL);
 
         Permissions.addExecuteApi(this, commonRole,
+                IDiscordService.class,
                 IGameMetadataService.class,
                 INetworkSecurity.class);
 

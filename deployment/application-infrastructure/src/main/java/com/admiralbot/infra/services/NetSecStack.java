@@ -46,9 +46,13 @@ public class NetSecStack extends Stack {
                 ManagedPolicies.EC2_FULL_ACCESS,
                 ManagedPolicies.LOGS_FULL_ACCESS
         );
-        Permissions.addConfigPathRead(this, taskRole, CommonConfig.PATH, NetSecConfig.PATH_PUBLIC);
-        Permissions.addFullExecuteApi(this, taskRole);
-        parent.getCommonResources().getNetSecKmsKey().grant(taskRole, "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey");
+        Permissions.addConfigPathRead(this, taskRole,
+                CommonConfig.PATH,
+                NetSecConfig.PATH_PUBLIC);
+        parent.getCommonResources().getNetSecKmsKey().grant(taskRole,
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:GenerateDataKey");
 
         ServiceApi api = new ServiceApi(this, "Api", parent, INetworkSecurity.class);
         api.addEcsRoute(INetworkSecurity.class, service);

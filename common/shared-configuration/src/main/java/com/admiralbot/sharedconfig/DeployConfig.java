@@ -14,4 +14,6 @@ public class DeployConfig {
     // Simple-item form of the deploy env manifest for local development
     public static final String DEV_ENVIRONMENT_PARAM_NAME = "DevelopmentEnvironment";
 
+    public static final String SERVICE_LOGS_PREFIX = "serverbot2/svc";
+
 }

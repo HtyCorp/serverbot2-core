@@ -87,6 +87,15 @@ public class AppDaemon {
     }
 
     private void checkIdleness() {
+        try {
+            doCheckIdleness();
+        } catch (Exception e) {
+            // Log exception but otherwise ignore it - prevents further scheduled executions being suppressed
+            logger.error("Uncaught exception in idle checker", e);
+        }
+    }
+
+    private void doCheckIdleness() {
 
         Instant now = Instant.now();
 

@@ -1,5 +1,6 @@
 import json
 import requests
+import logging
 from aws_requests_auth.aws_auth import AWSRequestsAuth
 from os import environ
 from uuid import uuid4
@@ -26,26 +27,46 @@ api_exceptions_to_messages = {
     "RequestHandlingRuntimeException": (500, "Sorry, an unexpected error occurred while processing your request.")
 }
 api_exception_default_message = (500, "Sorry, an unexpected error occurred.")
-
 gateway_exception_default_message = "Sorry, an unexpected gateway error occurred."
+uncaught_exception_default_message = (500, "Sorry an unexpected error occurred.", "Lambda uncaught")
 
 # Load environment variables file (see UrlShortenerFrontendStack.java; we can't use standard Lambda env vars in Edge)
 for (key, value) in json.load(open("environment.json")).items():
     environ[key] = value
 
-def lambda_handler(event, context):
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+def lambda_handler(event, _context):
+    try:
+        return handle_event(event, _context)
+    except:
+        logger.exception("Unexpected error running Lambda event handler")
+        (code, message, detail) = uncaught_exception_default_message
+        return build_error_response(code, message, detail)
+
+def handle_event(event, _context):
     request = event["Records"][0]["cf"]["request"]
 
+    logger.info(f"Got request path: {request['uri']}")
     path_segments = request["uri"].split("/") # CF team really should have called this "path", not "uri"
-
     if len(path_segments) <= 2:
         return build_error_response(400, "Bad Request", "missing request path segments")
     # Remove leading empty param (path always begins with a "/")
     path_segments.pop(0)
+    logger.info(f"Parsed path segments: {path_segments}")
 
     # Get auth and endpoint params from env vars to contact URL shortener service
+
+    access_key_id = environ["AWS_ACCESS_KEY_ID"]
+    url_service_url = environ["SB2_TARGET_URL"]
+    client_request_id = str(uuid4())
+
+    logger.info(f"Authenticating request {client_request_id} to service endpoint {url_service_url} "
+                f"with key ID {access_key_id}")
+
     auth = AWSRequestsAuth(
-        aws_access_key=environ["AWS_ACCESS_KEY_ID"],
+        aws_access_key=access_key_id,
         aws_secret_access_key=environ["AWS_SECRET_ACCESS_KEY"],
         aws_token=environ["AWS_SESSION_TOKEN"],
         aws_service="execute-api",
@@ -54,20 +75,20 @@ def lambda_handler(event, context):
     )
     json_string_body = json.dumps({
         "xApiTarget": "GetFullUrl",
-        "xRequestId": str(uuid4()),
+        "xRequestId": client_request_id,
         "tokenVersion": int(path_segments[0]),
         "urlToken": path_segments[1]
     })
     url_response_http = requests.post(
-        environ["SB2_TARGET_URL"],
+        url_service_url,
         data=json_string_body,
         auth=auth
     )
     url_response = url_response_http.json()
 
     # Handle success case
-    if "response" in url_response:
-        return handle_redirect(url_response["response"]["fullUrl"])
+    if (data := url_response.get("response")) is not None:
+        return handle_redirect(data["fullUrl"])
 
     # Handle case where error comes from API Gateway directly
     if "message" in url_response:

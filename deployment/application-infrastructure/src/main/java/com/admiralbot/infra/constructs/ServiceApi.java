@@ -4,6 +4,7 @@ import com.admiralbot.framework.common.ApiAuthType;
 import com.admiralbot.framework.common.ApiEndpointInfo;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.CommonConfig;
+import com.admiralbot.sharedconfig.DeployConfig;
 import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
@@ -52,7 +53,8 @@ public class ServiceApi extends Construct {
         String className = mainServiceInterfaceClass.getSimpleName();
         int startStrip = (className.startsWith("I") && Character.isUpperCase(className.charAt(1))) ? 1 : 0;
         int endStrip = (className.endsWith("Service")) ? "Service".length() : 0;
-        String apiId = className.substring(startStrip, className.length() - endStrip) + "ServiceApi";
+        String serviceName = className.substring(startStrip, className.length() - endStrip);
+        String apiId = serviceName + "ServiceApi";
 
         // CDK currently uses this ID as the API name, so to remove confusion make a compound name from the interface.
         api = HttpApi.Builder.create(this, apiId)
@@ -95,7 +97,9 @@ public class ServiceApi extends Construct {
 
         // Enable access logs (not supported in high-level constructs)
 
+        String friendlyLogGroupName = Joiner.slash(DeployConfig.SERVICE_LOGS_PREFIX, "apiaccess", serviceName);
         LogGroup accessLogGroup = LogGroup.Builder.create(this, apiId+"AccessLogs")
+                .logGroupName(friendlyLogGroupName)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .retention(RetentionDays.THREE_MONTHS)
                 .build();
