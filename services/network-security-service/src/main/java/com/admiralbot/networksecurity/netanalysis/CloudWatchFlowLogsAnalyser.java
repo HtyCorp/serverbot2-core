@@ -1,7 +1,6 @@
 package com.admiralbot.networksecurity.netanalysis;
 
 import com.admiralbot.framework.exception.server.RequestHandlingException;
-import com.admiralbot.networksecurity.model.GetNetworkUsageResponse;
 import com.admiralbot.networksecurity.model.PortPermission;
 import com.admiralbot.networksecurity.model.PortProtocol;
 import com.admiralbot.sharedconfig.CommonConfig;
@@ -18,11 +17,11 @@ import software.amazon.awssdk.services.cloudwatchlogs.model.ResultField;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
-    private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
     private static final long QUERY_CHECK_INTERVAL_MILLIS = 2000;
 
     private final CloudWatchLogsClient logsClient = SdkUtils.client(CloudWatchLogsClient.builder());
@@ -30,7 +29,11 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
     private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
 
     @Override
-    public GetNetworkUsageResponse analyse(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds) {
+    public Optional<Integer> getLatestActivityAgeSeconds(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds) {
+
+        if (authorisedPorts.isEmpty()) {
+            throw new IllegalStateException("Can't construct a valid query with no authorised ports");
+        }
 
         String queryString = buildQueryString(authorisedPorts, endpointVpcIp);
         logger.debug("Query string for flow logs analysis is:\n" + queryString);
@@ -70,8 +73,8 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
             }
 
             if (results == null || results.isEmpty()) {
-                logger.info("Empty results: returning a 'no-activity' final result");
-                return new GetNetworkUsageResponse(false, PLACEHOLDER_AGE_FOR_NO_ACTIVITY);
+                logger.info("Log query result is empty: return null activity age");
+                return Optional.empty();
             }
 
             // Get first result field of first result row (we know there's a field because it's part of query string)
@@ -82,7 +85,8 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
             long latestTimeUnix = Long.parseLong(timestampResult.value());
             int latestActivityAgeSeconds = (int) Instant.ofEpochMilli(latestTimeUnix).until(now, ChronoUnit.SECONDS);
 
-            return new GetNetworkUsageResponse(true, latestActivityAgeSeconds);
+            logger.info("Log query result got an activity age of {} seconds", latestActivityAgeSeconds);
+            return Optional.of(latestActivityAgeSeconds);
 
         } catch (RuntimeException e) {
             AWSXRay.getTraceEntity().addException(e);

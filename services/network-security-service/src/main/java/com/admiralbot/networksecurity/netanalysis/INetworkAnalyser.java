@@ -1,12 +1,12 @@
 package com.admiralbot.networksecurity.netanalysis;
 
-import com.admiralbot.networksecurity.model.GetNetworkUsageResponse;
 import com.admiralbot.networksecurity.model.PortPermission;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface INetworkAnalyser {
 
-    GetNetworkUsageResponse analyse(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds);
+    Optional<Integer> getLatestActivityAgeSeconds(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds);
 
 }

@@ -23,12 +23,14 @@ import software.amazon.awssdk.services.kms.model.KmsException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
     private static final Pattern BASIC_IP_REGEX = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
+    private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
 
     private final Gson gson = new GsonBuilder().serializeNulls().create();
     private final Crypto crypto = new Crypto();
@@ -177,7 +179,20 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
 
         ManagedSecurityGroup group = groupManager.describeGroup(getNetworkUsageRequest.getTargetSecurityGroupName());
 
-        return networkAnalyser.analyse(group.getAllowedPorts(), requestedEndpointIp, requestedWindowSeconds);
+        Optional<Integer> maybeLatestAgeSeconds;
+        if (group.getAllowedPorts().isEmpty()) {
+            logger.info("Security group has no allowed ports - defaulting to 'no activity' response");
+            maybeLatestAgeSeconds = Optional.empty();
+        } else {
+            maybeLatestAgeSeconds = networkAnalyser.getLatestActivityAgeSeconds(group.getAllowedPorts(),
+                    requestedEndpointIp, requestedWindowSeconds);
+            logger.info("Network analyzer reported latest activity age as: {}", maybeLatestAgeSeconds);
+        }
+
+        return new GetNetworkUsageResponse(
+                maybeLatestAgeSeconds.isPresent(),
+                maybeLatestAgeSeconds.orElse(PLACEHOLDER_AGE_FOR_NO_ACTIVITY)
+        );
     }
 
     @Override
