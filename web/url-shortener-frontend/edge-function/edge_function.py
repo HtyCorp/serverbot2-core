@@ -111,12 +111,13 @@ def handle_redirect(full_url):
     }
 
 def handle_error(url_response):
-    exception_type = url_response.get("exceptionTypeName")
-    if exception_type:
+    try:
+        exception_spec = url_response.get("error")
+        exception_type = exception_spec.get("exceptionTypeName")
         (code, message) = api_exceptions_to_messages.get(exception_type, api_exception_default_message)
-        detail = url_response["exceptionMessage"]
+        detail = exception_spec.get("exceptionMessage")
         return build_error_response(code, message, detail)
-    else:
+    except KeyError:
         (code, message) = api_exception_default_message
         detail = "unexpected API JSON format"
     return build_error_response(code, message, detail)
