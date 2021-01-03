@@ -53,11 +53,10 @@ public class ServiceApi extends Construct {
         String className = mainServiceInterfaceClass.getSimpleName();
         int startStrip = (className.startsWith("I") && Character.isUpperCase(className.charAt(1))) ? 1 : 0;
         int endStrip = (className.endsWith("Service")) ? "Service".length() : 0;
-        String serviceName = className.substring(startStrip, className.length() - endStrip);
-        String apiId = serviceName + "ServiceApi";
+        String apiConstructId = className.substring(startStrip, className.length() - endStrip) + "ServiceApi";
 
         // CDK currently uses this ID as the API name, so to remove confusion make a compound name from the interface.
-        api = HttpApi.Builder.create(this, apiId)
+        api = HttpApi.Builder.create(this, apiConstructId)
                 .createDefaultStage(false)
                 .build();
 
@@ -98,7 +97,7 @@ public class ServiceApi extends Construct {
         // Enable access logs (not supported in high-level constructs)
 
         String friendlyLogGroupName = Joiner.slash(DeployConfig.SERVICE_LOGS_PREFIX, "apiaccess", serviceName);
-        LogGroup accessLogGroup = LogGroup.Builder.create(this, apiId+"AccessLogs")
+        LogGroup accessLogGroup = LogGroup.Builder.create(this, apiConstructId+"AccessLogs")
                 .logGroupName(friendlyLogGroupName)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .retention(RetentionDays.THREE_MONTHS)
