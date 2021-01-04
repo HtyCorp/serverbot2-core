@@ -15,6 +15,10 @@ public class HelpMessageHelper {
         this.definitionSet = definitionSet;
     }
 
+    public boolean hasDefinitionFor(String commandName) {
+        return definitionSet.getFromName(commandName) != null;
+    }
+
     public ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp) {
 
         if (commandHelp.getCommandName() != null) {

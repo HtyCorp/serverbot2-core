@@ -12,6 +12,9 @@ public abstract class AbstractCommandHandler<ModelType> {
 
     private final CommandDispatcher<ModelType> commandDispatcher;
     private final HelpMessageHelper helpMessageHelper;
+    // AbstractApiRequestDispatcher already has a generic chaining mechanism for when a command isn't found.
+    // For better UX, we need some extra chaining specifically for '!help <command-name>' requests.
+    private AbstractCommandHandler<?> nextCommandHandler;
 
     protected abstract Class<ModelType> getHandlerType();
     protected abstract ModelType getHandlerInstance();
@@ -24,6 +27,7 @@ public abstract class AbstractCommandHandler<ModelType> {
     }
 
     public void setNextChainHandler(AbstractCommandHandler<?> nextChainHandler) {
+        this.nextCommandHandler = nextChainHandler;
         commandDispatcher.setNextChainDispatcher(nextChainHandler.commandDispatcher);
     }
 
@@ -32,6 +36,12 @@ public abstract class AbstractCommandHandler<ModelType> {
     }
 
     public ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp) {
+        if (commandHelp.getCommandName() != null &&
+                nextCommandHandler != null &&
+                !helpMessageHelper.hasDefinitionFor(commandHelp.getCommandName())){
+            logger.info("Got a request to look up help for a non-existent command - passing to next handler");
+            return nextCommandHandler.onCommandHelp(commandHelp);
+        }
         return helpMessageHelper.onCommandHelp(commandHelp);
     }
 
