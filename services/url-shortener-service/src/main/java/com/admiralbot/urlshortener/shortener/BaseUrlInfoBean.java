@@ -1,4 +1,4 @@
-package com.admiralbot.urlshortener;
+package com.admiralbot.urlshortener.shortener;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;

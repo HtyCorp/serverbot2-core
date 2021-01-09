@@ -6,7 +6,7 @@ public class UrlShortenerConfig {
 
     private UrlShortenerConfig() {}
 
-    public static final String FUNCTION_NAME = "UrlShortenerServiceProxy";
+    public static final String PATH_PRIVATE = "url-shortener/private";
 
     public static final String SUBDOMAIN = "go";
 
@@ -24,5 +24,10 @@ public class UrlShortenerConfig {
     // There is no defined maximum length of a URL (per any RFCs):
     // Common practice is "about 2K" so we do twice that to be on the safe side.
     public static final int MAX_URL_LENGTH = 4096;
+
+    public static String PREFERENCES_DYNAMO_TABLE_NAME = "UrlDeliveryUserPreferences";
+    public static String PREFERENCES_TABLE_PARTITION_KEY = "userId";
+
+    public static Secret PUSH_API_KEY_PAIR = new Secret(PATH_PRIVATE, "push-api-key-pair");
 
 }

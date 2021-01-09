@@ -6,6 +6,7 @@ import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
+import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.SecretValue;
@@ -92,6 +93,9 @@ public class CommonStack extends Stack {
         SecretValue discordApiTokenSource = SecretValue.secretsManager(env.getDiscordApiTokenSourceSecretArn());
         Util.instantiateConfigSecret(this, "DiscordApiTokenSecret",
                 DiscordConfig.API_TOKEN, discordApiTokenSource.toString());
+        SecretValue webPushKeyPairSource = SecretValue.secretsManager(env.getWebPushKeyPairSourceSecretArn());
+        Util.instantiateConfigSecret(this, "WebPushKeyPairSecret",
+                UrlShortenerConfig.PUSH_API_KEY_PAIR, webPushKeyPairSource.toString());
 
         Util.instantiateConfigSsmParameter(this, "SystemRootDomainNameParam",
                 CommonConfig.SYSTEM_ROOT_DOMAIN_NAME, env.getSystemRootDomainName());

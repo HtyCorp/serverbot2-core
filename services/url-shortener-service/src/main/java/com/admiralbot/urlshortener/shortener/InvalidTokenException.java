@@ -1,4 +1,4 @@
-package com.admiralbot.urlshortener;
+package com.admiralbot.urlshortener.shortener;
 
 public class InvalidTokenException extends RuntimeException {
 

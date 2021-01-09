@@ -1,9 +1,9 @@
-package com.admiralbot.urlshortener.tokenv1;
+package com.admiralbot.urlshortener.shortener.tokenv1;
 
 import com.admiralbot.sharedutil.Pair;
-import com.admiralbot.urlshortener.ITokenProcessor;
-import com.admiralbot.urlshortener.InvalidTokenException;
-import com.admiralbot.urlshortener.UrlRevokedException;
+import com.admiralbot.urlshortener.shortener.ITokenProcessor;
+import com.admiralbot.urlshortener.shortener.InvalidTokenException;
+import com.admiralbot.urlshortener.shortener.UrlRevokedException;
 import software.amazon.awssdk.core.SdkBytes;
 
 import javax.crypto.Cipher;

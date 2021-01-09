@@ -1,6 +1,6 @@
-package com.admiralbot.urlshortener.tokenv1;
+package com.admiralbot.urlshortener.shortener.tokenv1;
 
-import com.admiralbot.urlshortener.BaseUrlInfoBean;
+import com.admiralbot.urlshortener.shortener.BaseUrlInfoBean;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 

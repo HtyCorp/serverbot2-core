@@ -7,7 +7,7 @@ import com.admiralbot.framework.common.ApiHttpMethod;
 @ApiEndpointInfo(serviceName = "urlshortener", uriPath = "/", httpMethod = ApiHttpMethod.POST, authType = ApiAuthType.IAM)
 public interface IUrlShortener {
 
-    CreateShortUrlResponse createShortUrl(CreateShortUrlRequest request);
+    DeliverUrlResponse deliverUrl(DeliverUrlRequest request);
     GetFullUrlResponse getFullUrl(GetFullUrlRequest request);
 
 }

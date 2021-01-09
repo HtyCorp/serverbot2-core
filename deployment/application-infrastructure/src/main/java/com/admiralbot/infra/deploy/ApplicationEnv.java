@@ -10,6 +10,7 @@ public class ApplicationEnv {
     private String region;
 
     private String discordApiTokenSourceSecretArn;
+    private String webPushKeyPairSourceSecretArn;
 
     private String artifactBucketName;
 
@@ -48,6 +49,10 @@ public class ApplicationEnv {
 
     public String getDiscordApiTokenSourceSecretArn() {
         return discordApiTokenSourceSecretArn;
+    }
+
+    public String getWebPushKeyPairSourceSecretArn() {
+        return webPushKeyPairSourceSecretArn;
     }
 
     public String getArtifactBucketName() {

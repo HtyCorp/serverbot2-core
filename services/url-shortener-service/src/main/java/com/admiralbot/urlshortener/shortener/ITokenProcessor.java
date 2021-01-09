@@ -1,4 +1,4 @@
-package com.admiralbot.urlshortener;
+package com.admiralbot.urlshortener.shortener;
 
 import com.admiralbot.sharedutil.Pair;
 

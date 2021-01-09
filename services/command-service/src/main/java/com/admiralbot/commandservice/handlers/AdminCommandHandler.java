@@ -23,7 +23,7 @@ import com.admiralbot.sharedconfig.NetSecConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Poller;
 import com.admiralbot.sharedutil.Utils;
-import com.admiralbot.urlshortener.model.CreateShortUrlRequest;
+import com.admiralbot.urlshortener.model.DeliverUrlRequest;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
@@ -168,10 +168,10 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         try {
             String fullTerminalUrl = session.getSessionUrl();
-            CreateShortUrlRequest createShortUrlRequest = new CreateShortUrlRequest(
+            DeliverUrlRequest deliverUrlRequest = new DeliverUrlRequest(
                     fullTerminalUrl, CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds()
             );
-            String shortTerminalUrl = urlShortenerClient.createShortUrl(createShortUrlRequest).getShortUrl();
+            String shortTerminalUrl = urlShortenerClient.deliverUrl(deliverUrlRequest).getShortUrl();
 
             String privateMessageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
             SimpleEmbed terminalUrlEmbed = new SimpleEmbed(shortTerminalUrl,

@@ -25,4 +25,9 @@ public class SimpleEmbed {
     public String getDescription() {
         return description;
     }
+
+    public SimpleEmbed withUrl(String url) {
+        return new SimpleEmbed(url, this.title, this.description);
+    }
+
 }

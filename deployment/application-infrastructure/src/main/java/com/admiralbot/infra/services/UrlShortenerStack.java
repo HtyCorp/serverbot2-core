@@ -1,8 +1,10 @@
 package com.admiralbot.infra.services;
 
+import com.admiralbot.discordrelay.model.service.IDiscordService;
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
+import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import software.amazon.awscdk.core.RemovalPolicy;
@@ -35,10 +37,25 @@ public class UrlShortenerStack extends Stack {
                 .sortKey(sortKey)
                 .build();
 
+        // Configure the DDB table to store user delivery preferences
+
+        Attribute prefsPartitionKey = Attribute.builder()
+                .name(UrlShortenerConfig.PREFERENCES_TABLE_PARTITION_KEY)
+                .type(AttributeType.STRING)
+                .build();
+        Table prefsTable = Table.Builder.create(this, "PreferencesTable")
+                .tableName(UrlShortenerConfig.DYNAMO_TABLE_NAME)
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+
         // Add standard microservice and API
 
         EcsMicroservice microservice = new EcsMicroservice(this, "Service", parent, "url-shortener-service");
-        urlTable.grantFullAccess(microservice.getTaskRole());
+        urlTable.grantFullAccess(microservice);
+        prefsTable.grantFullAccess(microservice);
+
+        Permissions.addExecuteApi(this, microservice, IDiscordService.class);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IUrlShortener.class);
         api.addEcsRoute(IUrlShortener.class, microservice);
