@@ -1,6 +1,7 @@
 package com.admiralbot.workflows;
 
 import com.admiralbot.sharedconfig.CommonConfig;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.SdkUtils;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,10 @@ public class AppDnsRecordManager {
     private final Route53Client route53Client = SdkUtils.globalClient(Route53Client.builder());
 
     private final Logger logger = LogManager.getLogger(AppDnsRecordManager.class);
+
+    public String getFqdn(String name) {
+        return Joiner.dot(name, CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());
+    }
 
     public String getLocationString(String name) {
         ResourceRecordSet recordSet = lookupResourceRecord(name);
@@ -54,7 +59,7 @@ public class AppDnsRecordManager {
         ResourceRecord instanceIpRecord = ResourceRecord.builder().value(address).build();
 
         return ResourceRecordSet.builder()
-                .name(makeFqdn(name))
+                .name(makeFqdnTrailingDot(name))
                 .type(RRType.A)
                 .ttl(CommonConfig.APP_DNS_RECORD_TTL)
                 .resourceRecords(instanceIpRecord)
@@ -64,12 +69,12 @@ public class AppDnsRecordManager {
     private ResourceRecordSet lookupResourceRecord(String name) {
         return route53Client.listResourceRecordSets(r -> r.hostedZoneId(HOSTED_ZONE_ID)
                 .startRecordType(RRType.A)
-                .startRecordName(makeFqdn(name))
+                .startRecordName(makeFqdnTrailingDot(name))
                 .maxItems("1")
         ).resourceRecordSets().get(0);
     }
 
-    private String makeFqdn(String appName) {
+    private String makeFqdnTrailingDot(String appName) {
         return appName + "." + CommonConfig.APP_ROOT_DOMAIN_NAME.getValue() + ".";
     }
 

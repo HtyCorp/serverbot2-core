@@ -173,7 +173,9 @@ public class StepHandler {
         GameMetadata gameMetadata = getGameMetadata(executionState.getGameName());
         String appDaemonQueueName = gameMetadata.getInstanceQueueName();
         IAppDaemon appDaemonClient = ApiClient.sqs(IAppDaemon.class, appDaemonQueueName);
-        String dnsLocation = dnsRecordManager.getLocationString(gameMetadata.getGameName());
+
+        String dnsName = dnsRecordManager.getFqdn(gameMetadata.getGameName());
+        String dnsNameAndIp = dnsRecordManager.getLocationString(gameMetadata.getGameName());
 
         String ipAuthCheckUrl = "https://"
                 + NetSecConfig.AUTHORIZER_SUBDOMAIN
@@ -185,9 +187,11 @@ public class StepHandler {
             appDaemonClient.startApp(new StartAppRequest());
             logger.info("Successful StartApp call to app daemon");
             appendMessage(executionState.getInitialMessageUuid(),
-                    "Started at " + dnsLocation +".\n"
+                    "Started at " + dnsNameAndIp +".\n"
+                    + "Connect via Steam (if supported): <steam://connect/"+dnsName+">\n"
+                    + "\n"
                     + "If you're unable to connect:\n"
-                    + " * Make sure your IP address is whitelisted (go to "+ipAuthCheckUrl+" or use !addip).\n"
+                    + " * Ensure your IP is whitelisted (check at "+ipAuthCheckUrl+" or type !addip to whitelist).\n"
                     + " * For games with long load times, wait a few minutes and try again.");
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);
