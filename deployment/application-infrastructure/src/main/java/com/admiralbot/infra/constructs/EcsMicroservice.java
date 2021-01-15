@@ -2,7 +2,6 @@ package com.admiralbot.infra.constructs;
 
 import com.admiralbot.infra.deploy.ApplicationEnv;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
-import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
@@ -12,9 +11,6 @@ import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
 import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
-import software.amazon.awscdk.services.ec2.Peer;
-import software.amazon.awscdk.services.ec2.Port;
-import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.iam.IGrantable;
 import software.amazon.awscdk.services.iam.IPrincipal;
@@ -32,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 
 public class EcsMicroservice extends Construct implements IGrantable {
 
@@ -51,11 +48,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")
                 .assumedBy(new ServicePrincipal("ecs-tasks.amazonaws.com"))
-                .managedPolicies(List.of(
-                        ManagedPolicies.XRAY_DAEMON_WRITE_ACCESS
-                ))
                 .build();
-
         Permissions.addConfigPathRead(parent, taskRole, CommonConfig.PATH);
 
         // Important ref: https://aws.amazon.com/blogs/containers/how-amazon-ecs-manages-cpu-and-memory-resources/
@@ -66,7 +59,7 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
                 .compatibility(Compatibility.EC2)
-                .networkMode(NetworkMode.AWS_VPC)
+                .networkMode(NetworkMode.BRIDGE)
                 //.cpu("256")
                 //.memoryMiB("960")
                 .taskRole(taskRole)
@@ -107,32 +100,13 @@ public class EcsMicroservice extends Construct implements IGrantable {
                 .essential(true)
                 .image(ContainerImage.fromAsset(serviceDockerDir.toString()))
                 .logging(serverLogDriver)
+                // See Xray daemon definition in ServiceClusterStack: this is the default host gateway IP on ECS AMI
+                .environment(Map.of("AWS_XRAY_DAEMON_ADDRESS", "169.254.172.1:2000"))
                 .build());
         serviceContainer.addPortMappings(PortMapping.builder()
                 .protocol(Protocol.TCP)
                 .containerPort(CommonConfig.SERVICES_INTERNAL_HTTP_PORT)
-                .hostPort(CommonConfig.SERVICES_INTERNAL_HTTP_PORT)
-                .build());
-
-        // Sidecar container: Xray daemon
-
-        LogGroup xrayLogGroup = LogGroup.Builder.create(this, "XrayDaemonLogGroup")
-                .retention(RetentionDays.ONE_YEAR)
-                .removalPolicy(RemovalPolicy.DESTROY)
-                .build();
-        LogDriver xrayLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
-                .logGroup(xrayLogGroup)
-                .streamPrefix("xray-daemon")
-                .build());
-        ContainerDefinition xrayContainer = taskDefinition.addContainer("XrayDaemonContainer", ContainerDefinitionOptions.builder()
-                .memoryLimitMiB(64)
-                .image(ContainerImage.fromRegistry("amazon/aws-xray-daemon"))
-                .logging(xrayLogDriver)
-                .build());
-        xrayContainer.addPortMappings(PortMapping.builder()
-                .protocol(Protocol.UDP)
-                .containerPort(2000)
-                .hostPort(2000)
+                .hostPort(0) // '0' means assign ephemeral port (should be in 32768..65535 range)
                 .build());
 
         // Cloud Map options for service discovery (used by API Gateway)
@@ -146,19 +120,10 @@ public class EcsMicroservice extends Construct implements IGrantable {
 
         // Finally, create the service from our complete task definition with containers
 
-        SecurityGroup defaultTaskSg = SecurityGroup.Builder.create(this, "DefaultTaskSecurityGroup")
-                .vpc(appStage.getCommonResources().getServiceVpc())
-                .allowAllOutbound(true)
-                .build();
-        defaultTaskSg.addIngressRule(
-                Peer.ipv4(appStage.getCommonResources().getServiceVpc().getVpcCidrBlock()),
-                Port.tcp(CommonConfig.SERVICES_INTERNAL_HTTP_PORT));
         Ec2Service service = Ec2Service.Builder.create(this, "EcsService")
                 .cluster(appStage.getServiceCluster().getCluster())
                 .taskDefinition(taskDefinition)
-                .assignPublicIp(false)
                 .cloudMapOptions(cloudMapOptions)
-                .securityGroups(List.of(defaultTaskSg))
                 .placementStrategies(List.of(PlacementStrategy.packedByMemory()))
                 .build();
 

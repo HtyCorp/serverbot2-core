@@ -2,23 +2,27 @@ package com.admiralbot.infra.baseline;
 
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
+import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.sharedutil.Utils;
+import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup;
 import software.amazon.awscdk.services.autoscaling.CfnAutoScalingGroup.*;
-import software.amazon.awscdk.services.ec2.CfnLaunchTemplate;
+import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.IamInstanceProfileProperty;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.LaunchTemplateDataProperty;
 import software.amazon.awscdk.services.ec2.CfnLaunchTemplate.MonitoringProperty;
-import software.amazon.awscdk.services.ec2.ISubnet;
-import software.amazon.awscdk.services.ec2.SecurityGroup;
 import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.ecs.CfnCapacityProvider.AutoScalingGroupProviderProperty;
 import software.amazon.awscdk.services.ecs.CfnCapacityProvider.ManagedScalingProperty;
 import software.amazon.awscdk.services.ecs.CfnCluster.CapacityProviderStrategyItemProperty;
+import software.amazon.awscdk.services.ecs.Protocol;
 import software.amazon.awscdk.services.iam.CfnInstanceProfile;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
+import software.constructs.Construct;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -61,6 +65,11 @@ public class ServiceClusterStack extends Stack {
                 .vpc(parent.getCommonResources().getServiceVpc())
                 .allowAllOutbound(true)
                 .build();
+        // Allow ephemeral TCP ports, so ECS containers in bridge mode can receive HTTP requests
+        containerInstanceSecurityGroup.addIngressRule(
+                Peer.ipv4(parent.getCommonResources().getServiceVpc().getVpcCidrBlock()),
+                Port.tcpRange(32768, 65535)
+        );
 
         launchTemplatesByHardwareType.put(AmiHardwareType.STANDARD, makeContainerInstanceTemplate(AmiHardwareType.STANDARD));
         launchTemplatesByHardwareType.put(AmiHardwareType.ARM, makeContainerInstanceTemplate(AmiHardwareType.ARM));
@@ -135,6 +144,39 @@ public class ServiceClusterStack extends Stack {
                 .hasEc2Capacity(true)
                 .securityGroups(List.of(containerInstanceSecurityGroup))
                 .build());
+
+        // Add Xray daemon as an ECS daemon service for use by other containers
+
+        TaskDefinition xrayDaemonTaskDef = TaskDefinition.Builder.create(this, "XrayDaemonTasKDef")
+                .compatibility(Compatibility.EC2)
+                .networkMode(NetworkMode.BRIDGE)
+                .build();
+        Permissions.addManagedPoliciesToRole(xrayDaemonTaskDef.getTaskRole(), ManagedPolicies.XRAY_DAEMON_WRITE_ACCESS);
+
+        LogGroup xrayLogGroup = LogGroup.Builder.create(this, "XrayDaemonLogGroup")
+                .retention(RetentionDays.ONE_YEAR)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+        LogDriver xrayLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
+                .logGroup(xrayLogGroup)
+                .streamPrefix("xray-daemon")
+                .build());
+        ContainerDefinition xrayContainer = xrayDaemonTaskDef.addContainer("XrayDaemonContainer", ContainerDefinitionOptions.builder()
+                .memoryLimitMiB(128)
+                .image(ContainerImage.fromRegistry("amazon/aws-xray-daemon"))
+                .logging(xrayLogDriver)
+                .build());
+        xrayContainer.addPortMappings(PortMapping.builder()
+                .protocol(Protocol.UDP)
+                .containerPort(2000)
+                .hostPort(2000) // Uses a reserved port on each container instance since this is a daemon service
+                .build());
+
+        Ec2Service xrayDaemonService = Ec2Service.Builder.create(this, "XrayDaemonService")
+                .cluster(serviceCluster)
+                .daemon(true)
+                .taskDefinition(xrayDaemonTaskDef)
+                .build();
 
     }
 
