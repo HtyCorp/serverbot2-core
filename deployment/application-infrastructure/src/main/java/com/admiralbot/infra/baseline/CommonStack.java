@@ -125,17 +125,12 @@ public class CommonStack extends Stack {
                 .subnetType(SubnetType.PUBLIC)
                 .cidrMask(24)
                 .build();
-        SubnetConfiguration privateSubnet = SubnetConfiguration.builder()
-                .name("private")
-                .subnetType(SubnetType.PRIVATE)
-                .cidrMask(24)
-                .build();
 
         serviceVpc = Vpc.Builder.create(this, "ServiceVpc")
                 .cidr(CommonConfig.STANDARD_VPC_CIDR)
                 .maxAzs(3)
-                .subnetConfiguration(List.of(publicSubnet, privateSubnet))
-                .natGateways(1)
+                .subnetConfiguration(List.of(publicSubnet))
+                .natGateways(0)
                 .build();
 
         LogGroup appFlowLogsGroup = LogGroup.Builder.create(this, "AppFlowLogsGroup")
@@ -204,13 +199,13 @@ public class CommonStack extends Stack {
         apiVpcLinkSecurityGroup.addEgressRule(Peer.ipv4(serviceVpc.getVpcCidrBlock()), Port.allTraffic());
         apiVpcLink = VpcLink.Builder.create(this, "ApiVpcLink")
                 .vpc(serviceVpc)
-                .subnets(serviceVpc.getPublicSubnets())
+                .subnets(SubnetSelection.builder().subnetType(SubnetType.PUBLIC).build())
                 .securityGroups(List.of(apiVpcLinkSecurityGroup))
                 .build();
 
         apiVpcNamespace = PrivateDnsNamespace.Builder.create(this, "ApiVpcNamespace")
                 .vpc(serviceVpc)
-                .name(Joiner.dot("services.vpc.admiralbot.com"))
+                .name(Joiner.dot("services", "vpc", parent.getEnv().getSystemRootDomainName()))
                 .build();
 
     }

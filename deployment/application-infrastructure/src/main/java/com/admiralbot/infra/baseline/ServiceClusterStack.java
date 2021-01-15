@@ -98,8 +98,10 @@ public class ServiceClusterStack extends Stack {
                 .instancesDistribution(capacityOptimisedInstanceDistribution)
                 .build();
 
-        List<String> serviceSubnetIds = Utils.mapList(parent.getCommonResources().getServiceVpc().getPrivateSubnets(),
-                ISubnet::getSubnetId);
+        List<String> servicePublicSubnetIds = Utils.mapList(
+                parent.getCommonResources().getServiceVpc().getPublicSubnets(),
+                ISubnet::getSubnetId
+        );
         CfnAutoScalingGroup capacityAutoScalingGroup = CfnAutoScalingGroup.Builder.create(this, "CapacityAutoScalingGroup")
                 .capacityRebalance(true)
                 // Observation: When capacity is 0, managed scaling seems to interpret this as "100% utilization",
@@ -107,7 +109,7 @@ public class ServiceClusterStack extends Stack {
                 .minSize("1")
                 .maxSize("2")
                 .desiredCapacity("1")
-                .vpcZoneIdentifier(serviceSubnetIds)
+                .vpcZoneIdentifier(servicePublicSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
                 .newInstancesProtectedFromScaleIn(true)
                 .build();
