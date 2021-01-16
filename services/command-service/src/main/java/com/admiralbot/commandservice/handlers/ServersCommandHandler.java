@@ -6,6 +6,7 @@ import com.admiralbot.commandservice.SfnRunner;
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
 import com.admiralbot.commandservice.commands.servers.*;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
+import com.admiralbot.discordrelay.model.service.MessageChannel;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.gamemetadata.model.*;
@@ -14,19 +15,21 @@ import com.admiralbot.workflows.model.Machines;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class ServersCommandHandler extends AbstractCommandHandler<IServersCommandHandler> implements IServersCommandHandler {
 
     private final Logger logger = LogManager.getLogger(ServersCommandHandler.class);
 
-    private final IGameMetadataService gameMetadataServiceClient;
+    private final IGameMetadataService gameMetadataService;
     private final IpAuthMessageHelper ipAuthMessageHelper;
 
     private final SfnRunner sfnRunner = new SfnRunner();
 
-    public ServersCommandHandler(IGameMetadataService gameMetadataServiceClient, IpAuthMessageHelper ipAuthMessageHelper) {
-        this.gameMetadataServiceClient = gameMetadataServiceClient;
+    public ServersCommandHandler(IGameMetadataService gameMetadataService, IpAuthMessageHelper ipAuthMessageHelper) {
+        this.gameMetadataService = gameMetadataService;
         this.ipAuthMessageHelper = ipAuthMessageHelper;
     }
 
@@ -45,42 +48,48 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         if (commandGames.getGameName() != null) {
             return runShowSpecificGame(commandGames.getGameName());
         } else {
-            return runShowAllGames();
+            return runShowAllGames(commandGames.getContext().getChannel());
         }
     }
 
     private ProcessUserCommandResponse runShowSpecificGame(String name) {
-        DescribeGameResponse response = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+        DescribeGameResponse response = gameMetadataService.describeGame(new DescribeGameRequest(name));
         if (response.isPresent()) {
             GameMetadata game = response.getGame();
-            String output = "Game ID: " + game.getGameName() + " (use this in other commands)\n" +
-                    "Game description: " + game.getFullName() + "\n" +
-                    "Current status: " + game.getGameReadyState().toLowerCase();
+            String output = "Game ID: " + game.getGameName() + "\n" +
+                    "Full name: " + game.getFullName() + "\n" +
+                    "Status: " + game.getGameReadyState().toLowerCase();
             return new ProcessUserCommandResponse(output);
         } else {
             throw makeUnknownGameException(name);
         }
     }
 
-    private ProcessUserCommandResponse runShowAllGames() {
-        List<GameMetadata> games = gameMetadataServiceClient.listGames(new ListGamesRequest()).getGames();
+    private ProcessUserCommandResponse runShowAllGames(MessageChannel contextChannel) {
+        List<GameMetadata> games = new ArrayList<>(gameMetadataService.listGames(new ListGamesRequest()).getGames());
+        games.sort(Comparator.comparing(GameMetadata::getGameName));
+
         final StringBuilder output = new StringBuilder();
         if (games.isEmpty()) {
-            output.append("No games available yet.");
+            output.append("No games available yet. ").append((contextChannel == MessageChannel.ADMIN)
+                    ? "Try creating one with !newgame."
+                    : "Admin-channel users can create one with !newgame");
         } else {
             output.append("Available games (").append(games.size()).append("):\n");
             games.forEach(game -> {
-                output.append(game.getGameName()).append(": \"").append(game.getFullName()).append("\"");
-                output.append(", in ").append(game.getGameReadyState().toLowerCase()).append(" status \n");
+                String statusName = game.getGameReadyState().toLowerCase();
+                output.append(game.getGameName()).append(" (").append(game.getFullName()).append(")");
+                output.append(", currently ").append(statusName).append("\n");
             });
         }
+
         return new ProcessUserCommandResponse(output.toString());
     }
 
     @Override
     public ProcessUserCommandResponse onCommandStart(CommandStart commandStart) {
         String name = commandStart.getGameName();
-        DescribeGameResponse describe = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+        DescribeGameResponse describe = gameMetadataService.describeGame(new DescribeGameRequest(name));
         if (describe.isPresent()) {
             GameMetadata game = describe.getGame();
             if (game.getGameReadyState() != GameReadyState.STOPPED) {
@@ -100,7 +109,7 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
     @Override
     public ProcessUserCommandResponse onCommandStop(CommandStop commandStop) {
         String name = commandStop.getGameName();
-        DescribeGameResponse describe = gameMetadataServiceClient.describeGame(new DescribeGameRequest(name));
+        DescribeGameResponse describe = gameMetadataService.describeGame(new DescribeGameRequest(name));
         if (describe.isPresent()) {
             GameMetadata game = describe.getGame();
             if (game.getGameReadyState() != GameReadyState.RUNNING) {
