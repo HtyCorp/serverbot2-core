@@ -29,13 +29,17 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
     private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
 
     @Override
-    public Optional<Integer> getLatestActivityAgeSeconds(List<PortPermission> authorisedPorts, String endpointVpcIp, int windowSeconds) {
+    public Optional<Integer> getLatestActivityAgeSeconds(List<String> authorisedIps, List<PortPermission> authorisedPorts,
+                                                         String endpointVpcIp, int windowSeconds) {
 
+        if (authorisedIps.isEmpty()) {
+            throw new IllegalArgumentException("Can't construct a valid query with no authorised IPs");
+        }
         if (authorisedPorts.isEmpty()) {
-            throw new IllegalStateException("Can't construct a valid query with no authorised ports");
+            throw new IllegalArgumentException("Can't construct a valid query with no authorised ports");
         }
 
-        String queryString = buildQueryString(authorisedPorts, endpointVpcIp);
+        String queryString = buildQueryString(authorisedIps, authorisedPorts, endpointVpcIp);
         logger.debug("Query string for flow logs analysis is:\n" + queryString);
 
         Instant now = Instant.now();
@@ -96,16 +100,21 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
         }
     }
 
-    private String buildQueryString(List<PortPermission> authorisedPorts, String endpointVpcIp) {
+    private String buildQueryString(List<String> authorisedIps, List<PortPermission> authorisedPorts, String endpointVpcIp) {
         // Available fields:
         // @timestamp, @logStream, @message, accountId, endTime, interfaceId, logStatus, startTime, version, action,
         // bytes, dstAddr, dstPort, packets, protocol, srcAddr, srcPort
+
+        String destinationConditionString = "(action=\"ACCEPT\" and dstAddr=\"" + endpointVpcIp + "\")";
+        String ipConditionString = "(srcAddr in " + authorisedIps.stream()
+                .map(ip -> "\"" + ip + "\"")
+                .collect(Collectors.joining(",", "[", "])"));
         String portConditionString = authorisedPorts.stream()
                 .map(this::buildPortCondition)
-                .collect(Collectors.joining(" or ","(",")"));
-        return "fields @timestamp, action, srcAddr, dstAddr"
-                + " | filter (action=\"ACCEPT\" and dstAddr=\"" + endpointVpcIp + "\" and " + portConditionString + ")"
-                + " | stats latest(@timestamp) as latestTimeUnix";
+                .collect(Collectors.joining(" or ", "(", ")"));
+
+        return "filter "+destinationConditionString+" and " +ipConditionString+" and "+portConditionString+
+                " | stats latest(@timestamp) as latestTimeUnix";
     }
 
     private String buildPortCondition(PortPermission portPermission) {

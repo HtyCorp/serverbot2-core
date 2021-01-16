@@ -15,6 +15,7 @@ public interface IGroupManager {
     List<ManagedSecurityGroup> listGroups();
     void deleteGroup(String name) throws NoSuchResourceException;
 
+    List<String> listUserIps();
     void setUserIp(String userIpAddress, DiscordUserAuthInfo userInfo);
     Optional<DiscordUserAuthInfo> getUserInfoByIp(String userIpAddress);
 

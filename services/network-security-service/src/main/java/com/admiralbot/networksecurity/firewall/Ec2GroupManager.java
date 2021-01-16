@@ -13,6 +13,7 @@ import com.admiralbot.sharedconfig.NetSecConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Pair;
 import com.admiralbot.sharedutil.SdkUtils;
+import com.admiralbot.sharedutil.Utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -89,6 +90,12 @@ public class Ec2GroupManager implements IGroupManager {
                 throw new RequestHandlingException("Unknown EC2 API exception while deleting security group: " + e.getMessage(), e);
             }
         }
+    }
+
+    @Override
+    public List<String> listUserIps() {
+        // EC2 API CIDRs all end in "/32" but we need a plain IP, so just strip the last 3 chars from each.
+        return Utils.mapList(getDecryptedUserList().getEntries(), e -> e.getCidr().substring(0, e.getCidr().length() - 3));
     }
 
     @Override

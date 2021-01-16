@@ -183,9 +183,12 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
         if (group.getAllowedPorts().isEmpty()) {
             logger.info("Security group has no allowed ports - defaulting to 'no activity' response");
             maybeLatestAgeSeconds = Optional.empty();
+        } else if (groupManager.listUserIps().isEmpty()) {
+            logger.info("Prefix list has no allowed IPs - defaulting to 'no activity' response");
+            maybeLatestAgeSeconds = Optional.empty();
         } else {
-            maybeLatestAgeSeconds = networkAnalyser.getLatestActivityAgeSeconds(group.getAllowedPorts(),
-                    requestedEndpointIp, requestedWindowSeconds);
+            maybeLatestAgeSeconds = networkAnalyser.getLatestActivityAgeSeconds(groupManager.listUserIps(),
+                    group.getAllowedPorts(), requestedEndpointIp, requestedWindowSeconds);
             logger.info("Network analyzer reported latest activity age as: {}", maybeLatestAgeSeconds);
         }
 
