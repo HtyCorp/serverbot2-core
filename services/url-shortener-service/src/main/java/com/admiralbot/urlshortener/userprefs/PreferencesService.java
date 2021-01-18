@@ -20,11 +20,15 @@ public class PreferencesService {
             TableSchema.fromBean(UserPreferences.class));
 
     public void putUserPreferences(UserPreferences preferences) {
-        Objects.requireNonNull(preferences.getUserId());
-        if (preferences.isPushEnabled()) {
-            Objects.requireNonNull(preferences.getPushSubscription());
+        try {
+            Objects.requireNonNull(preferences.getUserId());
+            if (preferences.isPushEnabled()) {
+                Objects.requireNonNull(preferences.getPushSubscription());
+            }
+            table.putItem(preferences);
+        } catch (NullPointerException e) {
+            throw new IllegalArgumentException("Required user preference parameters missing");
         }
-        table.putItem(preferences);
     }
 
     public Optional<UserPreferences> getUserPreferences(String userId) {

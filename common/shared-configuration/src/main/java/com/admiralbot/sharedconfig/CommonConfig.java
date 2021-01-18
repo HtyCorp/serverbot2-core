@@ -1,5 +1,7 @@
 package com.admiralbot.sharedconfig;
 
+import com.admiralbot.sharedutil.Joiner;
+
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,5 +65,13 @@ public class CommonConfig {
     );
 
     public static SystemProperty ENABLE_MOCK = new SystemProperty("serverbot2.mock");
+
+    public static final String systemSubdomain(String subdomain) {
+        return Joiner.dot(subdomain, SYSTEM_ROOT_DOMAIN_NAME.getValue());
+    }
+
+    public static final String appSubdomain(String subdomain) {
+        return Joiner.dot(subdomain, APP_ROOT_DOMAIN_NAME.getValue());
+    }
 
 }

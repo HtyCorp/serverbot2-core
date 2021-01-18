@@ -1,7 +1,8 @@
 package com.admiralbot.infra.deploy;
 
 import com.admiralbot.infra.baseline.GlobalCommonStack;
-import com.admiralbot.infra.services.UrlShortenerFrontendStack;
+import com.admiralbot.infra.frontend.DeliveryPrefsEditorStack;
+import com.admiralbot.infra.frontend.UrlRedirectorStack;
 import software.amazon.awscdk.core.Stage;
 import software.amazon.awscdk.core.StageProps;
 import software.constructs.Construct;
@@ -25,7 +26,8 @@ public class ApplicationGlobalStage extends Stage {
 
         globalCommonStack = new GlobalCommonStack(this, "GlobalCommon");
 
-        new UrlShortenerFrontendStack(this, "UrlShortenerFrontend");
+        new UrlRedirectorStack(this, "UrlShortenerFrontend");
+        new DeliveryPrefsEditorStack(this, "DeliverPrefsEditor");
 
     }
 }

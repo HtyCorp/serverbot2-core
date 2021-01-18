@@ -8,6 +8,7 @@ import com.admiralbot.commandservice.commands.admin.*;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
 import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 import com.admiralbot.framework.client.ApiClient;
+import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
@@ -24,6 +25,8 @@ import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Poller;
 import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.urlshortener.model.DeliverUrlRequest;
+import com.admiralbot.urlshortener.model.DeliverUrlResponse;
+import com.admiralbot.urlshortener.model.DeliveryType;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
@@ -36,6 +39,7 @@ import software.amazon.awssdk.services.ec2.model.Filter;
 import software.amazon.awssdk.services.ec2.model.Volume;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -167,21 +171,25 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
                 makeSessionName(commandTerminal.getContext().getSenderId(), gameName));
 
         try {
+
             String fullTerminalUrl = session.getSessionUrl();
-            DeliverUrlRequest deliverUrlRequest = new DeliverUrlRequest(
-                    fullTerminalUrl, CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds()
-            );
-            String shortTerminalUrl = urlShortenerClient.deliverUrl(deliverUrlRequest).getShortUrl();
 
             String privateMessageContent = "Use this login link to connect to a server terminal for " + gameName + ".";
-            SimpleEmbed terminalUrlEmbed = new SimpleEmbed(shortTerminalUrl,
+            SimpleEmbed terminalUrlEmbed = new SimpleEmbed(fullTerminalUrl,
                     "Terminal login link",
-                    "Opens a terminal session for the server running " + gameName);
-
-            return new ProcessUserCommandResponse(
-                    "A login link has been sent to your private messages.",
-                    privateMessageContent, terminalUrlEmbed
+                    "Opens a terminal session for " + gameName
             );
+            String notificationText = "Click to access terminal for "+gameName;
+
+            DeliverUrlRequest deliverUrlRequest = new DeliverUrlRequest(
+                    commandTerminal.getContext().getSenderId(), fullTerminalUrl,
+                    CommandLambdaConfig.TERMINAL_SESSION_DURATION.getSeconds(),
+                    DeliveryType.PUSH_NOTIFICATION, privateMessageContent, terminalUrlEmbed,
+                    notificationText
+            );
+
+            return deliverUrlAndRespond(deliverUrlRequest, "terminal access");
+
         } catch (InterruptedException | IOException e) {
             logger.error("Error during terminal session URL generate", e);
             return new ProcessUserCommandResponse(
@@ -209,7 +217,6 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
     @Override
     public ProcessUserCommandResponse onCommandFiles(CommandFiles commandFiles) {
-
         String name = commandFiles.getGameName();
         GameMetadata gameMetadata = fetchGameMetadata(name);
 
@@ -223,14 +230,19 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         String privateMessageContent = "Important: you need to have an SFTP client installed to use this link. WinSCP is recommended: "
                 + "<https://winscp.net/eng/download.php>\n\n"
-                + "Click this link to launch your client and view/edit files for "+name+":\n"
-                + "<"+sftpUri+">";
-
-        return new ProcessUserCommandResponse(
-                "A connection URL has been sent to your private messages.",
-                privateMessageContent, null
+                + "Use the link below to launch your client and view/edit files for "+name+".";
+        SimpleEmbed embed = new SimpleEmbed(
+                sftpUri,
+                "File access link for "+name,
+                "Connection URL to connect to SFTP server session running on "+name
         );
+        String notificationText = "Click to access files for "+name;
 
+        DeliverUrlRequest deliverRequest = new DeliverUrlRequest(
+                commandFiles.getContext().getSenderId(), sftpUri, Duration.ofDays(1).getSeconds(),
+                DeliveryType.PUSH_NOTIFICATION, privateMessageContent, embed, notificationText
+        );
+        return deliverUrlAndRespond(deliverRequest, "file access");
     }
 
     private String buildSftpUri(String name, SftpSession session) {
@@ -453,6 +465,32 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
     private void validatePortNumber(int portNumber) {
         if (portNumber < 1024 || portNumber > 65535) {
             throw new RequestValidationException("Invalid port number " + portNumber + ": must be in range 1024-65535");
+        }
+    }
+
+    private ProcessUserCommandResponse deliverUrlAndRespond(DeliverUrlRequest request, String whatMessageType) {
+        DeliverUrlResponse response;
+        try {
+            response = urlShortenerClient.deliverUrl(request);
+        } catch (ApiException e) {
+            throw new RequestHandlingException("Sorry, something went wrong while preparing your requested URL.");
+        }
+
+        switch(response.getDeliveryTypeUsed()) {
+            case PRIVATE_MESSAGE_LINK:
+                return new ProcessUserCommandResponse(
+                        "A "+whatMessageType+" link has been sent to your private messages."
+                );
+            case PUSH_NOTIFICATION:
+                return new ProcessUserCommandResponse(
+                        "A clickable "+whatMessageType+" notification has been sent via your browser."
+                );
+            default:
+                // None of our commands request auto workflow (only !addip uses it) so we include it in error case.
+                logger.error("Got unexpected delivery type: " + response.getDeliveryTypeUsed());
+                return new ProcessUserCommandResponse(
+                        "Sorry, something went wrong while preparing your requested URL."
+                );
         }
     }
 

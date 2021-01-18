@@ -9,31 +9,32 @@ import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
-import com.admiralbot.sharedutil.ExceptionUtils;
-import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.urlshortener.model.*;
 import com.admiralbot.urlshortener.shortener.UrlShortener;
 import com.admiralbot.urlshortener.userprefs.PreferencesService;
 import com.admiralbot.urlshortener.userprefs.UserPreferences;
 import com.admiralbot.urlshortener.userprefs.WebPushSubscription;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.PEMException;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.jose4j.lang.JoseException;
 import software.amazon.awssdk.core.SdkBytes;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.KeyPair;
-import java.security.Security;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +45,7 @@ public class ServiceHandler implements IUrlShortener {
     }
 
     private final Logger logger = LogManager.getLogger(ServiceHandler.class);
+    private final Gson gson = new Gson();
 
     private final Pattern basicValidUrlPattern = Pattern.compile("(?<schema>[a-z]+)://"
             + "(?<domain>[a-zA-Z0-9-.]+)"
@@ -168,15 +170,36 @@ public class ServiceHandler implements IUrlShortener {
     }
 
     private void deliverNotification(DeliverUrlRequest request, WebPushSubscription subscription) {
-
         String shortUrl = shortener.generateShortUrl(request.getUrl(), request.getTtlSeconds());
         logger.info("Delivering via notification as short URL {}", shortUrl);
 
-        pushService.send(new Notification(
-                 subscription.getPushEndpoint(),
-                // TODO
-        ));
+        doPushNotification(shortUrl, request.getNotificationDisplayText(), false, subscription);
+    }
 
+    private void deliverAutomaticNotification(DeliverUrlRequest request, WebPushSubscription subscription) {
+        doPushNotification(request.getUrl(), request.getWorkflowDisplayText(), true, subscription);
+    }
+
+    private void doPushNotification(String url, String text, boolean fetchDirect, WebPushSubscription subscription) {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("url", url);
+        payload.addProperty("text", text);
+        payload.addProperty("fetchDirect", fetchDirect);
+
+        try {
+            Notification notification = new Notification(
+                    subscription.getPushEndpoint(),
+                    subscription.getKeyBase64UrlEncoded(),
+                    subscription.getAuthBase64UrlEncoded(),
+                    payload.toString()
+            );
+            pushService.send(notification);
+        } catch (Exception e) {
+            // Catching 'Exception' is generally bad, but this lib has too many checked exceptions to usefully write
+            // handlers for all of them. Better to see how this fails in practice and revisit.
+            logger.error("Failed to prepare push notification due to crypto error", e);
+            throw new RequestHandlingException("Unexpected error occurred while sending push notification");
+        }
     }
 
     @Override
