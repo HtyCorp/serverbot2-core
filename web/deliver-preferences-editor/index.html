@@ -2,10 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AdmiralBot Delivery Preferences</title>
+    <meta name="color-scheme" content="dark">
+    <link rel="stylesheet" href="index.css">
+    <title>AdmiralBot URL Preferences</title>
     <script src="client.js" defer></script>
 </head>
 <body>
-PLACEHOLDER
+    <div id="flex-body">
+        <div class="center-pane">
+            <img id="img-admiralface" src="admiralface_crop_round.png" style="float:left" width=96px height=96px>
+            <div class="admiral-title">AdmiralBot</div>
+            <div class="main-title">Link Sending Preferences</div>
+        </div>
+        <div class="center-pane">
+            <div id="ident-container" class="text-fade-cycle">Authenticating</div>
+        </div>
+        <div id="notifications-toggle-pane" class="center-pane">
+            <div>
+                <button id="btn-subscription-toggle">Allow notifications</button>
+            </div>
+            <p>
+                By default, commands like !addip send you links via Discord private message.
+                Enabling browser notifications allows more convenient options to get these links.
+            </p>
+            <p>
+                This only sends notifications in response to commands, and can be disabled at any time.
+            </p>
+        </div>
+        <div class="center-pane hide-contents">
+            <div>
+                <input type="checkbox" id="check-enable-notifications">
+                <label for="check-enable-notifications">Enable link notifications</label>
+            </div>
+            <p>
+                Links will be sent as clickable browser notifications that open to the expected page.
+            </p>
+            <div>
+                <input type="checkbox" id="check-enable-auto-addip">
+                <label for="check-enable-auto-addip">Enable automatic !addip (requires above)</label>
+            </div>
+            <p>
+                !addip will automatically whitelist your IP address using your browser, with no extra manual steps.
+            </p>
+        </div>
+    </div>
 </body>
 </html>
