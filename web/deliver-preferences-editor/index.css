@@ -12,7 +12,7 @@ html, body {
 }
 
 .text-fade-cycle {
-    animation: anim-text-fade 3s infinite ease-in-out;
+    animation: anim-text-fade 0.75s infinite ease-in-out;
 }
 @keyframes anim-text-fade {
     0% { color: rgba(255, 255, 255, 0.7); }
@@ -44,14 +44,17 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    margin: 0 auto;
     height: 100vh;
+    max-width: 480px;
 }
 
 .center-pane {
     /*background-color: hsl(225, 15%, 24%);*/
     background-color: rgba(255, 255, 255, 0.09);
-    width: 480px;
-    margin: 8px 0;
+    margin: 8px auto;
+    box-sizing: border-box;
+    width: 100%;
     padding: 12px;
     border-radius: 5px;
     box-shadow: 0 1px 3px 1px hsla(225, 5%, 4%, 0.5);
