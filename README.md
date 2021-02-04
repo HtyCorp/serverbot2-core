@@ -1,6 +1,6 @@
 # ServerBot2 
 
-###(a.k.a. *AdmiralBot*)
+### (a.k.a. *AdmiralBot*)
 
 ## About
 
@@ -9,7 +9,7 @@ This is a Discord bot that integrates with an AWS account to simplify deploying 
 * Dynamic user IP whitelisting to prevent unknown connections and mitigate DDoS. 
 * Allows most admin tasks through Discord without a direct AWS login needed, including server SSH access.
 
-\[TODO: insert demo here\]
+\[TODO: put a graphic demo here\]
 
 Plans for future development:
 * Short-term: improve existing features, add a few missing features (e.g. automatic volume backups), add more test coverage.
