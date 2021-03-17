@@ -1,6 +1,7 @@
 package com.admiralbot.infra.services;
 
 import com.admiralbot.commandservice.model.ICommandService;
+import com.admiralbot.discordrelay.model.service.IDiscordService;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
@@ -71,6 +72,7 @@ public class CommandStack extends Stack {
                 ManagedPolicies.EC2_FULL_ACCESS
         );
         Permissions.addExecuteApi(this, service,
+                IDiscordService.class,
                 IGameMetadataService.class,
                 INetworkSecurity.class,
                 IUrlShortener.class
