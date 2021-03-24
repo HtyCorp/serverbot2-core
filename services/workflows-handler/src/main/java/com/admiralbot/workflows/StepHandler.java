@@ -46,7 +46,8 @@ public class StepHandler {
     private final Poller<String,Instance> instanceIdPoller = new Poller<>(
             instanceId -> ec2Client.describeInstances(r -> r.instanceIds(instanceId))
                     .reservations().get(0).instances().get(0),
-            3000, 20
+            // State Machine executions have been frequently timing out when this was set to 3000x20ms time limit
+            6000, 25
     );
 
     void createGameMetadata(ExecutionState executionState) {
