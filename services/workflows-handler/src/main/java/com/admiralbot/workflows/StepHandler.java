@@ -47,7 +47,8 @@ public class StepHandler {
             instanceId -> ec2Client.describeInstances(r -> r.instanceIds(instanceId))
                     .reservations().get(0).instances().get(0),
             // State Machine executions have been frequently timing out when this was set to 3000x20ms time limit
-            6000, 25
+            // Updated to a much larger value (10s * 21 = 210s = 3m30s)
+            10*1000, 21
     );
 
     void createGameMetadata(ExecutionState executionState) {
