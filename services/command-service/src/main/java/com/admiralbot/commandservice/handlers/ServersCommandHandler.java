@@ -88,21 +88,30 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
 
     @Override
     public ProcessUserCommandResponse onCommandStart(CommandStart commandStart) {
-        String name = commandStart.getGameName();
-        DescribeGameResponse describe = gameMetadataService.describeGame(new DescribeGameRequest(name));
+        return processSfnStartRequest(Machines.RunGame, commandStart.getGameName(), commandStart);
+    }
+
+    @Override
+    public ProcessUserCommandResponse onCommandEditGame(CommandEditGame commandEditGame) {
+        return processSfnStartRequest(Machines.EditGame, commandEditGame.getGameName(), commandEditGame);
+    }
+
+    private ProcessUserCommandResponse processSfnStartRequest(Machines machine, String gameName, AbstractCommandDto context) {
+        DescribeGameResponse describe = gameMetadataService.describeGame(new DescribeGameRequest(gameName));
         if (describe.isPresent()) {
             GameMetadata game = describe.getGame();
             if (game.getGameReadyState() != GameReadyState.STOPPED) {
-                throw new RequestHandlingException(name + " isn't in a valid state to start (" +
+                throw new RequestHandlingException(gameName + " isn't in a valid state to start (" +
                         game.getGameReadyState().toLowerCase() + ").");
             }
-            ExecutionState state = runSfn(Machines.RunGame, name, commandStart);
+            ExecutionState state = sfnRunner.startExecution(machine, gameName, context.getContext().getMessageId(),
+                    context.getContext().getSenderId());
             return new ProcessUserCommandResponse(
                     "Starting " + makeGameDescriptor(game) + "...",
                     state.getInitialMessageUuid()
             );
         } else {
-            throw makeUnknownGameException(name);
+            throw makeUnknownGameException(gameName);
         }
     }
 
@@ -131,14 +140,6 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
 
     private String makeGameDescriptor(GameMetadata metadata) {
         return metadata.getGameName() + " (" + metadata.getFullName() + ")";
-    }
-
-    private ExecutionState runSfn(Machines machine, String gameName, AbstractCommandDto context) {
-        return sfnRunner.startExecution(
-                machine,
-                gameName,
-                context.getContext().getMessageId(),
-                context.getContext().getSenderId());
     }
 
     private RequestValidationException makeUnknownGameException(String gameName) {

@@ -78,6 +78,7 @@ public class WorkflowsStack extends Stack {
                 .sync(Tasks.LockGame)
                 .sync(Tasks.StartInstance)
                 .callback(Tasks.WaitInstanceReady, TIMEOUT_READY)
+                .sync(Tasks.InstanceReadyNotify)
                 .callback(Tasks.WaitServerStop, TIMEOUT_STOP)
                 .sync(Tasks.StopInstance)
                 .endSuccess();

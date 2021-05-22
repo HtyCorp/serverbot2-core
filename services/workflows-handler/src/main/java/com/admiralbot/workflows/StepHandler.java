@@ -167,8 +167,8 @@ public class StepHandler {
         String dnsLocation = dnsRecordManager.getLocationString(executionState.getGameName());
 
         appendMessage(executionState.getInitialMessageUuid(),
-                "Server host is up at " + dnsLocation + ".\nAutomated install is not yet available - use"
-                + " !terminal to install application software through SSH session.");
+                "Server host is up at " + dnsLocation + ".\n" +
+                        "Use !files or !terminal to connect to it and edit your server, then !stop to finish.");
     }
 
     void instanceReadyStartServer(ExecutionState executionState) {
