@@ -2,6 +2,7 @@
   "app": "mvn -e -q exec:java",
   "output": "target/cdk-assembly",
   "context": {
-    "@aws-cdk/core:newStyleStackSynthesis": true
+    "@aws-cdk/core:newStyleStackSynthesis": true,
+    "@aws-cdk/aws-kms:defaultKeyPolicies": true
   }
 }

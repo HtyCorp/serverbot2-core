@@ -16,7 +16,7 @@ import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.RecordTarget;
-import software.amazon.awscdk.services.route53.targets.ApiGatewayv2Domain;
+import software.amazon.awscdk.services.route53.targets.ApiGatewayv2DomainProperties;
 
 import java.util.List;
 import java.util.Objects;
@@ -90,7 +90,10 @@ public class ServiceApi extends Construct {
         ARecord apiAliasRecord = ARecord.Builder.create(this, "DnsRecord")
                 .recordName(fqdn)
                 .zone(appStage.getCommonResources().getSystemRootHostedZone())
-                .target(RecordTarget.fromAlias(new ApiGatewayv2Domain(serviceDomainName)))
+                .target(RecordTarget.fromAlias(new ApiGatewayv2DomainProperties(
+                        serviceDomainName.getRegionalDomainName(),
+                        serviceDomainName.getRegionalHostedZoneId()
+                )))
                 .ttl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
                 .build();
 
