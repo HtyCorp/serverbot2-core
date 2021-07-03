@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <awssdk.version>2.15.50</awssdk.version>
+        <awssdk.version>2.16.95</awssdk.version>
     </properties>
 
     <build>
