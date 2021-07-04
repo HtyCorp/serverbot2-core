@@ -207,40 +207,56 @@ public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implem
     }
 
     private SlashCommandBuilder buildSlashCommandDefinition(DiscordSlashCommand command) {
+
+        // Build a simple command with name and description; by default it has no permissions (not accessible by anyone)
         SlashCommandBuilder commandBuilder = new SlashCommandBuilder()
                 .setName(command.getName())
                 .setDescription(command.getDescription())
                 .setDefaultPermission(false);
+
+        // Add options (i.e. arguments/parameters) to command, if given
         if (command.getOptions() != null) {
             for (int optionIndex = 0; optionIndex < command.getOptions().size(); optionIndex++) {
                 DiscordSlashCommandOption option = command.getOptions().get(optionIndex);
+
                 SlashCommandOptionBuilder optionBuilder = new SlashCommandOptionBuilder()
                         .setType(convertOptionType(option.getType()))
                         .setName(option.getName())
                         .setDescription(option.getDescription())
                         .setRequired(optionIndex < command.getNumRequiredOptions());
+
+                // Add choices (i.e. enum input) to this option, if given
                 if (option.getStringChoices() != null) {
                     option.getStringChoices().forEach(choice -> optionBuilder.addChoice(choice, choice));
                 }
+
+                commandBuilder.addOption(optionBuilder.build());
             }
         }
+
         return commandBuilder;
     }
 
     private ServerSlashCommandPermissionsBuilder buildSlashCommandPermissions(long commandId, DiscordSlashCommand command) {
         List<SlashCommandPermissions> permissions = new ArrayList<>();
-        if (Utils.equalsAny(command.getPermissionLevel(), MessageChannel.MAIN, MessageChannel.ADMIN)) {
-            permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_MAIN));
+
+        // Reminder: permission order is ADMIN -> MAIN -> WELCOME
+        // Always grant permission to ADMIN
+        permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_ADMIN.getValue()));
+        // If level isn't ADMIN, it's either MAIN or WELCOME: grant to MAIN
+        if (command.getPermissionLevel() != MessageChannel.ADMIN) {
+            permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_MAIN.getValue()));
+            // If level still isn't main, it's WELCOME: grant to everyone (note guild ID doubles as '@everyone' role)
+            if (command.getPermissionLevel() != MessageChannel.MAIN) {
+                permissions.add(makeRoleCommandPermission(channelMap.getPrimaryServer().getIdAsString()));
+            }
         }
-        if (Utils.equalsAny(command.getPermissionLevel(), MessageChannel.ADMIN)){
-            permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_ADMIN));
-        }
+
         return new ServerSlashCommandPermissionsBuilder(commandId, permissions);
     }
 
-    private SlashCommandPermissions makeRoleCommandPermission(ConfigValue roleIdConfigValue) {
-        return SlashCommandPermissions.create(Long.parseLong(roleIdConfigValue.getValue()),
-                SlashCommandPermissionType.ROLE, true);
+    private SlashCommandPermissions makeRoleCommandPermission(String roleId) {
+        return SlashCommandPermissions.create(Long.parseLong(roleId), SlashCommandPermissionType.ROLE, true);
     }
 
     private SlashCommandOptionType convertOptionType(DiscordSlashCommandOptionType type) {
