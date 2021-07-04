@@ -23,6 +23,8 @@ public class DiscordConfig {
 
     // Only the main channel support join/leave via commands.
     public static final Parameter CHANNEL_ROLE_MAIN = new Parameter(PATH_PUBLIC, "role-id/main");
+    // But we also need the admin channel role to manage slash command permissions.
+    public static final Parameter CHANNEL_ROLE_ADMIN = new Parameter(PATH_PUBLIC, "role-id/admin");
 
     // I'm normally avoid fixed resource names (i.e. using CDK/CFN names), but persistent data stores are an exception.
     // Deletion/replacement of these should be manual and very careful anyway.

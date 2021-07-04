@@ -107,6 +107,8 @@ public class CommonStack extends Stack {
                 DiscordConfig.CHANNEL_ID_MAIN, env.getDiscordRelayChannelIdMain());
         Util.instantiateConfigSsmParameter(this, "ChannelIdAdminParam",
                 DiscordConfig.CHANNEL_ID_ADMIN, env.getDiscordRelayChannelIdAdmin());
+        Util.instantiateConfigSsmParameter(this, "RoleIdAdminParam",
+                DiscordConfig.CHANNEL_ROLE_ADMIN, env.getDiscordRelayRoleIdAdmin());
         Util.instantiateConfigSsmParameter(this, "RoleIdMainParam",
                 DiscordConfig.CHANNEL_ROLE_MAIN, env.getDiscordRelayRoleIdMain());
         Util.instantiateConfigSsmParameter(this, "PrefixListSizeParam",

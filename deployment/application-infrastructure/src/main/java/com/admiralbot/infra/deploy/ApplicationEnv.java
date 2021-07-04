@@ -22,6 +22,7 @@ public class ApplicationEnv {
     private String discordRelayChannelIdMain;
     private String discordRelayChannelIdAdmin;
 
+    private String discordRelayRoleIdAdmin;
     private String discordRelayRoleIdMain;
 
     private int prefixListCapacity;
@@ -80,6 +81,10 @@ public class ApplicationEnv {
 
     public String getDiscordRelayChannelIdAdmin() {
         return discordRelayChannelIdAdmin;
+    }
+
+    public String getDiscordRelayRoleIdAdmin() {
+        return discordRelayRoleIdAdmin;
     }
 
     public String getDiscordRelayRoleIdMain() {
