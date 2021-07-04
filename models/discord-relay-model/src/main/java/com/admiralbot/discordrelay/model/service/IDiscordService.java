@@ -10,5 +10,6 @@ public interface IDiscordService {
     NewMessageResponse newMessage(NewMessageRequest newMessageRequest);
     EditMessageResponse editMessage(EditMessageRequest editMessageRequest);
     ModifyRoleMembershipResponse modifyRoleMembership(ModifyRoleMembershipRequest removeFromRoleRequest);
+    PutSlashCommandsResponse putSlashCommands(PutSlashCommandsRequest putSlashCommandsRequest);
 
 }

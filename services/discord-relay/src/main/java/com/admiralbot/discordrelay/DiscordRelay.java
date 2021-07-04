@@ -10,10 +10,7 @@ import com.admiralbot.framework.exception.client.ApiClientException;
 import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.DiscordConfig;
-import com.admiralbot.sharedutil.AppContext;
-import com.admiralbot.sharedutil.LogUtils;
-import com.admiralbot.sharedutil.Utils;
-import com.admiralbot.sharedutil.XrayUtils;
+import com.admiralbot.sharedutil.*;
 import com.amazonaws.xray.AWSXRay;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,19 +19,24 @@ import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
+import org.javacord.api.event.interaction.InteractionCreateEvent;
 import org.javacord.api.event.message.MessageCreateEvent;
+import org.javacord.api.interaction.Interaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class DiscordRelay {
 
@@ -56,7 +58,7 @@ public class DiscordRelay {
     private static final String ERR_COMMANDSERVICE_OTHER_EXCEPTION = "Sorry, something went wrong (an unexpected error occurred).";
 
     // https://javacord.org/wiki/basic-tutorials/gateway-intents.html#list-of-intents
-    // We only want message events, but Javacord requires GUILDS too (login fails without it)
+    // We only want message events (and interactions), but Javacord requires GUILDS too (login fails without it)
     private static final Intent[] REQUIRED_DISCORD_INTENTS = new Intent[]{
             Intent.GUILDS,
             Intent.GUILD_MESSAGES
@@ -68,12 +70,14 @@ public class DiscordRelay {
     private final ChannelMap channelMap;
     private final ICommandService commandServiceClient;
     private final DynamoMessageTable messageTable;
-    private final Executor messageHandlerExecutor;
+
+    // Javacord event dispatching isn't designed to handle long-running listeners, so we offload to an Executor
+    private final Executor handlerQueue;
 
     public DiscordRelay() {
 
         commandArgParser = new CommandArgParser();
-        messageHandlerExecutor = Executors.newCachedThreadPool();
+        handlerQueue = Executors.newCachedThreadPool();
 
         logger.info("Building CommandService client...");
         commandServiceClient = ApiClient.http(ICommandService.class);
@@ -96,20 +100,22 @@ public class DiscordRelay {
         logger.info("Starting API service handler...");
         new DiscordServiceHandler(discordApi, channelMap, messageTable);
 
-        logger.info("Registering Javacord message listener...");
-        discordApi.addMessageCreateListener(this::queueHandleMessageCreateEvent);
+        logger.info("Registering Javacord listeners...");
+        discordApi.addMessageCreateListener(event -> asyncExecute("ProcessUserMessage",
+                this::onMessageCreate, event));
+        discordApi.addInteractionCreateListener(event -> asyncExecute("ProcessUserInteraction",
+                this::onInteractionCreate, event));
 
         logger.info("Ready to receive messages and API calls");
     }
 
-    // Javacord warns against using listener threads for long-running tasks, so hand off to an Executor instead.
-    private void queueHandleMessageCreateEvent(MessageCreateEvent messageCreateEvent) {
-        messageHandlerExecutor.execute(() -> {
+    private <T> void asyncExecute(String segmentName, Consumer<T> handler, T event) {
+        handlerQueue.execute(() -> {
             try {
-                AWSXRay.beginSegment("ProcessUserMessage");
-                onMessageCreate(messageCreateEvent);
+                AWSXRay.beginSegment(segmentName);
+                handler.accept(event);
             } catch (Exception e) {
-                logger.error("Uncaught exception during Discord message handling", e);
+                logger.error("Uncaught exception during {} handling", segmentName, e);
                 AWSXRay.getCurrentSegment().addException(e);
             } finally {
                 AWSXRay.endSegment();
@@ -168,10 +174,37 @@ public class DiscordRelay {
 
         logger.info("Message passed all checks for command validity. Sending initial reply message.");
 
+        String commandSourceId = Joiner.colon("message", receivedMessage.getIdAsString());
+        invokeCommand(requesterUser, channel, oAppChannel.get(), words, commandSourceId);
+
+    }
+
+    private void onInteractionCreate(InteractionCreateEvent interactionCreateEvent) {
+        interactionCreateEvent.getSlashCommandInteraction().ifPresentOrElse(interaction -> {
+            List<String> words = new ArrayList<>();
+            words.add(interaction.getCommandName());
+            interaction.getOptions().forEach(option -> words.add(option.getStringValue().orElseThrow()));
+
+            ServerTextChannel discordChannel = interaction.getChannel().flatMap(TextChannel::asServerTextChannel).orElseThrow();
+            MessageChannel appChannel = channelMap.getAppChannel(discordChannel).orElseThrow();
+
+            String commandSourceid = Joiner.colon("slashcommand", interaction.getIdAsString());
+            invokeCommand(interaction.getUser(), discordChannel, appChannel, words, commandSourceid);
+        },
+        () -> {
+            logIgnoreInteractionReason(interactionCreateEvent.getInteraction(),
+                    "wrong interaction type: " + interactionCreateEvent.getInteraction().getClass().getSimpleName());
+        });
+    }
+
+    private void invokeCommand(User requester, ServerTextChannel discordChannel, MessageChannel appChannel,
+                               List<String> words, String commandSourceId) {
+
+
         // Send initial message asynchronously so we can immediately start working on the command
 
         CompletableFuture<Message> initialMessageFuture = AWSXRay.createSubsegment("SendInitialReply",
-                () -> channel.sendMessage(MSG_WORKING_ON_IT)
+                () -> discordChannel.sendMessage(MSG_WORKING_ON_IT)
         );
 
         // Submit to CommandService
@@ -183,10 +216,10 @@ public class DiscordRelay {
 
         try {
             commandResponse = AWSXRay.createSubsegment("SubmitCommand", subsegment -> {
-                subsegment.putAnnotation("DiscordMessageId", receivedMessage.getIdAsString());
+                subsegment.putAnnotation("CommandSourceId", commandSourceId);
                 ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
-                        words, oAppChannel.get(), receivedMessage.getIdAsString(),
-                        requesterUser.getIdAsString(), requesterUser.getDiscriminatedName()
+                        words, appChannel, commandSourceId,
+                        requester.getIdAsString(), requester.getDiscriminatedName()
                 );
                 return commandServiceClient.processUserCommand(commandRequest);
             });
@@ -236,7 +269,7 @@ public class DiscordRelay {
                 EmbedBuilder pmEmbed = Utils.mapNullable(commandResponse.getPrivateMessageEmbed(), this::convertSimpleEmbed);
                 try {
                     AWSXRay.createSubsegment("SendPrivateReply", () -> {
-                        PrivateChannel requesterPrivateChannel = requesterUser.openPrivateChannel()
+                        PrivateChannel requesterPrivateChannel = requester.openPrivateChannel()
                                 .orTimeout(MESSAGE_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                                 .join();
                         requesterPrivateChannel.sendMessage(pmContent, pmEmbed)
@@ -274,18 +307,21 @@ public class DiscordRelay {
             AWSXRay.createSubsegment("RecordMessageId", () -> {
                 DynamoMessageItem newItem = new DynamoMessageItem(
                         finalReplyExternalId,
-                        channel.getIdAsString(),
+                        discordChannel.getIdAsString(),
                         replyMessage.getIdAsString()
                 );
                 LogUtils.debugDump(logger, "New DDB message item is: ", newItem);
                 messageTable.put(newItem);
             });
         }
-
     }
 
     private void logIgnoreMessageReason(Message message, String reason) {
         logger.info("Ignored message " + message.getIdAsString() + ": " + reason + ".");
+    }
+
+    private void logIgnoreInteractionReason(Interaction interaction, String reason) {
+        logger.info("Ignored interaction " + interaction.getIdAsString() + ": " + reason + ".");
     }
 
     private EmbedBuilder convertSimpleEmbed(SimpleEmbed embed) {

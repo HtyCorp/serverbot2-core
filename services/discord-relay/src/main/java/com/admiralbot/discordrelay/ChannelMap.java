@@ -6,6 +6,7 @@ import com.admiralbot.sharedconfig.Parameter;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.server.Server;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 public class ChannelMap {
 
+    private final Server primaryServer;
     private final Map<ServerTextChannel, MessageChannel> discordToApp = new HashMap<>();
     private final Map<MessageChannel, ServerTextChannel> appToDiscord = new EnumMap<>(MessageChannel.class);
 
@@ -21,6 +23,11 @@ public class ChannelMap {
         putBoth(discordApi, MessageChannel.WELCOME, DiscordConfig.CHANNEL_ID_WELCOME);
         putBoth(discordApi, MessageChannel.MAIN, DiscordConfig.CHANNEL_ID_MAIN);
         putBoth(discordApi, MessageChannel.ADMIN, DiscordConfig.CHANNEL_ID_ADMIN);
+        primaryServer = appToDiscord.get(MessageChannel.WELCOME).getServer();
+    }
+
+    public Server getPrimaryServer() {
+        return primaryServer;
     }
 
     public Optional<MessageChannel> getAppChannel(ServerTextChannel discordChannel) {

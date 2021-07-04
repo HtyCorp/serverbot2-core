@@ -5,6 +5,7 @@ import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestHandlingRuntimeException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.server.HttpApiServer;
+import com.admiralbot.sharedconfig.ConfigValue;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.Utils;
 import org.javacord.api.DiscordApi;
@@ -14,12 +15,18 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.Role;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
+import org.javacord.api.interaction.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
 
@@ -176,6 +183,73 @@ public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implem
 
         return new ModifyRoleMembershipResponse();
 
+    }
+
+    @Override
+    public PutSlashCommandsResponse putSlashCommands(PutSlashCommandsRequest request) {
+
+        Server primaryServer = channelMap.getPrimaryServer();
+
+        // Push the requested commands and save the response to get the resulting IDs
+        List<SlashCommandBuilder> definitions = request.getSlashCommands().stream()
+                .map(this::buildSlashCommandDefinition)
+                .collect(Collectors.toList());
+        List<SlashCommand> resultCommands = discordApi.bulkOverwriteServerSlashCommands(primaryServer, definitions).join();
+
+        // Update the permissions on all commands; we need the IDs from above to refer to them
+        Map<String,Long> nameToId = resultCommands.stream().collect(Collectors.toMap(SlashCommand::getName, SlashCommand::getId));
+        List<ServerSlashCommandPermissionsBuilder> permissions = request.getSlashCommands().stream()
+                .map(command -> buildSlashCommandPermissions(nameToId.get(command.getName()), command))
+                .collect(Collectors.toList());
+        discordApi.batchUpdateSlashCommandPermissions(primaryServer, permissions);
+
+        return new PutSlashCommandsResponse();
+    }
+
+    private SlashCommandBuilder buildSlashCommandDefinition(DiscordSlashCommand command) {
+        SlashCommandBuilder commandBuilder = new SlashCommandBuilder()
+                .setName(command.getName())
+                .setDescription(command.getDescription())
+                .setDefaultPermission(false);
+        if (command.getOptions() != null) {
+            for (int optionIndex = 0; optionIndex < command.getOptions().size(); optionIndex++) {
+                DiscordSlashCommandOption option = command.getOptions().get(optionIndex);
+                SlashCommandOptionBuilder optionBuilder = new SlashCommandOptionBuilder()
+                        .setType(convertOptionType(option.getType()))
+                        .setName(option.getName())
+                        .setDescription(option.getDescription())
+                        .setRequired(optionIndex < command.getNumRequiredOptions());
+                if (option.getStringChoices() != null) {
+                    option.getStringChoices().forEach(choice -> optionBuilder.addChoice(choice, choice));
+                }
+            }
+        }
+        return commandBuilder;
+    }
+
+    private ServerSlashCommandPermissionsBuilder buildSlashCommandPermissions(long commandId, DiscordSlashCommand command) {
+        List<SlashCommandPermissions> permissions = new ArrayList<>();
+        if (Utils.equalsAny(command.getPermissionLevel(), MessageChannel.MAIN, MessageChannel.ADMIN)) {
+            permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_MAIN));
+        }
+        if (Utils.equalsAny(command.getPermissionLevel(), MessageChannel.ADMIN)){
+            permissions.add(makeRoleCommandPermission(DiscordConfig.CHANNEL_ROLE_ADMIN));
+        }
+        return new ServerSlashCommandPermissionsBuilder(commandId, permissions);
+    }
+
+    private SlashCommandPermissions makeRoleCommandPermission(ConfigValue roleIdConfigValue) {
+        return SlashCommandPermissions.create(Long.parseLong(roleIdConfigValue.getValue()),
+                SlashCommandPermissionType.ROLE, true);
+    }
+
+    private SlashCommandOptionType convertOptionType(DiscordSlashCommandOptionType type) {
+        switch(type) {
+            case BOOLEAN: return SlashCommandOptionType.BOOLEAN;
+            case INTEGER: return SlashCommandOptionType.INTEGER;
+            case STRING: return SlashCommandOptionType.STRING;
+            default: throw new IllegalStateException("Unexpected option type: " + type);
+        }
     }
 
 }
