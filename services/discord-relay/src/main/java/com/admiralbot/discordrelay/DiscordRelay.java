@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 public class DiscordRelay {
 
     public static void main(String[] args) {
+        XrayUtils.setIgnoreMissingContext();
         XrayUtils.setServiceName("DiscordRelay");
         AppContext.setContainer();
         new DiscordRelay();
