@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
+public class RelayServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
 
     private final DiscordApi discordApi;
     private final ChannelMap channelMap;
@@ -46,7 +46,7 @@ public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implem
         return this;
     }
 
-    public DiscordServiceHandler(DiscordApi discordApi, ChannelMap channelMap, DynamoMessageTable messageTable) {
+    public RelayServiceHandler(DiscordApi discordApi, ChannelMap channelMap, DynamoMessageTable messageTable) {
         this.discordApi = discordApi;
         this.channelMap = channelMap;
         this.messageTable = messageTable;
@@ -148,7 +148,17 @@ public class DiscordServiceHandler extends HttpApiServer<IDiscordService> implem
         } else if (editMode == EditMode.APPEND) {
             newContent = oldContent + "\n" + requestedContent;
         }
-        message.edit(newContent);
+
+        // Edit method changes depending on whether the message is sent from an interaction or not
+        String interactionId = dbItem.getInteractionId();
+        String interactionToken = dbItem.getInteractionToken();
+        if (interactionId != null && interactionToken != null) {
+            InteractionResponder interactionEditor = new InteractionResponder(discordApi);
+            interactionEditor.setContent(newContent);
+            interactionEditor.editFollowupMessage(interactionId, interactionToken, messageId).join();
+        } else {
+            message.edit(newContent).join();
+        }
 
         return new EditMessageResponse(newContent, channelId, messageId);
 

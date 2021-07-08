@@ -9,6 +9,8 @@ public class DynamoMessageItem {
     private String externalMessageId;
     private String discordChannelId;
     private String discordMessageId;
+    private String interactionId;
+    private String interactionToken;
 
     public DynamoMessageItem() {}
 
@@ -16,6 +18,15 @@ public class DynamoMessageItem {
         this.externalMessageId = externalMessageId;
         this.discordChannelId = discordChannelId;
         this.discordMessageId = discordMessageId;
+    }
+
+    public DynamoMessageItem(String externalMessageId, String discordChannelId, String discordMessageId,
+                             String interactionId, String interactionToken) {
+        this.externalMessageId = externalMessageId;
+        this.discordChannelId = discordChannelId;
+        this.discordMessageId = discordMessageId;
+        this.interactionId = interactionId;
+        this.interactionToken = interactionToken;
     }
 
     @DynamoDbPartitionKey
@@ -41,5 +52,21 @@ public class DynamoMessageItem {
 
     public void setDiscordMessageId(String discordMessageId) {
         this.discordMessageId = discordMessageId;
+    }
+
+    public String getInteractionId() {
+        return interactionId;
+    }
+
+    public void setInteractionId(String interactionId) {
+        this.interactionId = interactionId;
+    }
+
+    public String getInteractionToken() {
+        return interactionToken;
+    }
+
+    public void setInteractionToken(String interactionToken) {
+        this.interactionToken = interactionToken;
     }
 }

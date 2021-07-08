@@ -19,17 +19,14 @@ import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
-import org.javacord.api.event.interaction.InteractionCreateEvent;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.interaction.Interaction;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,7 +38,6 @@ import java.util.function.Consumer;
 public class DiscordRelay {
 
     public static void main(String[] args) {
-        XrayUtils.setIgnoreMissingContext();
         XrayUtils.setServiceName("DiscordRelay");
         AppContext.setContainer();
         new DiscordRelay();
@@ -97,14 +93,16 @@ public class DiscordRelay {
         logger.info("Building DDB message table");
         messageTable = new DynamoMessageTable();
 
+        logger.info("Builder interaction handler...");
+        InteractionHandler slashCommandHandler = new InteractionHandler(channelMap, messageTable, commandServiceClient);
+
         logger.info("Starting API service handler...");
-        new DiscordServiceHandler(discordApi, channelMap, messageTable);
+        new RelayServiceHandler(discordApi, channelMap, messageTable);
 
         logger.info("Registering Javacord listeners...");
         discordApi.addMessageCreateListener(event -> asyncExecute("ProcessUserMessage",
                 this::onMessageCreate, event));
-        discordApi.addInteractionCreateListener(event -> asyncExecute("ProcessUserInteraction",
-                this::onInteractionCreate, event));
+        discordApi.addSlashCommandCreateListener(slashCommandHandler);
 
         logger.info("Ready to receive messages and API calls");
     }
@@ -177,24 +175,6 @@ public class DiscordRelay {
         String commandSourceId = Joiner.colon("message", receivedMessage.getIdAsString());
         invokeCommand(requesterUser, channel, oAppChannel.get(), words, commandSourceId);
 
-    }
-
-    private void onInteractionCreate(InteractionCreateEvent interactionCreateEvent) {
-        interactionCreateEvent.getSlashCommandInteraction().ifPresentOrElse(interaction -> {
-            List<String> words = new ArrayList<>();
-            words.add(interaction.getCommandName());
-            interaction.getOptions().forEach(option -> words.add(option.getStringValue().orElseThrow()));
-
-            ServerTextChannel discordChannel = interaction.getChannel().flatMap(TextChannel::asServerTextChannel).orElseThrow();
-            MessageChannel appChannel = channelMap.getAppChannel(discordChannel).orElseThrow();
-
-            String commandSourceid = Joiner.colon("slashcommand", interaction.getIdAsString());
-            invokeCommand(interaction.getUser(), discordChannel, appChannel, words, commandSourceid);
-        },
-        () -> {
-            logIgnoreInteractionReason(interactionCreateEvent.getInteraction(),
-                    "wrong interaction type: " + interactionCreateEvent.getInteraction().getClass().getSimpleName());
-        });
     }
 
     private void invokeCommand(User requester, ServerTextChannel discordChannel, MessageChannel appChannel,
