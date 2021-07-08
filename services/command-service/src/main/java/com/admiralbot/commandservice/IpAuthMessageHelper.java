@@ -4,8 +4,6 @@ import com.admiralbot.commandservice.commands.servers.CommandAddGuestIp;
 import com.admiralbot.commandservice.commands.welcome.CommandAddIp;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
-import com.admiralbot.discordrelay.model.service.IDiscordService;
-import com.admiralbot.discordrelay.model.service.NewMessageRequest;
 import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 import com.admiralbot.networksecurity.model.GenerateIpAuthUrlRequest;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
@@ -28,7 +26,7 @@ public class IpAuthMessageHelper {
     public ProcessUserCommandResponse handleMemberIpAuthRequest(CommandAddIp commandAddIp) {
         ProcessUserCommandRequest context = commandAddIp.getContext();
 
-        GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getMessageId(), context.getSenderId());
+        GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getCommandSourceId(), context.getSenderId());
 
         String friendlyDomain = CommonConfig.APP_ROOT_DOMAIN_NAME.getValue();
 
@@ -47,7 +45,7 @@ public class IpAuthMessageHelper {
     public ProcessUserCommandResponse handleGuestIpAuthRequest(CommandAddGuestIp commandAddGuestIp) {
         ProcessUserCommandRequest context = commandAddGuestIp.getContext();
 
-        GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getMessageId(), null);
+        GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getCommandSourceId(), null);
 
         String recipient = context.getSenderId();
 

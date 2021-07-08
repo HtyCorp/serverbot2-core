@@ -84,7 +84,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         ExecutionState state = sfnRunner.startExecution(
                 Machines.CreateGame,
                 name,
-                commandNewGame.getContext().getMessageId(),
+                commandNewGame.getContext().getCommandSourceId(),
                 commandNewGame.getContext().getSenderId()
         );
         return new ProcessUserCommandResponse(
@@ -127,7 +127,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
         ExecutionState state = sfnRunner.startExecution(
                 Machines.DeleteGame,
                 name,
-                commandDeleteGame.getContext().getMessageId(),
+                commandDeleteGame.getContext().getCommandSourceId(),
                 commandDeleteGame.getContext().getSenderId()
         );
 
@@ -198,7 +198,7 @@ public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHan
 
         String rootVolumeId = fetchRootVolume(gameMetadata).volumeId();
         String snapshotName = Joiner.kebab("AppInstance", "ManualBackup", name,
-                "m"+commandBackupNow.getContext().getMessageId());
+                "m"+commandBackupNow.getContext().getCommandSourceId());
         String snapshotId = ec2Client.createSnapshot(r -> r.volumeId(rootVolumeId).description(snapshotName)).snapshotId();
 
         logger.info("Created new snapshot {} for game {}", snapshotId, name);

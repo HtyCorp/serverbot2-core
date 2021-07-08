@@ -104,8 +104,8 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
                 throw new RequestHandlingException(gameName + " isn't in a valid state to start (" +
                         game.getGameReadyState().toLowerCase() + ").");
             }
-            ExecutionState state = sfnRunner.startExecution(machine, gameName, context.getContext().getMessageId(),
-                    context.getContext().getSenderId());
+            ExecutionState state = sfnRunner.startExecution(machine, gameName,
+                    context.getContext().getCommandSourceId(), context.getContext().getSenderId());
             return new ProcessUserCommandResponse(
                     "Starting " + makeGameDescriptor(game) + "...",
                     state.getInitialMessageUuid()

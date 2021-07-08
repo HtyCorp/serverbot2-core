@@ -104,7 +104,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
         commandWords.add(interaction.getCommandName());
         interaction.getOptions().forEach(option -> commandWords.add(option.getStringValue().orElseThrow()));
 
-        final String commandSourceId = Joiner.colon("slashcommand", interaction.getIdAsString());
+        final String commandSourceId = "i" + interaction.getIdAsString();
 
         ProcessUserCommandResponse commandResponse = null;
         String errorReplyContent = MSG_COMMANDSERVICE_OTHER_EXCEPTION;

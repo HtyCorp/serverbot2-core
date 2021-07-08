@@ -34,7 +34,7 @@ public class SfnRunner {
     }
 
     public ExecutionState startExecution(Machines targetMachine, String gameName,
-                                         String sourceMessageId, String sourceUserId) {
+                                         String commandSourceId, String sourceUserId) {
 
         ensureClientInitialised();
 
@@ -45,7 +45,7 @@ public class SfnRunner {
                 IDUtils.randomUUID()
         );
         String inputStateJson = gson.toJson(inputState);
-        String executionId = generateExecutionId(sourceMessageId, sourceUserId);
+        String executionId = generateExecutionId(commandSourceId, sourceUserId);
         sfnClient.startExecution(r -> r.stateMachineArn(stateMachineArns.get(targetMachine))
                 .name(executionId)
                 .input(inputStateJson));
@@ -58,9 +58,9 @@ public class SfnRunner {
         sfnClient.sendTaskSuccess(r -> r.taskToken(taskToken).output("{}"));
     }
 
-    private String generateExecutionId(String messageId, String userId) {
+    private String generateExecutionId(String commandSource, String userId) {
         return "t"+IDUtils.epochSeconds()
-                + "-m"+messageId
+                + "-"+commandSource
                 + "-u"+userId;
     }
 
