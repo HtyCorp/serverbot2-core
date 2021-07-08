@@ -24,6 +24,7 @@ import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -99,8 +100,10 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         CompletableFuture<InteractionOriginalResponseUpdater> responseUpdaterFuture = interaction.respondLater();
 
-        final List<String> args = Utils.mapList(interaction.getOptions(),
-                option -> option.getStringValue().orElseThrow());
+        final List<String> commandWords = new ArrayList<>();
+        commandWords.add(interaction.getCommandName());
+        interaction.getOptions().forEach(option -> commandWords.add(option.getStringValue().orElseThrow()));
+
         final String commandSourceId = Joiner.colon("slashcommand", interaction.getIdAsString());
 
         ProcessUserCommandResponse commandResponse = null;
@@ -110,7 +113,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
             commandResponse = AWSXRay.createSubsegment("SubmitCommand", subsegment -> {
                 subsegment.putAnnotation("CommandSourceId", commandSourceId);
                 ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
-                        args, appChannel, commandSourceId,
+                        commandWords, appChannel, commandSourceId,
                         requester.getIdAsString(), requester.getDiscriminatedName()
                 );
                 return commandServiceClient.processUserCommand(commandRequest);
@@ -187,8 +190,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         logger.info("Updating responder content");
         Message responseMessage = AWSXRay.createSubsegment("EditChannelReply", () ->
-             responseUpdater.setContent(finalReplyContent).update()
-                     .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join()
+                responseUpdater.setContent(finalReplyContent).update()
+                        .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join()
         );
         if (replyMessageExternalId != null) {
             logger.info("Recording message ID in DDB to enable future tracking and edits");
