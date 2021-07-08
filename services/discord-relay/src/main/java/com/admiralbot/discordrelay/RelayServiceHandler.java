@@ -5,9 +5,10 @@ import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestHandlingRuntimeException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.server.HttpApiServer;
-import com.admiralbot.sharedconfig.ConfigValue;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.Utils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -25,7 +26,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class RelayServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
@@ -34,7 +34,7 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
     private final ChannelMap channelMap;
     private final DynamoMessageTable messageTable;
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LogManager.getLogger(RelayServiceHandler.class);
 
     @Override
     protected Class<IDiscordService> getModelClass() {
@@ -140,6 +140,7 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
         // Odd that this isn't an optional like Channel. Doesn't declare exceptions either.
         // Will have to test effect with deleted messages and see how logging/recovery can be improved.
         Message message = discordApi.getMessageById(messageId, channel).join();
+        logger.debug("Original message to edit has content: <{}>", message.getContent());
 
         String oldContent = message.getContent();
         String newContent = null;
@@ -188,7 +189,7 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
         else if (modifyOperation == RoleModifyOperation.REMOVE_USER) operation = targetRole::removeUser;
         else throw new RequestHandlingRuntimeException("Impossible state: invalid operation type");
 
-        // TODO: Determine how this responds if request doesn't change membership.
+        // Note that this acts like a PUT and will still succeed even if the user already has this role added/removed.
         operation.apply(targetUser).join();
 
         return new ModifyRoleMembershipResponse();
