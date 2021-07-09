@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.ec2.Ec2Client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RootCommandHandler implements ICommandService {
 
@@ -79,25 +80,27 @@ public class RootCommandHandler implements ICommandService {
     @Override
     public GenerateSlashCommandSetResponse generateSlashCommandSet(GenerateSlashCommandSetRequest request) {
         List<DiscordSlashCommand> slashCommands = new ArrayList<>();
-        slashCommands.addAll(generateSlashCommands(adminCommandHandler, MessageChannel.ADMIN));
-        slashCommands.addAll(generateSlashCommands(serversCommandHandler, MessageChannel.MAIN));
-        slashCommands.addAll(generateSlashCommands(welcomeCommandHandler, MessageChannel.WELCOME));
+        slashCommands.addAll(generateSlashCommands(adminCommandHandler, MessageChannel.ADMIN, true));
+        slashCommands.addAll(generateSlashCommands(serversCommandHandler, MessageChannel.MAIN, true));
+        slashCommands.addAll(generateSlashCommands(welcomeCommandHandler, MessageChannel.WELCOME, false));
         return new GenerateSlashCommandSetResponse(slashCommands);
     }
 
     private List<DiscordSlashCommand> generateSlashCommands(AbstractCommandHandler<?> handler,
-                                                            MessageChannel permissionLevel) {
-        return Utils.map(handler.getCommandDefinitionSet().getAll(), command -> {
-            List<DiscordSlashCommandOption> commandOptions = Utils.map(command.getOrderedFields(),
-                    fieldAndInfo -> new DiscordSlashCommandOption(
-                            convertFieldTypeToCommandOption(fieldAndInfo.a().getType()),
-                            fieldAndInfo.a().getName(),
-                            fieldAndInfo.b().description(),
-                            List.of() // Choices aren't supported just yet
-                    ));
-            return new DiscordSlashCommand(permissionLevel, command.getName(), command.getDescription(),
-                    command.getNumRequiredFields(), commandOptions);
-        });
+                                                            MessageChannel permissionLevel, boolean ignoreHelp) {
+        return handler.getCommandDefinitionSet().getAll().stream()
+                .filter(command -> !(ignoreHelp && command.getName().equals("help")))
+                .map(command -> {
+                    List<DiscordSlashCommandOption> commandOptions = Utils.map(command.getOrderedFields(),
+                            fieldAndInfo -> new DiscordSlashCommandOption(
+                                    convertFieldTypeToCommandOption(fieldAndInfo.a().getType()),
+                                    fieldAndInfo.a().getName(),
+                                    fieldAndInfo.b().description(),
+                                    null // Choices aren't supported just yet
+                            ));
+                    return new DiscordSlashCommand(permissionLevel, command.getName(), command.getDescription(),
+                            command.getNumRequiredFields(), commandOptions);
+                }).collect(Collectors.toList());
     }
 
     private DiscordSlashCommandOptionType convertFieldTypeToCommandOption(Class<?> fieldType) {
