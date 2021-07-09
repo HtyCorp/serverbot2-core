@@ -7,7 +7,6 @@ import com.admiralbot.discordrelay.model.service.MessageChannel;
 import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 import com.admiralbot.framework.exception.client.ApiClientException;
 import com.admiralbot.framework.exception.server.ApiServerException;
-import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.amazonaws.xray.AWSXRay;
@@ -201,7 +200,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
                         channel.getIdAsString(),
                         responseMessage.getIdAsString(),
                         interaction.getIdAsString(),
-                        interaction.getToken()
+                        interaction.getToken(),
+                        finalReplyContent
                 );
                 LogUtils.debugDump(logger, "New DDB message item is: ", newItem);
                 messageTable.put(newItem);

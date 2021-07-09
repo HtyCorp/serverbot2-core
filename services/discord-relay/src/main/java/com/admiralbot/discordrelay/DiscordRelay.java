@@ -289,7 +289,8 @@ public class DiscordRelay {
                 DynamoMessageItem newItem = new DynamoMessageItem(
                         finalReplyExternalId,
                         discordChannel.getIdAsString(),
-                        replyMessage.getIdAsString()
+                        replyMessage.getIdAsString(),
+                        finalReplyContent
                 );
                 LogUtils.debugDump(logger, "New DDB message item is: ", newItem);
                 messageTable.put(newItem);
@@ -299,10 +300,6 @@ public class DiscordRelay {
 
     private void logIgnoreMessageReason(Message message, String reason) {
         logger.info("Ignored message " + message.getIdAsString() + ": " + reason + ".");
-    }
-
-    private void logIgnoreInteractionReason(Interaction interaction, String reason) {
-        logger.info("Ignored interaction " + interaction.getIdAsString() + ": " + reason + ".");
     }
 
     private EmbedBuilder convertSimpleEmbed(SimpleEmbed embed) {

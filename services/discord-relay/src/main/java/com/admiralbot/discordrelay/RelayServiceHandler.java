@@ -100,7 +100,7 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
 
         if (requestedExternalId != null) {
             messageTable.put(new DynamoMessageItem(requestedExternalId, channel.getIdAsString(),
-                    message.getIdAsString()));
+                    message.getIdAsString(), requestedContent));
         }
 
         return new NewMessageResponse(channel.getIdAsString(), message.getIdAsString());
@@ -140,9 +140,10 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
         // Odd that this isn't an optional like Channel. Doesn't declare exceptions either.
         // Will have to test effect with deleted messages and see how logging/recovery can be improved.
         Message message = discordApi.getMessageById(messageId, channel).join();
-        logger.debug("Original message to edit has content: <{}>", message.getContent());
 
-        String oldContent = message.getContent();
+        // DDB is used as the source of truth for message content: fetching message content by message ID doesn't seem
+        // to work for original interaction responses so this is more reliable
+        String oldContent = dbItem.getMessageContent();
         String newContent = null;
         if (editMode == EditMode.REPLACE) {
             newContent = requestedContent;
@@ -160,6 +161,11 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
         } else {
             message.edit(newContent).join();
         }
+
+        // Update the message content in DDB; this should happen last since DDB is the source of truth and we don't want
+        // faults to make phantom changes to it (e.g. if an APPEND call was retried several times)
+        dbItem.setMessageContent(newContent);
+        messageTable.put(dbItem);
 
         return new EditMessageResponse(newContent, channelId, messageId);
 
