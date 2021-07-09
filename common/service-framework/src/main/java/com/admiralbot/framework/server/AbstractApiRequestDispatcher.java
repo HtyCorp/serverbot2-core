@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInputType, ParsedInputType> {
 
     private final ModelType handlerInstance;
-    private final ApiDefinitionSet<?> apiDefinitionSet;
+    private final ApiDefinitionSet<ModelType> apiDefinitionSet;
 
     private final Logger logger = LogManager.getLogger(AbstractApiRequestDispatcher.class);
 
@@ -27,7 +27,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
         logger.trace("Finished construction");
     }
 
-    public ApiDefinitionSet<?> getApiDefinitionSet() {
+    public ApiDefinitionSet<ModelType> getApiDefinitionSet() {
         return apiDefinitionSet;
     }
 

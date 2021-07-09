@@ -1,6 +1,7 @@
 package com.admiralbot.sharedutil;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,8 +17,8 @@ public class Utils {
         return Arrays.asList(options).contains(object);
     }
 
-    public static <U,V> List<V> mapList(List<U> inputList, Function<U,V> mapper) {
-        return inputList.stream().map(mapper).collect(Collectors.toList());
+    public static <U,V> List<V> map(Collection<U> input, Function<U,V> mapper) {
+        return input.stream().map(mapper).collect(Collectors.toList());
     }
 
     public static boolean inRangeInclusive(long number, long min, long max) {

@@ -1,5 +1,6 @@
 package com.admiralbot.discordrelay;
 
+import com.admiralbot.commandservice.model.GenerateSlashCommandSetRequest;
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
@@ -25,7 +26,6 @@ import org.javacord.api.entity.message.MessageAuthor;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
-import org.javacord.api.interaction.Interaction;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,6 +67,7 @@ public class DiscordRelay {
     private final ChannelMap channelMap;
     private final ICommandService commandServiceClient;
     private final DynamoMessageTable messageTable;
+    private final SlashCommandUpdater slashCommandUpdater;
 
     // Javacord event dispatching isn't designed to handle long-running listeners, so we offload to an Executor
     private final Executor handlerQueue;
@@ -94,11 +95,16 @@ public class DiscordRelay {
         logger.info("Building DDB message table");
         messageTable = new DynamoMessageTable();
 
+        logger.info("Building slash command updater and updating commands...");
+        slashCommandUpdater = new SlashCommandUpdater(discordApi, channelMap);
+        slashCommandUpdater.putSlashCommands(commandServiceClient.generateSlashCommandSet(
+                new GenerateSlashCommandSetRequest()).getSlashCommands());
+
         logger.info("Builder interaction handler...");
         InteractionHandler slashCommandHandler = new InteractionHandler(channelMap, messageTable, commandServiceClient);
 
         logger.info("Starting API service handler...");
-        new RelayServiceHandler(discordApi, channelMap, messageTable);
+        new RelayServiceHandler(discordApi, channelMap, messageTable, slashCommandUpdater);
 
         logger.info("Registering Javacord listeners...");
         discordApi.addMessageCreateListener(event -> asyncExecute("ProcessUserMessage",

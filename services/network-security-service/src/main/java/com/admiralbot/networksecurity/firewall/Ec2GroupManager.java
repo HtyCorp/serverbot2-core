@@ -95,7 +95,7 @@ public class Ec2GroupManager implements IGroupManager {
     @Override
     public List<String> listUserIps() {
         // EC2 API CIDRs all end in "/32" but we need a plain IP, so just strip the last 3 chars from each.
-        return Utils.mapList(getDecryptedUserList().getEntries(), e -> e.getCidr().substring(0, e.getCidr().length() - 3));
+        return Utils.map(getDecryptedUserList().getEntries(), e -> e.getCidr().substring(0, e.getCidr().length() - 3));
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.admiralbot.commandservice;
 import com.admiralbot.commandservice.commands.common.CommandHelp;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
+import com.admiralbot.framework.common.ApiDefinitionSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,4 +46,7 @@ public abstract class AbstractCommandHandler<ModelType> {
         return helpMessageHelper.onCommandHelp(commandHelp);
     }
 
+    public ApiDefinitionSet<ModelType> getCommandDefinitionSet() {
+        return commandDispatcher.getApiDefinitionSet();
+    }
 }

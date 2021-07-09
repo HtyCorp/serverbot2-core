@@ -22,7 +22,6 @@ import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
-import software.constructs.Construct;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -98,7 +97,7 @@ public class ServiceClusterStack extends Stack {
                 .instancesDistribution(capacityOptimisedInstanceDistribution)
                 .build();
 
-        List<String> servicePublicSubnetIds = Utils.mapList(
+        List<String> servicePublicSubnetIds = Utils.map(
                 parent.getCommonResources().getServiceVpc().getPublicSubnets(),
                 ISubnet::getSubnetId
         );

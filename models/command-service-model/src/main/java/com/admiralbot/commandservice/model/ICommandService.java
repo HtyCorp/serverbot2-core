@@ -6,5 +6,6 @@ import com.admiralbot.framework.common.ApiHttpMethod;
 
 @ApiEndpointInfo(serviceName = "commandservice", uriPath = "/", httpMethod = ApiHttpMethod.POST, authType = ApiAuthType.IAM)
 public interface ICommandService {
-    ProcessUserCommandResponse processUserCommand(ProcessUserCommandRequest commandServiceRequest);
+    ProcessUserCommandResponse processUserCommand(ProcessUserCommandRequest request);
+    GenerateSlashCommandSetResponse generateSlashCommandSet(GenerateSlashCommandSetRequest request);
 }

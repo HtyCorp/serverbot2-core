@@ -1,20 +1,22 @@
 package com.admiralbot.commandservice.handlers;
 
+import com.admiralbot.commandservice.AbstractCommandHandler;
 import com.admiralbot.commandservice.IpAuthMessageHelper;
-import com.admiralbot.commandservice.model.ICommandService;
-import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
-import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
-import com.admiralbot.discordrelay.model.service.IDiscordService;
-import com.admiralbot.discordrelay.model.service.MessageChannel;
+import com.admiralbot.commandservice.model.*;
+import com.admiralbot.discordrelay.model.service.*;
 import com.admiralbot.framework.client.ApiClient;
 import com.admiralbot.framework.exception.server.RequestHandlingRuntimeException;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedutil.SdkUtils;
+import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RootCommandHandler implements ICommandService {
 
@@ -71,6 +73,42 @@ public class RootCommandHandler implements ICommandService {
             return welcomeCommandHandler.handleRequest(commandRequest);
         } else {
             throw new RequestHandlingRuntimeException("Impossible: received an unknown channel");
+        }
+    }
+
+    @Override
+    public GenerateSlashCommandSetResponse generateSlashCommandSet(GenerateSlashCommandSetRequest request) {
+        List<DiscordSlashCommand> slashCommands = new ArrayList<>();
+        slashCommands.addAll(generateSlashCommands(adminCommandHandler, MessageChannel.ADMIN));
+        slashCommands.addAll(generateSlashCommands(serversCommandHandler, MessageChannel.MAIN));
+        slashCommands.addAll(generateSlashCommands(welcomeCommandHandler, MessageChannel.WELCOME));
+        return new GenerateSlashCommandSetResponse(slashCommands);
+    }
+
+    private List<DiscordSlashCommand> generateSlashCommands(AbstractCommandHandler<?> handler,
+                                                            MessageChannel permissionLevel) {
+        return Utils.map(handler.getCommandDefinitionSet().getAll(), command -> {
+            List<DiscordSlashCommandOption> commandOptions = Utils.map(command.getOrderedFields(),
+                    fieldAndInfo -> new DiscordSlashCommandOption(
+                            convertFieldTypeToCommandOption(fieldAndInfo.a().getType()),
+                            fieldAndInfo.a().getName(),
+                            fieldAndInfo.b().description(),
+                            List.of() // Choices aren't supported just yet
+                    ));
+            return new DiscordSlashCommand(permissionLevel, command.getName(), command.getDescription(),
+                    command.getNumRequiredFields(), commandOptions);
+        });
+    }
+
+    private DiscordSlashCommandOptionType convertFieldTypeToCommandOption(Class<?> fieldType) {
+        if (fieldType == Boolean.class || fieldType == Boolean.TYPE) {
+            return DiscordSlashCommandOptionType.BOOLEAN;
+        } else if (fieldType == Integer.class || fieldType == Integer.TYPE) {
+            return DiscordSlashCommandOptionType.INTEGER;
+        } else if (fieldType == String.class) {
+            return DiscordSlashCommandOptionType.STRING;
+        } else {
+            throw new IllegalStateException("Unsupported option type: " + fieldType);
         }
     }
 }
