@@ -39,7 +39,7 @@ public class HelpMessageHelper {
             String aggregateHelpString = definitionSet.getAll().stream()
                     .map(definition -> definition.getUsageString() + "\n  " + definition.getDescription())
                     .collect(Collectors.joining("\n"));
-            return new ProcessUserCommandResponse(aggregateHelpString);
+            return new ProcessUserCommandResponse(aggregateHelpString, true);
         }
 
     }

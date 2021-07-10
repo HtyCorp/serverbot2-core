@@ -16,6 +16,7 @@ import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
@@ -139,6 +140,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
         }
 
         String replyMessageContent;
+        boolean ephemeralMessage = false;
         String replyMessageExternalId = null;
 
         if (commandResponse == null) {
@@ -151,6 +153,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
             // Reply content and (nullable) ID from the command response are used if everything goes well
             logger.info("Setting reply content to message/ID returned by CommandService");
             replyMessageContent = commandResponse.getMessageContent();
+            ephemeralMessage = commandResponse.isEphemeralMessage();
             replyMessageExternalId = commandResponse.getMessageExternalId();
 
             // If there's a requested private reply as well, send it and overwrite the response message with a generic
@@ -189,10 +192,16 @@ public class InteractionHandler implements SlashCommandCreateListener {
         final String finalReplyExternalId = replyMessageExternalId;
 
         logger.info("Updating responder content");
-        Message responseMessage = AWSXRay.createSubsegment("EditChannelReply", () ->
-                responseUpdater.setContent(finalReplyContent).update()
-                        .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join()
-        );
+
+        boolean finalEphemeralMessage = ephemeralMessage;
+        Message responseMessage = AWSXRay.createSubsegment("EditInteractionResponse", () -> {
+            if (finalEphemeralMessage) {
+                responseUpdater.setFlags(MessageFlag.EPHEMERAL);
+            }
+            return responseUpdater.setContent(finalReplyContent).update()
+                    .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .join();
+        });
         if (replyMessageExternalId != null) {
             logger.info("Recording message ID in DDB to enable future tracking and edits");
             AWSXRay.createSubsegment("RecordMessageId", () -> {

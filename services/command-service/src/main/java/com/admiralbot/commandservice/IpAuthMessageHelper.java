@@ -63,9 +63,9 @@ public class IpAuthMessageHelper {
 
     private ProcessUserCommandResponse handleIpAuthRequest(
                 GenerateIpAuthUrlRequest generateUrlRequest,
-                String message,
-                String embedTitle,
-                String embedDescription) {
+                String privateMessage,
+                String privateEmbedTitle,
+                String privateEmbedDescription) {
         
         String fullAuthUrl = networkSecurityServiceClient.generateIpAuthUrl(generateUrlRequest).getIpAuthUrl();
 
@@ -74,10 +74,10 @@ public class IpAuthMessageHelper {
         );
         String shortAuthUrl = urlShortenerClient.createShortUrl(createShortUrlRequest).getShortUrl();
 
-        SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl, embedTitle, embedDescription);
+        SimpleEmbed authLinkEmbed = new SimpleEmbed(shortAuthUrl, privateEmbedTitle, privateEmbedDescription);
         return new ProcessUserCommandResponse(
                 "A whitelist link has been sent to your private messages.",
-                message, authLinkEmbed
+                true, privateMessage, authLinkEmbed
         );
     }
 

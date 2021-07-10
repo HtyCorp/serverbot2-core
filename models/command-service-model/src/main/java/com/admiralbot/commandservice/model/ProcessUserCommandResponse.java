@@ -7,6 +7,7 @@ public class ProcessUserCommandResponse {
     // All fields optional
     private String messageContent;
     private String messageExternalId;
+    private boolean ephemeralMessage; // Default false is fine since it doesn't change historic behaviour
     private String privateMessageContent;
     private SimpleEmbed privateMessageEmbed;
 
@@ -22,9 +23,22 @@ public class ProcessUserCommandResponse {
         this.messageExternalId = messageExternalId;
     }
 
+    public ProcessUserCommandResponse(String messageContent, boolean ephemeralMessage) {
+        this.messageContent = messageContent;
+        this.ephemeralMessage = ephemeralMessage;
+    }
+
     public ProcessUserCommandResponse(String messageContent, String privateMessageContent,
                                       SimpleEmbed privateMessageEmbed) {
         this.messageContent = messageContent;
+        this.privateMessageContent = privateMessageContent;
+        this.privateMessageEmbed = privateMessageEmbed;
+    }
+
+    public ProcessUserCommandResponse(String messageContent, boolean ephemeralMessage, String privateMessageContent,
+                                      SimpleEmbed privateMessageEmbed) {
+        this.messageContent = messageContent;
+        this.ephemeralMessage = ephemeralMessage;
         this.privateMessageContent = privateMessageContent;
         this.privateMessageEmbed = privateMessageEmbed;
     }
@@ -35,6 +49,10 @@ public class ProcessUserCommandResponse {
 
     public String getMessageExternalId() {
         return messageExternalId;
+    }
+
+    public boolean isEphemeralMessage() {
+        return ephemeralMessage;
     }
 
     public String getPrivateMessageContent() {
