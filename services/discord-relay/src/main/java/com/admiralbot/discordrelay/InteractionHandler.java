@@ -154,6 +154,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
             logger.info("Setting reply content to message/ID returned by CommandService");
             replyMessageContent = commandResponse.getMessageContent();
             ephemeralMessage = commandResponse.isEphemeralMessage();
+            logger.debug("ephemeral message = " + ephemeralMessage);
             replyMessageExternalId = commandResponse.getMessageExternalId();
 
             // If there's a requested private reply as well, send it and overwrite the response message with a generic
@@ -195,12 +196,11 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         boolean finalEphemeralMessage = ephemeralMessage;
         Message responseMessage = AWSXRay.createSubsegment("EditInteractionResponse", () -> {
+            responseUpdater.setContent(finalReplyContent);
             if (finalEphemeralMessage) {
                 responseUpdater.setFlags(MessageFlag.EPHEMERAL);
             }
-            return responseUpdater.setContent(finalReplyContent).update()
-                    .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                    .join();
+            return responseUpdater.update().orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join();
         });
         if (replyMessageExternalId != null) {
             logger.info("Recording message ID in DDB to enable future tracking and edits");
