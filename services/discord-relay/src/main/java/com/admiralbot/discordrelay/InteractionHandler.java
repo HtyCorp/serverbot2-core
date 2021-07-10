@@ -33,7 +33,8 @@ import java.util.concurrent.TimeUnit;
 
 public class InteractionHandler implements SlashCommandCreateListener {
 
-    private static final String MSG_CAN_ONLY_USE_IN_CHANNELS = "Sorry, you can only use this command in a serverbot channel.";
+    private static final String MSG_CAN_ONLY_USE_IN_CHANNELS = "Sorry, you can only use this command in a server bot channel " +
+            "(due to Discord's limitations on slash command permissions).";
     private static final String MSG_PRIVATE_REPLY_FAILED = "Sorry, sending the requested private message went wrong for some reason.";
     private static final String MSG_COMMANDSERVICE_CLIENT_EXCEPTION = "Sorry, something went wrong (unable to submit command).";
     private static final String MSG_COMMANDSERVICE_SERVER_EXCEPTION = "Sorry, something went wrong (failed to process command).";

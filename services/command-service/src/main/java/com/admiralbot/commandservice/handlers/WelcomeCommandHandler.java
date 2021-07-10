@@ -123,7 +123,7 @@ public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeComman
             outputBuilder.append("\n");
         });
 
-        outputBuilder.append("\nNote: your IP address must be whitelisted (use !addip) to connect to these.");
+        outputBuilder.append("\nNote: your IP address must be whitelisted (use /addip) to connect to these.");
 
         return new ProcessUserCommandResponse(outputBuilder.toString());
 

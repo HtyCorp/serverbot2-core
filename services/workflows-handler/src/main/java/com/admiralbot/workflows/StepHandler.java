@@ -168,7 +168,7 @@ public class StepHandler {
 
         appendMessage(executionState.getInitialMessageUuid(),
                 "Server host is up at " + dnsLocation + ".\n" +
-                        "Use !files or !terminal to connect to it and edit your server, then !stop to finish.");
+                        "Use /files or /terminal to connect to it and edit your server, then /stop to finish.");
     }
 
     void instanceReadyStartServer(ExecutionState executionState) {
@@ -193,7 +193,7 @@ public class StepHandler {
                     + "Connect via Steam (if supported): <steam://connect/"+dnsName+">\n"
                     + "\n"
                     + "If you're unable to connect:\n"
-                    + " * Ensure your IP is whitelisted (check at "+ipAuthCheckUrl+" or type !addip to whitelist).\n"
+                    + " * Ensure your IP is whitelisted (check at "+ipAuthCheckUrl+" or type /addip to whitelist).\n"
                     + " * For games with long load times, wait a few minutes and try again.");
         } catch (ApiServerException e) {
             logger.error("StartApp call to app daemon failed", e);

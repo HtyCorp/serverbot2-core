@@ -126,7 +126,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
         } else {
             return generateSuccess(
                     "Your IP address ("+sourceIpAddress+") is not whitelisted to join "+friendlyDomainName+" servers.\n"
-                    + "Use !addip in any server bot channel to whitelist it."
+                    + "Use /addip in any server bot channel to whitelist it."
             );
         }
 

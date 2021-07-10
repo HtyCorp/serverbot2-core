@@ -14,7 +14,7 @@ public abstract class AbstractCommandHandler<ModelType> {
     private final CommandDispatcher<ModelType> commandDispatcher;
     private final HelpMessageHelper helpMessageHelper;
     // AbstractApiRequestDispatcher already has a generic chaining mechanism for when a command isn't found.
-    // For better UX, we need some extra chaining specifically for '!help <command-name>' requests.
+    // For better UX, we need some extra chaining specifically for '/help <command-name>' requests.
     private AbstractCommandHandler<?> nextCommandHandler;
 
     protected abstract Class<ModelType> getHandlerType();

@@ -72,8 +72,8 @@ public class ServersCommandHandler extends AbstractCommandHandler<IServersComman
         final StringBuilder output = new StringBuilder();
         if (games.isEmpty()) {
             output.append("No games available yet. ").append((contextChannel == MessageChannel.ADMIN)
-                    ? "Try creating one with !newgame."
-                    : "Admin-channel users can create one with !newgame");
+                    ? "Try creating one with /newgame."
+                    : "Admin-channel users can create one with /newgame");
         } else {
             output.append("Available games (").append(games.size()).append("):\n");
             games.forEach(game -> {

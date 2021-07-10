@@ -15,6 +15,11 @@ import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Utility class to assist with responding to interactions 'asynchronously', i.e. from a lookup of the original
+ * interaction ID and token when an interaction response has to be edited outside the original DiscordRelay event.
+ */
+
 public class InteractionResponder extends InteractionMessageBuilder {
 
     private final DiscordApi discordApi;

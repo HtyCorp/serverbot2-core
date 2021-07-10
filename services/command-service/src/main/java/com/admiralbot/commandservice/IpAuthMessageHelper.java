@@ -53,7 +53,7 @@ public class IpAuthMessageHelper {
         String message = "The following link can be copied and shared to users outside of Discord. When used, it will "
                 + "whitelist the user's IP address to connect to "+friendlyDomain+" servers.\n"
                 + "Note that this access will expire 3 days after the issue time of this link. Discord members can use "
-                + "the !addip command to get long-term access.";
+                + "the /addip command to get long-term access.";
 
         String embedTitle = "Shareable IP whitelist link for " + context.getSenderName();
         String embedDescription = "Temporary, shareable link to whitelist guest IP addresses for " + friendlyDomain;

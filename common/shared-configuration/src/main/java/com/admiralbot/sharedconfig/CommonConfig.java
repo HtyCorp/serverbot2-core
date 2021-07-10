@@ -25,7 +25,7 @@ public class CommonConfig {
     public static final Parameter APP_ROOT_DOMAIN_ZONE_ID = new Parameter(PATH, "app-root-domain-zone-id");
     public static final long APP_DNS_RECORD_TTL = 10;
 
-    public static final String COMMAND_SIGIL_CHARACTER = "!";
+    public static final String COMMAND_SIGIL_CHARACTER = "/";
 
     public static final int DEFAULT_SQS_WAIT_TIME_SECONDS = 20;
 
