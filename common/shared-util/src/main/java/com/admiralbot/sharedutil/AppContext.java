@@ -8,10 +8,13 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.regions.providers.InstanceProfileRegionProvider;
+import software.amazon.awssdk.utils.StringUtils;
 
 import java.util.function.Supplier;
 
 public class AppContext {
+
+    private static final String FORCE_DEFAULT_ENV_VAR_NAME = "APP_CONTEXT_FORCE_DEFAULT";
 
     private static final Logger logger = LogManager.getLogger(AppContext.class);
 
@@ -56,7 +59,9 @@ public class AppContext {
     private static void setGlobalContextIfUnset(Supplier<AppContext> context, boolean disregardAlreadySetError) {
         if (globalContext == null) {
             logger.info("Set new global app context");
-            globalContext = context.get();
+            globalContext = "true".equals(System.getenv(FORCE_DEFAULT_ENV_VAR_NAME))
+                    ? defaultContext()
+                    : context.get();
         } else if (disregardAlreadySetError) {
             logger.info("Ignoring requested global app context, since one is already set");
         } else {
