@@ -215,7 +215,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
         Message responseMessage = AWSXRay.createSubsegment("SendFollowupResponse", () -> {
             // We could theoretically just edit the immediate response when the new response is also non-ephemeral,
             // but I prefer to do things consistently whether it's ephemeral or not.
-            immediateResponse.delete();
+
+            //immediateResponse.delete();
             InteractionFollowupMessageBuilder followupMessage = interaction.createFollowupMessageBuilder();
             followupMessage.setContent(finalReplyContent);
             if (finalEphemeralMessage) {
