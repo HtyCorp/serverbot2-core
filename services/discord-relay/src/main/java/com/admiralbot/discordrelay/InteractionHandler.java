@@ -42,6 +42,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
     private static final long DISCORD_ACTION_TIMEOUT_SECONDS = 5;
 
+    /*
     private static final List<String> CHOICES_MSG_PLEASE_WAIT = List.of(
             "Just a second...",
             "Just a moment...",
@@ -51,6 +52,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
             "Wait a bit...",
             "Almost there..."
     );
+     */
 
     private static final Logger logger = LogManager.getLogger(InteractionHandler.class);
 
@@ -107,12 +109,15 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         logger.info("Slash command interaction is valid, submitting command to CommandService...");
 
-        // Javacord doesn't seem to have a way to make deferred responses ephemeral, so for now we send our own wait message.
+        // Ephemeral messages aren't deletable! Always something with Discord isn't there...
+        /*
         String randomWaitMessage = CHOICES_MSG_PLEASE_WAIT.get(ThreadLocalRandom.current().nextInt(CHOICES_MSG_PLEASE_WAIT.size()));
         CompletableFuture<InteractionOriginalResponseUpdater> immediateResponseFuture = interaction.createImmediateResponder()
                 .setContent(randomWaitMessage)
                 .setFlags(MessageFlag.EPHEMERAL)
                 .respond();
+         */
+        CompletableFuture<InteractionOriginalResponseUpdater> immediateResponseFuture = interaction.respondLater();
 
         final List<String> commandWords = new ArrayList<>();
         commandWords.add(interaction.getCommandName());
@@ -208,7 +213,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         boolean finalEphemeralMessage = ephemeralMessage;
         Message responseMessage = AWSXRay.createSubsegment("SendFollowupResponse", () -> {
-            // We could theoretically just edit the immediate response when the new response is also ephemeral,
+            // We could theoretically just edit the immediate response when the new response is also non-ephemeral,
             // but I prefer to do things consistently whether it's ephemeral or not.
             immediateResponse.delete();
             InteractionFollowupMessageBuilder followupMessage = interaction.createFollowupMessageBuilder();
