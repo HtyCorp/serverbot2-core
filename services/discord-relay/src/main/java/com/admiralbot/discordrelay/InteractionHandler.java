@@ -21,16 +21,14 @@ import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommandInteraction;
+import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class InteractionHandler implements SlashCommandCreateListener {
 
@@ -43,6 +41,16 @@ public class InteractionHandler implements SlashCommandCreateListener {
     private static final String MSG_GENERIC_COMMAND_SUCCESS = "Command completed successfully";
 
     private static final long DISCORD_ACTION_TIMEOUT_SECONDS = 5;
+
+    private static final List<String> CHOICES_MSG_PLEASE_WAIT = List.of(
+            "Just a second...",
+            "Just a moment...",
+            "Hang on a tick...",
+            "One second love...",
+            "Working on it...",
+            "Wait a bit...",
+            "Almost there..."
+    );
 
     private static final Logger logger = LogManager.getLogger(InteractionHandler.class);
 
@@ -99,7 +107,12 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         logger.info("Slash command interaction is valid, submitting command to CommandService...");
 
-        CompletableFuture<InteractionOriginalResponseUpdater> responseUpdaterFuture = interaction.respondLater();
+        // Javacord doesn't seem to have a way to make deferred responses ephemeral, so for now we send our own wait message.
+        String randomWaitMessage = CHOICES_MSG_PLEASE_WAIT.get(ThreadLocalRandom.current().nextInt(CHOICES_MSG_PLEASE_WAIT.size()));
+        CompletableFuture<InteractionOriginalResponseUpdater> immediateResponseFuture = interaction.createImmediateResponder()
+                .setContent(randomWaitMessage)
+                .setFlags(MessageFlag.EPHEMERAL)
+                .respond();
 
         final List<String> commandWords = new ArrayList<>();
         commandWords.add(interaction.getCommandName());
@@ -131,9 +144,9 @@ public class InteractionHandler implements SlashCommandCreateListener {
         }
 
         // Wait for completion of the initial response
-        InteractionOriginalResponseUpdater responseUpdater;
+        InteractionOriginalResponseUpdater immediateResponse;
         try {
-            responseUpdater = responseUpdaterFuture.get(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            immediateResponse = immediateResponseFuture.get(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error("Initial response failed. Aborting since we can't contact user", e);
             return;
@@ -154,7 +167,6 @@ public class InteractionHandler implements SlashCommandCreateListener {
             logger.info("Setting reply content to message/ID returned by CommandService");
             replyMessageContent = commandResponse.getMessageContent();
             ephemeralMessage = commandResponse.isEphemeralMessage();
-            logger.debug("ephemeral message = " + ephemeralMessage);
             replyMessageExternalId = commandResponse.getMessageExternalId();
 
             // If there's a requested private reply as well, send it and overwrite the response message with a generic
@@ -192,19 +204,24 @@ public class InteractionHandler implements SlashCommandCreateListener {
         final String finalReplyContent = replyMessageContent;
         final String finalReplyExternalId = replyMessageExternalId;
 
-        logger.info("Updating responder content");
+        logger.info("Sending followup response...");
 
         boolean finalEphemeralMessage = ephemeralMessage;
-        Message responseMessage = AWSXRay.createSubsegment("EditInteractionResponse", () -> {
-            responseUpdater.setContent(finalReplyContent);
+        Message responseMessage = AWSXRay.createSubsegment("SendFollowupResponse", () -> {
+            // We could theoretically just edit the immediate response when the new response is also ephemeral,
+            // but I prefer to do things consistently whether it's ephemeral or not.
+            immediateResponse.delete();
+            InteractionFollowupMessageBuilder followupMessage = interaction.createFollowupMessageBuilder();
+            followupMessage.setContent(finalReplyContent);
             if (finalEphemeralMessage) {
-                responseUpdater.setFlags(MessageFlag.EPHEMERAL);
+                followupMessage.setFlags(MessageFlag.EPHEMERAL);
             }
-            return responseUpdater.update().orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join();
+            return followupMessage.send().orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS).join();
         });
+
         if (replyMessageExternalId != null) {
-            logger.info("Recording message ID in DDB to enable future tracking and edits");
-            AWSXRay.createSubsegment("RecordMessageId", () -> {
+            logger.info("Recording interaction details in DDB to enable future tracking and edits");
+            AWSXRay.createSubsegment("StoreInteractionDetails", () -> {
                 DynamoMessageItem newItem = new DynamoMessageItem(
                         finalReplyExternalId,
                         channel.getIdAsString(),
