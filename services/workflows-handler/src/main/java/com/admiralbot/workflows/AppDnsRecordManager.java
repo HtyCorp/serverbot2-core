@@ -4,8 +4,8 @@ import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.SdkUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.route53.Route53Client;
 import software.amazon.awssdk.services.route53.model.*;
 
@@ -15,7 +15,7 @@ public class AppDnsRecordManager {
 
     private final Route53Client route53Client = SdkUtils.globalClient(Route53Client.builder());
 
-    private final Logger logger = LogManager.getLogger(AppDnsRecordManager.class);
+    private final Logger logger = LoggerFactory.getLogger(AppDnsRecordManager.class);
 
     public String getFqdn(String name) {
         return Joiner.dot(name, CommonConfig.APP_ROOT_DOMAIN_NAME.getValue());

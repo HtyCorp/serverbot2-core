@@ -10,8 +10,8 @@ import com.admiralbot.sharedutil.*;
 import com.admiralbot.urlshortener.model.*;
 import com.admiralbot.urlshortener.tokenv1.V1TokenProcessor;
 import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBean;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -33,7 +33,7 @@ public class ServiceHandler implements IUrlShortener {
         AppContext.setLambda();
     }
 
-    private final Logger logger = LogManager.getLogger(ServiceHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(ServiceHandler.class);
 
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))

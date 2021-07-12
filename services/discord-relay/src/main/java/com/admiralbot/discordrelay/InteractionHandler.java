@@ -10,8 +10,8 @@ import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.amazonaws.xray.AWSXRay;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -54,7 +54,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
     );
      */
 
-    private static final Logger logger = LogManager.getLogger(InteractionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(InteractionHandler.class);
 
     private final Executor threadPool = Executors.newCachedThreadPool();
 

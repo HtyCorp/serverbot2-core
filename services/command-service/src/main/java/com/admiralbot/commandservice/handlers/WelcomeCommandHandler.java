@@ -16,8 +16,8 @@ import com.admiralbot.gamemetadata.model.ListGamesRequest;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Utils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.Instance;
 
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 public class WelcomeCommandHandler extends AbstractCommandHandler<IWelcomeCommandHandler> implements IWelcomeCommandHandler {
 
-    private final Logger logger = LogManager.getLogger(WelcomeCommandHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(WelcomeCommandHandler.class);
 
     private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;

@@ -12,8 +12,8 @@ import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.gamemetadata.model.*;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class ServersCommandHandler extends AbstractCommandHandler<IServersCommandHandler> implements IServersCommandHandler {
 
-    private final Logger logger = LogManager.getLogger(ServersCommandHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(ServersCommandHandler.class);
 
     private final IGameMetadataService gameMetadataService;
     private final IpAuthMessageHelper ipAuthMessageHelper;

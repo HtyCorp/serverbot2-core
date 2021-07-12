@@ -27,8 +27,8 @@ import com.admiralbot.urlshortener.model.CreateShortUrlRequest;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 import com.admiralbot.workflows.model.ExecutionState;
 import com.admiralbot.workflows.model.Machines;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.DescribeVolumesResponse;
 import software.amazon.awssdk.services.ec2.model.Ec2Exception;
@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
 
 public class AdminCommandHandler extends AbstractCommandHandler<IAdminCommandHandler> implements IAdminCommandHandler {
 
-    private final Logger logger = LogManager.getLogger(AdminCommandHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(AdminCommandHandler.class);
 
     private final Ec2Client ec2Client;
     private final IGameMetadataService gameMetadataServiceClient;

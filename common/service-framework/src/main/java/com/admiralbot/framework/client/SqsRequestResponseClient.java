@@ -8,8 +8,8 @@ import com.admiralbot.sharedutil.IDUtils;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -34,7 +34,7 @@ public class SqsRequestResponseClient {
     // Lazily initialize this: don't want to create temp SQS queue if it won't be used.
     private volatile String rxTempQueueUrl;
 
-    Logger logger = LogManager.getLogger(SqsRequestResponseClient.class);
+    Logger logger = LoggerFactory.getLogger(SqsRequestResponseClient.class);
     private final Gson gson = new Gson();
 
     public SqsRequestResponseClient() {

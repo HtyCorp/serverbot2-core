@@ -7,8 +7,8 @@ import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.amazonaws.xray.AWSXRay;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.GetQueryResultsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.QueryStatus;
@@ -26,7 +26,7 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
 
     private final CloudWatchLogsClient logsClient = SdkUtils.client(CloudWatchLogsClient.builder());
 
-    private final Logger logger = LogManager.getLogger(CloudWatchFlowLogsAnalyser.class);
+    private final Logger logger = LoggerFactory.getLogger(CloudWatchFlowLogsAnalyser.class);
 
     @Override
     public Optional<Integer> getLatestActivityAgeSeconds(List<String> authorisedIps, List<PortPermission> authorisedPorts,

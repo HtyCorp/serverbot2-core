@@ -5,8 +5,8 @@ import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.gamemetadata.metastore.*;
 import com.admiralbot.gamemetadata.model.*;
 import com.admiralbot.sharedconfig.CommonConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +19,7 @@ public class GameMetadataServiceHandler implements IGameMetadataService {
 
     private final IMetadataStore store = chooseDataStore();
 
-    private final Logger logger = LogManager.getLogger(GameMetadataServiceHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(GameMetadataServiceHandler.class);
 
     @Override
     public ListGamesResponse listGames(ListGamesRequest request) {

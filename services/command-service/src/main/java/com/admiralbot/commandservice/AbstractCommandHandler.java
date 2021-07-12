@@ -4,12 +4,12 @@ import com.admiralbot.commandservice.commands.common.CommandHelp;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
 import com.admiralbot.framework.common.ApiDefinitionSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 public abstract class AbstractCommandHandler<ModelType> {
 
-    private final Logger logger = LogManager.getLogger(AbstractCommandHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(AbstractCommandHandler.class);
 
     private final CommandDispatcher<ModelType> commandDispatcher;
     private final HelpMessageHelper helpMessageHelper;

@@ -4,8 +4,8 @@ import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InputLogEvent;
@@ -40,7 +40,7 @@ public class CloudWatchLogsUploader {
     private final String logGroupName;
     private final String logStreamName;
 
-    private final Logger logger = LogManager.getLogger(CloudWatchLogsUploader.class);
+    private final Logger logger = LoggerFactory.getLogger(CloudWatchLogsUploader.class);
 
     public CloudWatchLogsUploader(InputStream inputStream, String appName, Instant when, String outputType) {
         this.streamReader = new BufferedReader(new InputStreamReader(inputStream));

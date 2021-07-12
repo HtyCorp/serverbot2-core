@@ -7,8 +7,8 @@ import com.admiralbot.sharedutil.XrayUtils;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.TraceHeader;
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
@@ -24,7 +24,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
     private final String serviceInterfaceName = getModelClass().getSimpleName();
     private final String receiveQueueName;
 
-    private final Logger logger = LogManager.getLogger(SqsApiServer.class);
+    private final Logger logger = LoggerFactory.getLogger(SqsApiServer.class);
     private final Gson gson = new Gson();
 
     @Override
@@ -33,6 +33,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
     }
 
     public SqsApiServer(String receiveQueueName) {
+        super.initialise();
         // Don't run as daemon: this is intended as a forever-running server thread.
         this.receiveQueueName = receiveQueueName;
         new Thread(this::runReceiveLoop, THREAD_NAME).start();

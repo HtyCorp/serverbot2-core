@@ -20,8 +20,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -44,7 +44,7 @@ public class ApiGatewayLambdaHandler implements RequestHandler<APIGatewayProxyRe
             new Pair<>(0, ChronoUnit.MINUTES)
     );
 
-    private final Logger logger = LogManager.getLogger(ApiGatewayLambdaHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(ApiGatewayLambdaHandler.class);
     private final Gson gson = new Gson();
 
     private final INetworkSecurity networkSecurityClient = ApiClient.http(INetworkSecurity.class);

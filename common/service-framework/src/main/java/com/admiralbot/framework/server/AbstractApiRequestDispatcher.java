@@ -5,8 +5,8 @@ import com.admiralbot.framework.common.ApiDefinitionSet;
 import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.server.*;
 import com.admiralbot.sharedutil.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -15,7 +15,7 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
     private final ModelType handlerInstance;
     private final ApiDefinitionSet<ModelType> apiDefinitionSet;
 
-    private final Logger logger = LogManager.getLogger(AbstractApiRequestDispatcher.class);
+    private final Logger logger = LoggerFactory.getLogger(AbstractApiRequestDispatcher.class);
 
     private AbstractApiRequestDispatcher<?, OutputType, RawInputType, ?> nextChainDispatcher;
 

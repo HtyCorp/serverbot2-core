@@ -5,8 +5,8 @@ import com.admiralbot.sharedutil.Utils;
 import com.amazonaws.xray.AWSXRay;
 import com.amazonaws.xray.entities.Entity;
 import com.amazonaws.xray.entities.TraceHeader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams;
@@ -23,7 +23,7 @@ public class SigV4HttpClient {
 
     private final AppContext appContext;
 
-    private static final Logger logger = LogManager.getLogger(SigV4HttpClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(SigV4HttpClient.class);
 
     public SigV4HttpClient(AppContext appContext) {
         Objects.requireNonNull(appContext, "SigV4HttpClient requires a non-null app context");

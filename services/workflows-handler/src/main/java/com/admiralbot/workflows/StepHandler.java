@@ -20,8 +20,8 @@ import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Poller;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.workflows.model.ExecutionState;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class StepHandler {
 
-    private final Logger logger = LogManager.getLogger(StepHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(StepHandler.class);
 
     private final Ec2Client ec2Client = SdkUtils.client(Ec2Client.builder());
     private final SqsClient sqsClient = SdkUtils.client(SqsClient.builder());

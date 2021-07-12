@@ -16,8 +16,8 @@ import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.ec2.Ec2Client;
@@ -43,7 +43,7 @@ public class Ec2GroupManager implements IGroupManager {
 
     private final Pattern NUMERIC_ID_PATTERN = Pattern.compile("\\d+");
 
-    private final Logger logger = LogManager.getLogger(Ec2GroupManager.class);
+    private final Logger logger = LoggerFactory.getLogger(Ec2GroupManager.class);
 
     public Ec2GroupManager(Crypto crypto) {
         this.crypto = crypto;

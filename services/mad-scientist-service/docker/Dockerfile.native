@@ -1,0 +1,3 @@
+FROM public.ecr.aws/lambda/provided:al2
+COPY service $LAMBDA_RUNTIME_DIR/bootstrap
+CMD [ "example.handler" ]

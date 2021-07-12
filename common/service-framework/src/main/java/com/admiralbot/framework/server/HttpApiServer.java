@@ -8,14 +8,14 @@ import com.amazonaws.xray.entities.TraceHeader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import spark.Request;
 import spark.Spark;
 
 public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
-    private final Logger logger = LogManager.getLogger(HttpApiServer.class);
+    private final Logger logger = LoggerFactory.getLogger(HttpApiServer.class);
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
     @Override
@@ -24,6 +24,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
     }
 
     public HttpApiServer() {
+        super.initialise();
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
             throw new IllegalArgumentException("HTTP APIs only support POST method currently");
         }
@@ -36,7 +37,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
             logger.info("Request payload:");
             logger.info(request.body());
             logger.info("Request headers:");
-            logger.info(request.headers());
+            logger.info(request.headers().toString());
 
             TraceHeader trace = extractTraceHeaderIfAvailable(request);
             if (trace != null) {

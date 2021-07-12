@@ -1,0 +1,15 @@
+### Setup
+cd services/mad-scientist-service/docker
+cp ../target/mad-scientist-service-1.0-SNAPSHOT.jar ./service.jar
+
+### Native run
+native-image --initialize-at-build-time=org.slf4j --no-fallback -H:ReflectionConfigurationFiles=reflect.json -jar service.jar
+docker build -t mad-scientist-native -f Dockerfile.native .
+docker run -p 9000:8080 --env-file=./envfile mad-scientist-native
+
+### Java run
+docker build -t mad-scientist-java -f Dockerfile .
+docker run -p 9000:8080 --env-file=./envfile mad-scientist-java
+
+### Test invocation
+curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"httpMethod":"POST","path":"/","body":"{\"xApiTarget\":\"CountBuckets\"}"}'

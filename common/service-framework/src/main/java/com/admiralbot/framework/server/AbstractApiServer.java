@@ -36,12 +36,12 @@ public abstract class AbstractApiServer<ModelType> {
      */
     protected abstract boolean requiresEndpointInfo();
 
-    private final JsonApiRequestDispatcher<ModelType> requestDispatcher;
-    private final ApiEndpointInfo apiEndpointInfo;
-    private final String simpleServiceName;
+    private boolean isInitialised = false;
+    private JsonApiRequestDispatcher<ModelType> requestDispatcher;
+    private ApiEndpointInfo apiEndpointInfo;
+    private String simpleServiceName;
 
-    public AbstractApiServer() {
-
+    protected void initialise() {
         // Xray defaults: treat missing context as non-fatal (only affects monitoring) and set a good service name
 
         simpleServiceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
@@ -54,18 +54,26 @@ public abstract class AbstractApiServer<ModelType> {
         requestDispatcher = new JsonApiRequestDispatcher<>(serviceRequestHandler,getModelClass(), requiresEndpointInfo());
         apiEndpointInfo = getModelClass().getAnnotation(ApiEndpointInfo.class);
 
+        isInitialised = true;
     }
 
     protected JsonApiRequestDispatcher<ModelType> getRequestDispatcher() {
-        return requestDispatcher;
+        return requireInitialised(requestDispatcher);
     }
 
     protected ApiEndpointInfo getEndpointInfo() {
-        return apiEndpointInfo;
+        return requireInitialised(apiEndpointInfo);
     }
 
     protected String getSimpleServiceName() {
-        return simpleServiceName;
+        return requireInitialised(simpleServiceName);
+    }
+
+    private <T> T requireInitialised(T field) {
+        if (!isInitialised) {
+            throw new IllegalStateException("`initialize()` was not called on server instance");
+        }
+        return field;
     }
 
 }

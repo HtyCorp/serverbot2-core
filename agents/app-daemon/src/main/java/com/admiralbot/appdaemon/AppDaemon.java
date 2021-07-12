@@ -15,8 +15,8 @@ import com.admiralbot.sharedconfig.WorkflowsConfig;
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.XrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sfn.SfnClient;
 
@@ -44,7 +44,7 @@ public class AppDaemon {
     private Instant latestNetworkActivityTime = Instant.now();
     private IdleState idleState = IdleState.ACTIVE_USE;
 
-    private final Logger logger = LogManager.getLogger(AppDaemon.class);
+    private final Logger logger = LoggerFactory.getLogger(AppDaemon.class);
     private final SfnClient sfnClient = SdkUtils.client(SfnClient.builder());
     private final INetworkSecurity networkSecurityServiceClient = ApiClient.http(INetworkSecurity.class);
     private final IDiscordService discordServiceClient = ApiClient.http(IDiscordService.class);

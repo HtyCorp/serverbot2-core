@@ -11,8 +11,8 @@ import com.admiralbot.networksecurity.model.INetworkSecurity;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.urlshortener.model.IUrlShortener;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class RootCommandHandler implements ICommandService {
 
-    private final Logger logger = LogManager.getLogger(RootCommandHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(RootCommandHandler.class);
 
     private final AdminCommandHandler adminCommandHandler;
     private final ServersCommandHandler serversCommandHandler;

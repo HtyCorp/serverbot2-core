@@ -8,8 +8,8 @@ import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.sharedutil.XrayUtils;
 import com.amazonaws.xray.AWSXRay;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -48,7 +48,7 @@ public class DiscordRelay {
             Intent.GUILD_MESSAGES
     };
 
-    private final Logger logger = LogManager.getLogger(DiscordRelay.class);
+    private final Logger logger = LoggerFactory.getLogger(DiscordRelay.class);
 
     private final CommandArgParser commandArgParser;
     private final ChannelMap channelMap;
