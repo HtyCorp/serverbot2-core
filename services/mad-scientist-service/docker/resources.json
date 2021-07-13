@@ -1,0 +1,9 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "commons-logging.properties"},
+      {"pattern": "com/amazonaws/xray/.*"},
+      {"pattern": "aws-lambda-runtime-interface-client.*"}
+    ]
+  }
+}

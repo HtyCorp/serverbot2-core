@@ -1,14 +1,22 @@
 ### Setup
-cd services/mad-scientist-service/docker
+export JAVA_HOME=/home/hamish/java/graal/graal211
+export PATH=/home/hamish/java/graal/graal211/bin:$PATH
+cd /mnt/c/Users/Hamish/IdeaProjects/serverbot2-core/services/mad-scientist-service/docker
+
+### On new service build
 cp ../target/mad-scientist-service-1.0-SNAPSHOT.jar ./service.jar
 
 ### Native run
-native-image --initialize-at-build-time=org.slf4j --no-fallback -H:ReflectionConfigurationFiles=reflect.json -jar service.jar
+native-image --initialize-at-build-time=org.slf4j --no-fallback --enable-url-protocols=http,https \
+-H:ReflectionConfigurationFiles=reflect.json \
+-H:ResourceConfigurationFiles=resources.json \
+-H:JNIConfigurationFiles=jni.json \
+-jar service.jar
 docker build -t mad-scientist-native -f Dockerfile.native .
 docker run -p 9000:8080 --env-file=./envfile mad-scientist-native
 
 ### Java run
-docker build -t mad-scientist-java -f Dockerfile .
+docker build -t mad-scientist-java -f Dockerfile.java .
 docker run -p 9000:8080 --env-file=./envfile mad-scientist-java
 
 ### Test invocation
