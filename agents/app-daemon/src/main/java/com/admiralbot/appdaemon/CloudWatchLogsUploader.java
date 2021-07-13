@@ -2,10 +2,8 @@ package com.admiralbot.appdaemon;
 
 import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedutil.Joiner;
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InputLogEvent;
@@ -63,7 +61,6 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamReadLoop() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         try {
             String logLine;
             while ((logLine = streamReader.readLine()) != null) {
@@ -94,7 +91,6 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamUploadLoop() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         String nextSequenceToken = null; // No sequence token specified for first batch of events uploaded
         try {
             while (true) {

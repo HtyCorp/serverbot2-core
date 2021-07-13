@@ -3,14 +3,12 @@ package com.admiralbot.framework.server;
 import com.admiralbot.framework.common.ApiHttpMethod;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.entities.TraceHeader;
+import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import spark.Request;
+import org.slf4j.LoggerFactory;
 import spark.Spark;
 
 public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelType> {
@@ -39,23 +37,18 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
             logger.info("Request headers:");
             logger.info(request.headers().toString());
 
-            TraceHeader trace = extractTraceHeaderIfAvailable(request);
-            if (trace != null) {
-                AWSXRay.beginSegment(getSimpleServiceName(), trace.getRootTraceId(), trace.getParentId());
-            } else {
-                AWSXRay.beginSegment(getSimpleServiceName());
-            }
+            XrayUtils.beginSegment(getSimpleServiceName(), request.headers(XrayUtils.TRACE_ID_HEADER_KEY));
 
             try {
 
-                AWSXRay.beginSubsegment("HandleRequest");
+                XrayUtils.beginSubsegment("HandleRequest");
 
                 String responseBody = getRequestDispatcher().handleRequest(request.body());
 
                 logger.info("Response payload:");
                 logger.info(responseBody);
 
-                AWSXRay.endSubsegment();
+                XrayUtils.endSubsegment();
 
                 response.header("server", "Serverbot2 API");
                 return responseBody;
@@ -63,7 +56,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
             } catch (Exception e) {
 
                 logger.error("Encountered error while dispatching request", e);
-                AWSXRay.getCurrentSegment().addException(e);
+                XrayUtils.addSegmentException(e);
 
                 response.status(500);
 
@@ -74,19 +67,11 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
             } finally {
 
-                AWSXRay.endSegment();
+                XrayUtils.endSegment();
 
             }
 
         });
-    }
-
-    private TraceHeader extractTraceHeaderIfAvailable(Request request) {
-        String traceHeaderString = request.headers(TraceHeader.HEADER_KEY);
-        if (traceHeaderString != null) {
-            return TraceHeader.fromString(traceHeaderString);
-        }
-        return null;
     }
 
 }

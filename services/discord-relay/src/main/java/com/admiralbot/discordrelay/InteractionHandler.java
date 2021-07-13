@@ -9,9 +9,7 @@ import com.admiralbot.framework.exception.client.ApiClientException;
 import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Utils;
-import com.amazonaws.xray.AWSXRay;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import com.admiralbot.sharedutil.XrayUtils;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -24,11 +22,17 @@ import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.interaction.callback.InteractionFollowupMessageBuilder;
 import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class InteractionHandler implements SlashCommandCreateListener {
 
@@ -72,13 +76,13 @@ public class InteractionHandler implements SlashCommandCreateListener {
     public void onSlashCommandCreate(SlashCommandCreateEvent slashCommandCreateEvent) {
         threadPool.execute(() -> {
             try {
-                AWSXRay.beginSegment("ProcessSlashCommandInteraction");
+                XrayUtils.beginSegment("ProcessSlashCommandInteraction");
                 handleSlashCommandInteraction(slashCommandCreateEvent.getSlashCommandInteraction());
             } catch (Exception e) {
                 logger.error("Uncaught exception during slash command handling", e);
-                AWSXRay.getCurrentSegment().addException(e);
+                XrayUtils.addSegmentException(e);
             } finally {
-                AWSXRay.endSegment();
+                XrayUtils.endSegment();
             }
         });
     }
@@ -129,8 +133,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
         String errorReplyContent = MSG_COMMANDSERVICE_OTHER_EXCEPTION;
 
         try {
-            commandResponse = AWSXRay.createSubsegment("SubmitCommand", subsegment -> {
-                subsegment.putAnnotation("CommandSourceId", commandSourceId);
+            Map<String,String> annotations = Map.of("CommandSourceId", commandSourceId);
+            commandResponse = XrayUtils.subsegment("SubmitCommand", annotations, () -> {
                 ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                         commandWords, appChannel, commandSourceId,
                         requester.getIdAsString(), requester.getDiscriminatedName()
@@ -181,7 +185,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
                 String pmContent = commandResponse.getPrivateMessageContent();
                 EmbedBuilder pmEmbed = Utils.mapNullable(commandResponse.getPrivateMessageEmbed(), this::convertSimpleEmbed);
                 try {
-                    AWSXRay.createSubsegment("SendPrivateReply", () -> {
+                    XrayUtils.subsegment("SendPrivateReply", null, () -> {
                         PrivateChannel requesterPrivateChannel = requester.openPrivateChannel()
                                 .orTimeout(DISCORD_ACTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                                 .join();
@@ -212,7 +216,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
         logger.info("Sending followup response...");
 
         boolean finalEphemeralMessage = ephemeralMessage;
-        Message responseMessage = AWSXRay.createSubsegment("SendFollowupResponse", () -> {
+        Message responseMessage = XrayUtils.subsegment("SendFollowupResponse", null, () -> {
             // We could theoretically just edit the immediate response when the new response is also non-ephemeral,
             // but I prefer to do things consistently whether it's ephemeral or not.
 
@@ -227,7 +231,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         if (replyMessageExternalId != null) {
             logger.info("Recording interaction details in DDB to enable future tracking and edits");
-            AWSXRay.createSubsegment("StoreInteractionDetails", () -> {
+            XrayUtils.subsegment("StoreInteractionDetails", null, () -> {
                 DynamoMessageItem newItem = new DynamoMessageItem(
                         finalReplyExternalId,
                         channel.getIdAsString(),

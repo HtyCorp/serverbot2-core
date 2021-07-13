@@ -4,11 +4,9 @@ import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.XrayUtils;
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.entities.TraceHeader;
 import com.google.gson.Gson;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
@@ -21,7 +19,6 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
     private static final String THREAD_NAME = "SqsApiRequestReceiverThread";
 
     private final SqsClient sqsClient = SqsClient.create();
-    private final String serviceInterfaceName = getModelClass().getSimpleName();
     private final String receiveQueueName;
 
     private final Logger logger = LoggerFactory.getLogger(SqsApiServer.class);
@@ -77,12 +74,8 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                     response.messages().forEach(message -> {
 
                         // Propagate Xray trace information if available in message attributes
-                        TraceHeader trace = extractTraceHeaderIfAvailable(message);
-                        if (trace != null) {
-                            AWSXRay.beginSegment("HandleRequest", trace.getRootTraceId(), trace.getParentId());
-                        } else {
-                            AWSXRay.beginSegment("HandleRequest");
-                        }
+                        String traceHeader = extractTraceHeaderIfAvailable(message);
+                        XrayUtils.beginSegment("HandleRequest", traceHeader);
 
                         try {
 
@@ -107,9 +100,9 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
 
                             sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
 
-                            AWSXRay.beginSubsegment("DispatchRequest");
+                            XrayUtils.beginSubsegment("DispatchRequest");
                             String responseString = getRequestDispatcher().handleRequest(message.body());
-                            AWSXRay.endSubsegment();
+                            XrayUtils.endSubsegment();
 
                             logger.info("Response payload:\n" + responseString);
 
@@ -118,7 +111,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                                     // No point putting the queue URL attribute back in.
                             );
 
-                            AWSXRay.beginSubsegment("SendReply");
+                            XrayUtils.beginSubsegment("SendReply");
                             try {
                                 sqsClient.sendMessage(r -> r.queueUrl(replyQueueUrl)
                                         .messageAttributes(sqsAttrMap)
@@ -126,13 +119,13 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                             } catch (Exception e) {
                                 // Reply queue send might fail outside the control of this service, so don't make it fatal.
                                 logger.warn("Unable to send SQS response message", e);
-                                AWSXRay.getCurrentSubsegment().addException(e);
+                                XrayUtils.addSubsegmentException(e);
                             } finally {
-                                AWSXRay.endSubsegment();
+                                XrayUtils.endSubsegment();
                             }
 
                         } finally {
-                            AWSXRay.endSegment();
+                            XrayUtils.endSegment();
                         }
                     });
                 }
@@ -143,12 +136,9 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
         }
     }
 
-    private TraceHeader extractTraceHeaderIfAvailable(Message message) {
+    private String extractTraceHeaderIfAvailable(Message message) {
         if (message.hasAttributes()) {
-            String headerString = message.attributes().get(MessageSystemAttributeName.AWS_TRACE_HEADER);
-            if (headerString != null) {
-                return TraceHeader.fromString(headerString);
-            }
+            return message.attributes().get(MessageSystemAttributeName.AWS_TRACE_HEADER);
         }
         return null;
     }

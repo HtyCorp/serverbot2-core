@@ -1,6 +1,9 @@
 package com.admiralbot.discordrelay;
 
-import com.admiralbot.discordrelay.model.service.*;
+import com.admiralbot.discordrelay.model.service.DiscordSlashCommand;
+import com.admiralbot.discordrelay.model.service.DiscordSlashCommandOption;
+import com.admiralbot.discordrelay.model.service.DiscordSlashCommandOptionType;
+import com.admiralbot.discordrelay.model.service.MessageChannel;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.Utils;
 import org.javacord.api.DiscordApi;

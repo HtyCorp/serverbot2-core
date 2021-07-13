@@ -10,8 +10,8 @@ import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Pair;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
 
 import java.io.FileReader;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class ServiceHandler implements IAppDaemon {

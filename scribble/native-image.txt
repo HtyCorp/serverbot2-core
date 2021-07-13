@@ -6,11 +6,16 @@ cd /mnt/c/Users/Hamish/IdeaProjects/serverbot2-core/services/mad-scientist-servi
 ### On new service build
 cp ../target/mad-scientist-service-1.0-SNAPSHOT.jar ./service.jar
 
-### Native run
+### Native build with all options
 native-image --initialize-at-build-time=org.slf4j --no-fallback --enable-url-protocols=http,https \
 -H:ReflectionConfigurationFiles=reflect.json \
 -H:ResourceConfigurationFiles=resources.json \
 -H:JNIConfigurationFiles=jni.json \
+-jar service.jar
+
+### Native run
+native-image --initialize-at-build-time=org.slf4j --no-fallback --enable-url-protocols=http,https \
+-H:ReflectionConfigurationFiles=reflect.json \
 -jar service.jar
 docker build -t mad-scientist-native -f Dockerfile.native .
 docker run -p 9000:8080 --env-file=./envfile mad-scientist-native

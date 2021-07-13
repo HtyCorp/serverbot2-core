@@ -9,6 +9,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.regions.providers.InstanceProfileRegionProvider;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class AppContext {
@@ -24,7 +25,7 @@ public class AppContext {
     private final SdkHttpClient httpClient;
 
     public static AppContext get() {
-        return globalContext;
+        return Objects.requireNonNull(globalContext, "AppContext not initialised");
     }
 
     public static AppContext getAsGlobalRegion() {

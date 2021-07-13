@@ -2,17 +2,14 @@ package com.admiralbot.madscientist;
 
 import com.admiralbot.framework.exception.server.FrameworkInternalException;
 import com.admiralbot.framework.server.AbstractApiServer;
-import com.amazonaws.services.lambda.runtime.api.client.runtimeapi.InvocationRequest;
-import com.amazonaws.services.lambda.runtime.api.client.runtimeapi.LambdaRuntimeClient;
+import com.admiralbot.madscientist.lambdaruntime.LambdaInvocation;
+import com.admiralbot.madscientist.lambdaruntime.LambdaRuntimeClient;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.amazonaws.xray.entities.TraceHeader;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.SdkBytes;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -32,50 +29,35 @@ public abstract class LambdaProxyServer<ModelType> extends AbstractApiServer<Mod
     private final ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
 
     public LambdaProxyServer() {
-        String runtimeApiEndpoint = System.getenv("AWS_LAMBDA_RUNTIME_API");
-        runtimeClient = new LambdaRuntimeClient(runtimeApiEndpoint);
+        runtimeClient = new LambdaRuntimeClient();
         try {
             super.initialise();
             (new Thread(this::lambdaInvocationHandlerLoop, "LambdaInvocationHandlerLoop")).start();
         } catch (Exception e) {
             String errorMessage = "LambdaRuntimeServer initialization failed: " + e.getMessage();
-            try {
-                runtimeClient.postInitError(SdkBytes.fromUtf8String(errorMessage).asByteArray(),
-                        "LambdaRuntimeServer.Initialise");
-            } catch (IOException ioe) {
-                logger.error("Couldn't post Lambda init error", ioe);
-            }
+            runtimeClient.postInitError(errorMessage, e.getClass().getSimpleName(), null);
             throw new RuntimeException(errorMessage, e);
         }
     }
 
     private void lambdaInvocationHandlerLoop() {
         while(true) {
-            InvocationRequest invocation = runtimeClient.waitForNextInvocation();
+            LambdaInvocation invocation = runtimeClient.getNextInvocation();
             try {
                 APIGatewayProxyResponseEvent responseEvent = handleInvocation(invocation);
-                String responseString = gson.toJson(responseEvent);
-                runtimeClient.postInvocationResponse(invocation.getId(),
-                        SdkBytes.fromUtf8String(responseString).asByteArray());
+                runtimeClient.postInvocationResponse(invocation.getId(), responseEvent);
             } catch (Exception invokeException) {
                 logger.error("Internal error during invocation handling", invokeException);
-                try {
-                    runtimeClient.postInvocationError(invocation.getId(),
-                            SdkBytes.fromUtf8String(invokeException.toString()).asByteArray(),
-                            "LambdRuntimeServer.InvocationUnknown");
-                } catch (IOException postErrorException) {
-                    logger.error("Failed to post invocation error", postErrorException);
-                }
+                runtimeClient.postInvocationError(invocation.getId(), invokeException.toString(),
+                        invokeException.getClass().getSimpleName(), null);
             }
         }
     }
 
-    private APIGatewayProxyResponseEvent handleInvocation(InvocationRequest invocation) {
-        String proxyRequestString = SdkBytes.fromInputStream(invocation.getContentAsStream()).asUtf8String();
-        APIGatewayProxyRequestEvent proxyRequest = gson.fromJson(proxyRequestString, APIGatewayProxyRequestEvent.class);
-        long maxExecutionTimeMs = invocation.getDeadlineTimeInMs() - Instant.now().toEpochMilli();
+    private APIGatewayProxyResponseEvent handleInvocation(LambdaInvocation invocation) {
+        long maxExecutionTimeMs = invocation.getDeadlineMs() - Instant.now().toEpochMilli();
 
-        APIGatewayProxyResponseEvent errorResponse = generateErrorIfInvalidRequest(proxyRequest);
+        APIGatewayProxyResponseEvent errorResponse = generateErrorIfInvalidRequest(invocation.getApiGatewayRequest());
         if (errorResponse != null) {
             return errorResponse;
         }
@@ -86,7 +68,7 @@ public abstract class LambdaProxyServer<ModelType> extends AbstractApiServer<Mod
             System.setProperty("com.amazonaws.xray.traceHeader", invocation.getXrayTraceId());
         }
         Future<String> responseFuture = threadExecutor.submit(() ->
-                getRequestDispatcher().handleRequest(proxyRequest.getBody()));
+                getRequestDispatcher().handleRequest(invocation.getApiGatewayRequest().getBody()));
 
         try {
             String responseBody = responseFuture.get(maxExecutionTimeMs, TimeUnit.MILLISECONDS);
@@ -104,14 +86,9 @@ public abstract class LambdaProxyServer<ModelType> extends AbstractApiServer<Mod
 
     }
 
-    private TraceHeader extractTraceHeader(InvocationRequest invocation) {
-        if (invocation.getXrayTraceId() != null) {
-            return TraceHeader.fromString(invocation.getXrayTraceId());
-        }
-        return null;
-    }
-
     private APIGatewayProxyResponseEvent generateErrorIfInvalidRequest(APIGatewayProxyRequestEvent request) {
+        System.out.println("request="+request);
+        System.out.println("endpointInfo="+getEndpointInfo());
         if (!request.getHttpMethod().equalsIgnoreCase(getEndpointInfo().httpMethod().toString())) {
             return standardResponse(405).withBody("{\"message\":\"Method not allowed\"}");
         }

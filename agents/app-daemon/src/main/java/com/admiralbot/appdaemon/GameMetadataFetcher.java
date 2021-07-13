@@ -4,8 +4,8 @@ import com.admiralbot.framework.client.ApiClient;
 import com.admiralbot.gamemetadata.model.GameMetadata;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
 import com.admiralbot.gamemetadata.model.IdentifyInstanceRequest;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GameMetadataFetcher {
 

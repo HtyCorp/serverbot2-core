@@ -7,8 +7,6 @@ import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.server.HttpApiServer;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.Utils;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -17,6 +15,8 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

@@ -17,7 +17,6 @@ import com.admiralbot.framework.server.LambdaApiServer;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.*;
-import com.amazonaws.xray.AWSXRay;
 import com.google.gson.*;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.lambda.LambdaClient;
@@ -139,7 +138,7 @@ public final class ApiClient {
                                     return toString();
                             }
 
-                            AWSXRay.beginSubsegment(modelInterfaceClass.getSimpleName() + "Client");
+                            XrayUtils.beginSubsegment(modelInterfaceClass.getSimpleName() + "Client");
 
                             Object requestPojo = args[0];
                             ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(requestPojo.getClass());
@@ -196,7 +195,7 @@ public final class ApiClient {
                         } catch (RuntimeException e) {
                             throw new ApiClientException("Unexpected error while making client request", e);
                         } finally {
-                            AWSXRay.endSubsegment();
+                            XrayUtils.endSubsegment();
                         }
                     }
                 });

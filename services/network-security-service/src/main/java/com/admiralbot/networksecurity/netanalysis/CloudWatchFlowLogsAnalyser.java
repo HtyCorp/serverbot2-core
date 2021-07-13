@@ -6,9 +6,9 @@ import com.admiralbot.networksecurity.model.PortProtocol;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.Utils;
-import com.amazonaws.xray.AWSXRay;
-import org.slf4j.LoggerFactory;
+import com.admiralbot.sharedutil.XrayUtils;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.GetQueryResultsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.QueryStatus;
@@ -54,7 +54,7 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
         ).queryId();
 
         try {
-            AWSXRay.beginSubsegment("PollQueryResult");
+            XrayUtils.beginSubsegment("PollQueryResult");
 
             List<List<ResultField>> results = null;
             QueryStatus status = QueryStatus.SCHEDULED;
@@ -93,10 +93,10 @@ public class CloudWatchFlowLogsAnalyser implements INetworkAnalyser {
             return Optional.of(latestActivityAgeSeconds);
 
         } catch (RuntimeException e) {
-            AWSXRay.getTraceEntity().addException(e);
+            XrayUtils.addSubsegmentException(e);
             throw e;
         } finally {
-            AWSXRay.endSubsegment();
+            XrayUtils.endSubsegment();
         }
     }
 

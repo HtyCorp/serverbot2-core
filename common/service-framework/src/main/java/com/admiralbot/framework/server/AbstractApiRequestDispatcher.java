@@ -5,8 +5,8 @@ import com.admiralbot.framework.common.ApiDefinitionSet;
 import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.server.*;
 import com.admiralbot.sharedutil.Pair;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 
