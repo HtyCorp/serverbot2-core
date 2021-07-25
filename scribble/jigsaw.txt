@@ -1,3 +1,6 @@
+### IMPORTANT
+### This is mostly redundant if native-image migration succeeds: agent will be a native binary artifact so no JRE necessary
+
 # In future, should distribute modularized JDK as part of app daemon artifact so separate JDK install not needed (and to save disk space)
 # Needs a few steps and workarounds for discovered issues:
 # 1) `jdeps` on uber jar fails, so need to copy dependencies separately

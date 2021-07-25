@@ -1,0 +1,48 @@
+Client paths:
+	ApiClient.http(<model>)
+		-> make ApiDefinitionSet(<model>)
+			-> make ApiActionDefinition per interface method
+				-> reflectively get classes and annotations per method
+		-> make dynamic proxy with model class
+	Invoke (dynamic proxy):
+	    -> get action definition for request object
+	    -> Build request JSON with Gson
+	    -> Send JSON request
+	    -> Parse response object (from action definition) or error using Gson and return to caller
+
+Problematic reflection usages:
+* Client construction makes ApiDefinitionSet at runtime by reflectively inspecting model interface
+* Dynamic proxy is constructed with non-compile-time model class
+* Request POJO is converted to request JSON by Gson
+* Response JSON is converted to response POJO by Gson
+
+Server path:
+	new <TYPE>ApiServer(<model>)
+		-> make handler instance
+		-> make json dispatcher for instance
+			-> make ActionDefinitionSet(<model>)
+				-> reflectively get classes and annotations per method
+	Invoke (dispatcher):
+		-> Dispatcher gets action definition from 'target' JSON key
+		-> Dispatcher deseralises with Gson and validates request
+		-> Dispatcher reflectively invokes action method on handler instance
+		-> Dispatcher serialises response object or error to JSON and responds
+
+Problematic reflection usages:
+* JSON dispatcher makes ApiDefinitionSet at runtime by reflectively inspecting model interface
+* Request JSON is converted to request POJO by Gson
+* Handler instance method is invoked reflectively by dispatcher
+* Response POJO is converted to response JSON by Gson
+
+Solutions:
+* Immutables lib can generate Gson type handler for model request/response clases
+* Add ApiDefinitionSet generation statically at compile-time, configure native-image to init at image build time?
+  -> Not 100% sure this will work since Method and Constructor are built statically but still called at runtime
+    -> If that fails, add per-model reflect config files to allow constructor and method invoke?
+  -> Same thing for dynamic proxy?
+    -> Actually a lot easier since the reflective part can be entirely done statically at image build time
+* Create annotation processor to generate set and action definition code, constructor call and API method invoke?
+  -> Some kind of per-model adapter that the dispatcher, client, CommandService/HelpCommandHelper, etc can offload to
+
+Still need to think about:
+* ApiServerException serialisation (mostly separate from the rest of these mechanisms above)
