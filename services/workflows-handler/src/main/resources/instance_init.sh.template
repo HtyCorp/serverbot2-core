@@ -29,7 +29,7 @@ echo '[SB2INIT] Installing steamcmd...'
 # steamcmd requires an EULA agreement - must preset for noninteractive
 echo steam steam/license note '' | debconf-set-selections
 echo steam steam/question select 'I AGREE' | debconf-set-selections
-apt-get -y install lib32gcc1 steamcmd
+apt-get -y install lib32gcc-s1 steamcmd
 
 echo '[SB2INIT] Setting up working directory...'
 mkdir /opt/serverbot2
