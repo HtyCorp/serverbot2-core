@@ -29,8 +29,8 @@ public class UbuntuAmiLocator {
     private static final Map<Function<UbuntuAmiInfo,String>,String> AMI_CRITERIA = Map.of(
             UbuntuAmiInfo::getRegion, getRegion(),
             UbuntuAmiInfo::getArch, "amd64",
-            UbuntuAmiInfo::getName, "bionic",
-            UbuntuAmiInfo::getVersion, "18.04 LTS",
+            UbuntuAmiInfo::getName, "hirsute",
+            UbuntuAmiInfo::getVersion, "21.04",
             UbuntuAmiInfo::getType, "hvm:ebs-ssd"
     );
 
