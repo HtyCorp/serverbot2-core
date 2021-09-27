@@ -2,7 +2,9 @@ package com.admiralbot.commandservice.commands.admin;
 
 import com.admiralbot.commandservice.commands.common.CommandHelp;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
+import com.admiralbot.framework.common.FrameworkApiModel;
 
+@FrameworkApiModel
 public interface IAdminCommandHandler {
 
     ProcessUserCommandResponse onCommandHelp(CommandHelp commandHelp);

@@ -10,6 +10,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
+        <!-- Setting a constant build output timestamp makes builds reproducible, which can reduce deploy time -->
         <project.build.outputTimestamp>2021-06-06T06:06:06Z</project.build.outputTimestamp>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -108,6 +109,7 @@
         <module>services/url-shortener-service</module>
         <module>services/workflows-handler</module>
         <module>models/url-shortener-service-model</module>
+        <module>buildtools/native-image-annotations</module>
     </modules>
 
     <dependencyManagement>
