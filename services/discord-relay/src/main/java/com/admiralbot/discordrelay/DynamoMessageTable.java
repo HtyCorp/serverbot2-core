@@ -10,11 +10,14 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class DynamoMessageTable {
 
+    // Initialised at native-image build time to avoid runtime reflection
+    private static final TableSchema<DynamoMessageItem> beanSchema = TableSchema.fromBean(DynamoMessageItem.class);
+
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
             .build();
     private final DynamoDbTable<DynamoMessageItem> messageTable = ddbClient.table(DiscordConfig.MESSAGE_TABLE_NAME,
-            TableSchema.fromBean(DynamoMessageItem.class));
+            beanSchema);
 
     public boolean has(String externalId) {
         return consistentGet(externalId) != null;

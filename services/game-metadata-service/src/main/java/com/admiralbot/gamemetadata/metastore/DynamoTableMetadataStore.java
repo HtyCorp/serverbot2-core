@@ -14,11 +14,13 @@ import java.util.stream.Stream;
 
 public class DynamoTableMetadataStore implements IMetadataStore {
 
+    // Initialised at native-image build time to avoid runtime reflection
+    private static final TableSchema<GameMetadataBean> beanShema = TableSchema.fromBean(GameMetadataBean.class);
+
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
             .build();
-    private final DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
-            TableSchema.fromBean(GameMetadataBean.class));
+    private final DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME, beanShema);
 
     @Override
     public void putIfMissing(GameMetadataBean item) {

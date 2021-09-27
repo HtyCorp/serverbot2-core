@@ -33,6 +33,9 @@ public class ServiceHandler implements IUrlShortener {
         AppContext.setLambda();
     }
 
+    // Initialised at native-image build time to avoid runtime reflection
+    private static final TableSchema<V1UrlInfoBean> beanSchema = TableSchema.fromBean(V1UrlInfoBean.class);
+
     private final Logger logger = LogManager.getLogger(ServiceHandler.class);
 
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
@@ -40,7 +43,7 @@ public class ServiceHandler implements IUrlShortener {
             .build();
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
-            TableSchema.fromBean(V1UrlInfoBean.class));
+            beanSchema);
     private final V1TokenProcessor v1Processor = new V1TokenProcessor();
 
     private final Pattern basicValidUrlPattern = Pattern.compile("(?<schema>[a-z]+)://"
