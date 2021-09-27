@@ -27,6 +27,11 @@
             <artifactId>shared-configuration</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>native-image-annotations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.sparkjava/spark-core -->
         <dependency>
