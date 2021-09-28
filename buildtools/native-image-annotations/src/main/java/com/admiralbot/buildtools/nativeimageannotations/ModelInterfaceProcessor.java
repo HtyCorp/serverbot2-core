@@ -66,12 +66,15 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void registerFieldTypes(TypeElement type, Set<String> requiredClassNames) {
-        requiredClassNames.add(getQualifiedTypeName(type));
-        type.getEnclosedElements().stream()
-                .filter(this::isInstanceFieldElement)
-                .flatMap(element -> getTypesOfInterest(element.asType()))
-                .map(this::getTypeElement)
-                .forEach(fieldType -> registerFieldTypes(fieldType, requiredClassNames));
+        boolean notSeenBefore = requiredClassNames.add(getQualifiedTypeName(type));
+        // Don't recurse into this type if we have seen it before
+        if (notSeenBefore) {
+            type.getEnclosedElements().stream()
+                    .filter(this::isInstanceFieldElement)
+                    .flatMap(element -> getTypesOfInterest(element.asType()))
+                    .map(this::getTypeElement)
+                    .forEach(fieldType -> registerFieldTypes(fieldType, requiredClassNames));
+        }
     }
 
     private boolean isInstanceFieldElement(Element element) {
@@ -90,10 +93,10 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
             Stream<TypeMirror> argTypes = declaredType.getTypeArguments().stream().flatMap(this::getTypesOfInterest);
             return Stream.concat(Stream.of(rawType), argTypes);
         }
-        if (!type.getKind().isPrimitive()) {
-            throw new RuntimeException(type + ": Not a primitive or processable type");
+        if (type.getKind().isPrimitive()) {
+            return Stream.empty();
         }
-        return Stream.empty();
+        throw new RuntimeException(type + ": not a supported type kind " + type.getKind());
     }
 
     private TypeElement getTypeElement(TypeMirror type) {
@@ -113,17 +116,18 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void createProxyResourceFile(TypeElement originElement, String interfaceClassName) {
-        String fileContent = "[[" + interfaceClassName + "]]";
+        String fileContent = "[[\"" + interfaceClassName + "\"]]";
         writeNativeImageResourceFile(originElement, "proxy-config.json", fileContent);
     }
 
     private void createReflectionResourceFile(TypeElement originElement, Set<String> requiredClassNames) {
         String reflectJson = requiredClassNames.stream()
+                .sorted()
                 .map(name -> "{\"name\":\"" + name + "\"" +
                         ",\"allDeclaredFields\":true" +
                         ",\"allDeclaredConstructors\":true" +
                         "}")
-                .collect(Collectors.joining(",\n", "[", "]"));
+                .collect(Collectors.joining(",\n", "[\n", "\n]"));
 
         writeNativeImageResourceFile(originElement, "reflect-config.json", reflectJson.toString());
     }
