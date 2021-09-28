@@ -16,8 +16,8 @@ import com.admiralbot.gamemetadata.model.ListGamesRequest;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.Utils;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.Instance;
 

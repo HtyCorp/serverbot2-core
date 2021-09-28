@@ -41,7 +41,7 @@ public class NetSecStack extends Stack {
 
         EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security-service");
 
-        Role taskRole = service.getTaskRole();
+        Role taskRole = service.getRole();
         Permissions.addManagedPoliciesToRole(taskRole,
                 ManagedPolicies.EC2_FULL_ACCESS,
                 ManagedPolicies.LOGS_FULL_ACCESS

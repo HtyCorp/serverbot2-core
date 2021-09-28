@@ -36,7 +36,7 @@ public class RelayStack extends Stack {
         EcsMicroservice service = new EcsMicroservice(this, "EcsMicroservice", parent, "discord-relay");
         Permissions.addConfigPathRead(this, service, DiscordConfig.PATH_ALL);
         Permissions.addExecuteApi(this, service, ICommandService.class);
-        Permissions.addManagedPoliciesToRole(service.getTaskRole(), ManagedPolicies.SQS_FULL_ACCESS);
+        Permissions.addManagedPoliciesToRole(service.getRole(), ManagedPolicies.SQS_FULL_ACCESS);
         messageTable.grantFullAccess(service);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IDiscordService.class);

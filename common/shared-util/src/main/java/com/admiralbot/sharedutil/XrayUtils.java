@@ -18,7 +18,13 @@ public class XrayUtils {
     }
 
     public static void setInstrumentationEnabled(boolean enabled) {
+        // The ideal is to modify the equivalent env var, but modifying env vars in Java is not simple
+        // Recent versions of AWS Xray Java SDK support this system property as an alternative
         setProperty("com.amazonaws.xray.tracingEnabled", xrayBoolString(enabled));
+    }
+
+    public static void setTraceId(String traceId) {
+        System.setProperty("com.amazonaws.xray.traceHeader", traceId);
     }
 
     enum XrayMissingContextStrategy {

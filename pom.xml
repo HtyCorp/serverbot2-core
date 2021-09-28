@@ -59,7 +59,10 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <skip>false</skip>
+                        <!-- Looks like this hasn't been updated yet for this option to work correctly. -->
+                        <!-- This would be nice but it doesn't `mkdir` correctly. -->
+                        <!--<outputDirectory>${project.build.directory}/lambdazip</outputDirectory>-->
+                        <imageName>service-native-image</imageName>
                         <mainClass>${module.mainClass}</mainClass>
                         <buildArgs>
                             --no-fallback

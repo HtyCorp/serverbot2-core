@@ -38,7 +38,7 @@ public class UrlShortenerStack extends Stack {
         // Add standard microservice and API
 
         EcsMicroservice microservice = new EcsMicroservice(this, "Service", parent, "url-shortener-service");
-        urlTable.grantFullAccess(microservice.getTaskRole());
+        urlTable.grantFullAccess(microservice.getRole());
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IUrlShortener.class);
         api.addEcsRoute(IUrlShortener.class, microservice);

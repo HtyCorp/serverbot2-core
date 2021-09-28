@@ -35,14 +35,6 @@ public class EcsMicroservice extends Construct implements IGrantable {
     private final Role taskRole;
     private final Service internalDiscoveryService;
 
-    public Role getTaskRole() {
-        return taskRole;
-    }
-
-    public Service getInternalDiscoveryService() {
-        return internalDiscoveryService;
-    }
-
     public EcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String internalName) {
         super(parent, id);
 
@@ -131,6 +123,14 @@ public class EcsMicroservice extends Construct implements IGrantable {
         // This isn't ideal but the underlying lib code does return a concrete Service so it's safe for now.
         internalDiscoveryService = (Service) service.getCloudMapService();
 
+    }
+
+    public Service getInternalDiscoveryService() {
+        return internalDiscoveryService;
+    }
+
+    public Role getRole() {
+        return taskRole;
     }
 
     @Override

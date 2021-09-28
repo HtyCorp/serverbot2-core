@@ -12,6 +12,7 @@ import software.amazon.awscdk.core.RemovalPolicy;
 import software.amazon.awscdk.services.apigatewayv2.*;
 import software.amazon.awscdk.services.apigatewayv2.CfnStage.AccessLogSettingsProperty;
 import software.amazon.awscdk.services.apigatewayv2.integrations.HttpServiceDiscoveryIntegration;
+import software.amazon.awscdk.services.apigatewayv2.integrations.LambdaProxyIntegration;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.route53.ARecord;
@@ -20,6 +21,7 @@ import software.amazon.awscdk.services.route53.targets.ApiGatewayv2DomainPropert
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public class ServiceApi extends Construct {
 
@@ -114,7 +116,23 @@ public class ServiceApi extends Construct {
 
     }
 
+    public void addNativeLambdaRoute(Class<?> serviceInterfaceClass, NativeLambdaMicroservice lambda) {
+        doAddRoute(serviceInterfaceClass, _endpointInfo -> LambdaProxyIntegration.Builder.create()
+                .handler(lambda.getFunction())
+                .payloadFormatVersion(PayloadFormatVersion.VERSION_2_0)
+                .build());
+    }
+
     public void addEcsRoute(Class<?> serviceInterfaceClass, EcsMicroservice ecsMicroservice) {
+        doAddRoute(serviceInterfaceClass, endpointInfo -> HttpServiceDiscoveryIntegration.Builder.create()
+                .service(ecsMicroservice.getInternalDiscoveryService())
+                .method(getEndpointHttpMethod(endpointInfo))
+                .vpcLink(commonVpcLink)
+                .build());
+    }
+
+    private void doAddRoute(Class<?> serviceInterfaceClass,
+                            Function<ApiEndpointInfo,IHttpRouteIntegration> integrationGenerator) {
         ApiEndpointInfo endpointInfo = serviceInterfaceClass.getAnnotation(ApiEndpointInfo.class);
 
         if (!endpointInfo.serviceName().equals(serviceName)) {
@@ -122,17 +140,11 @@ public class ServiceApi extends Construct {
                     "set service name '"+serviceName+"'.");
         }
 
-        HttpMethod httpMethodForEndpoint = HttpMethod.valueOf(endpointInfo.httpMethod().name());
-
-        HttpServiceDiscoveryIntegration ecsServiceIntegration = HttpServiceDiscoveryIntegration.Builder.create()
-                .service(ecsMicroservice.getInternalDiscoveryService())
-                .method(httpMethodForEndpoint)
-                .vpcLink(commonVpcLink)
-                .build();
+        IHttpRouteIntegration apiIntegration = integrationGenerator.apply(endpointInfo);
 
         IHttpRoute route = api.addRoutes(AddRoutesOptions.builder()
-                .integration(ecsServiceIntegration)
-                .methods(List.of(httpMethodForEndpoint))
+                .integration(apiIntegration)
+                .methods(List.of(getEndpointHttpMethod(endpointInfo)))
                 .path(endpointInfo.uriPath())
                 .build()
         ).get(0);
@@ -141,7 +153,9 @@ public class ServiceApi extends Construct {
             CfnRoute cfnRoute = (CfnRoute) route.getNode().getDefaultChild();
             Objects.requireNonNull(cfnRoute).setAuthorizationType("AWS_IAM");
         }
-
     }
 
+    private HttpMethod getEndpointHttpMethod(ApiEndpointInfo endpointInfo) {
+        return HttpMethod.valueOf(endpointInfo.httpMethod().name());
+    }
 }
