@@ -1,11 +1,25 @@
 version: 0.2
 
+env:
+  variables:
+    CDK_VERSION: "1.111.0"
+    GRAAL_RELEASE: "vm-21.2.0"
+    GRAAL_ARTIFACT: "graalvm-ce-java11-linux-amd64-21.2.0"
+    JAVA_HOME: "/usr/local/lib/graalvm/${GRAAL_ARTIFACT}"
+    PATH: "${JAVA_HOME}/bin:${PATH}"
+    GRAAL_DOWNLOAD_PREFIX: "https://github.com/graalvm/graalvm-ce-builds/releases/download"
+
 phases:
   install:
-    runtime-versions:
-      java: corretto11
     commands:
-      - "npm install -g aws-cdk@1.111.0"
+      # Install NPM to 'global' local repo
+      - "npm install -g aws-cdk@${CDK_VERSION}"
+      # Skip step if Graal is already installed
+      - "[[ -f \"${JAVA_HOME}\" ]] && echo 'GraalVM ${GRAAL_ARTIFACT} installed' && exit 0"
+      # Prepare JAVA_HOME directory and download/unzip GraalVM JDK
+      - "mkdir -p \"${JAVA_HOME}\""
+      - "curl -L \"${GRAAL_DOWNLOAD_PREFIX}/${GRAAL_RELEASE}/${GRAAL_ARTIFACT}.tar.gz\" | tar xzvC \"${JAVA_HOME}\""
+      - "gu -v install native-image"
   build:
     commands:
       # Compile Java modules
@@ -29,3 +43,4 @@ cache:
   paths:
     - '/root/.m2/**/*'
     - '/usr/local/lib/node_modules/aws-cdk/**/*'
+    - '/usr/local/lib/graalvm/**/*'
