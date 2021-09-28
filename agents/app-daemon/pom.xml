@@ -13,7 +13,7 @@
     <artifactId>app-daemon</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.appdaemon.AppDaemon</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.appdaemon.AppDaemon</module.mainClass>
     </properties>
 
     <build>

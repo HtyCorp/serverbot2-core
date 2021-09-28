@@ -13,7 +13,7 @@
     <artifactId>resource-reaper</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.resourcereaper.ScheduledLambdaHandler</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.resourcereaper.ScheduledLambdaHandler</module.mainClass>
     </properties>
 
     <build>

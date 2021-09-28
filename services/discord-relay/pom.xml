@@ -13,7 +13,7 @@
     <artifactId>discord-relay</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.discordrelay.DiscordRelay</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.discordrelay.DiscordRelay</module.mainClass>
     </properties>
 
     <build>

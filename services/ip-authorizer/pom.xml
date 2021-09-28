@@ -13,7 +13,7 @@
     <artifactId>ip-authorizer</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.ipauth.ApiGatewayLambdaHandler</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.ipauth.ApiGatewayLambdaHandler</module.mainClass>
     </properties>
 
     <build>

@@ -13,7 +13,7 @@
     <artifactId>game-metadata-service</artifactId>
     
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.gamemetadata.MainServer</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.gamemetadata.MainServer</module.mainClass>
     </properties>
 
     <build>

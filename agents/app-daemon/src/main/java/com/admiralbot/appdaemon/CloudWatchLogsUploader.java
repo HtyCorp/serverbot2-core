@@ -2,10 +2,8 @@ package com.admiralbot.appdaemon;
 
 import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedutil.Joiner;
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.InputLogEvent;
@@ -40,7 +38,7 @@ public class CloudWatchLogsUploader {
     private final String logGroupName;
     private final String logStreamName;
 
-    private final Logger logger = LogManager.getLogger(CloudWatchLogsUploader.class);
+    private final Logger logger = LoggerFactory.getLogger(CloudWatchLogsUploader.class);
 
     public CloudWatchLogsUploader(InputStream inputStream, String appName, Instant when, String outputType) {
         this.streamReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -63,7 +61,6 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamReadLoop() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         try {
             String logLine;
             while ((logLine = streamReader.readLine()) != null) {
@@ -94,7 +91,6 @@ public class CloudWatchLogsUploader {
     }
 
     private void streamUploadLoop() {
-        AWSXRay.getGlobalRecorder().setContextMissingStrategy(new IgnoreErrorContextMissingStrategy());
         String nextSequenceToken = null; // No sequence token specified for first batch of events uploaded
         try {
             while (true) {
@@ -116,9 +112,9 @@ public class CloudWatchLogsUploader {
                 String finalNextSequenceToken = nextSequenceToken;
                 nextSequenceToken = logsClient.putLogEvents(r ->
                         r.logGroupName(logGroupName)
-                        .logStreamName(logStreamName)
-                        .sequenceToken(finalNextSequenceToken)
-                        .logEvents(eventsBatch)
+                                .logStreamName(logStreamName)
+                                .sequenceToken(finalNextSequenceToken)
+                                .logEvents(eventsBatch)
                 ).nextSequenceToken();
                 logger.trace("Finished upload and got next sequence token " + nextSequenceToken);
             }

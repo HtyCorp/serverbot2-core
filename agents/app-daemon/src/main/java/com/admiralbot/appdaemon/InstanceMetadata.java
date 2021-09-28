@@ -2,8 +2,8 @@ package com.admiralbot.appdaemon;
 
 import com.admiralbot.sharedutil.LogUtils;
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +21,7 @@ public class InstanceMetadata {
     private String privateIp;
     private String region;
 
-    private static final Logger logger = LogManager.getLogger(InstanceMetadata.class);
+    private static final Logger logger = LoggerFactory.getLogger(InstanceMetadata.class);
 
     private static final Gson gson = new Gson();
     private static final URI identityMetadataUri =

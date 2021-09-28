@@ -13,7 +13,7 @@
     <artifactId>network-security-service</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.networksecurity.MainServer</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.networksecurity.MainServer</module.mainClass>
     </properties>
 
     <build>

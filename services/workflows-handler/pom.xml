@@ -13,7 +13,7 @@
     <artifactId>workflows-handler</artifactId>
 
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.workflows.LambdaHandler</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.workflows.LambdaHandler</module.mainClass>
     </properties>
 
     <build>

@@ -1,7 +1,7 @@
 package com.admiralbot.sharedutil;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -16,7 +16,7 @@ public class AppContext {
 
     private static final String FORCE_DEFAULT_ENV_VAR_NAME = "APP_CONTEXT_FORCE_DEFAULT";
 
-    private static final Logger logger = LogManager.getLogger(AppContext.class);
+    private static final Logger logger = LoggerFactory.getLogger(AppContext.class);
 
     private static AppContext globalContext;
 

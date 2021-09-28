@@ -1,8 +1,8 @@
 package com.admiralbot.discordrelay;
 
 import com.admiralbot.sharedutil.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public class CommandArgParser {
 
-    private final Logger logger = LogManager.getLogger(CommandArgParser.class);
+    private final Logger logger = LoggerFactory.getLogger(CommandArgParser.class);
 
     private final static Pattern SQUOTE = Pattern.compile("\\s*'([^']*)'\\s*");
     private final static Pattern DQUOTE = Pattern.compile("\\s*\"([^\"]*)\"\\s*");

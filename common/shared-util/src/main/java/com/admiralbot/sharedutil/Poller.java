@@ -1,14 +1,14 @@
 package com.admiralbot.sharedutil;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Poller<PollerInputType,PollerOutputType> {
 
-    private final static Logger logger = LogManager.getLogger(Poller.class);
+    private final static Logger logger = LoggerFactory.getLogger(Poller.class);
 
     private final Function<PollerInputType,PollerOutputType> pollFunction;
     private final long pollIntervalMillis;

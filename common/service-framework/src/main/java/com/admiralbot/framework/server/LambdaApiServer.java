@@ -3,8 +3,8 @@ package com.admiralbot.framework.server;
 import com.admiralbot.sharedconfig.LambdaWarmerConfig;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +15,11 @@ import java.nio.charset.StandardCharsets;
 // but clients in this framework send an unquoted JSON object.
 public abstract class LambdaApiServer<ModelType> extends AbstractApiServer<ModelType> implements RequestStreamHandler {
 
-    private final Logger logger = LogManager.getLogger(LambdaApiServer.class);
+    private final Logger logger = LoggerFactory.getLogger(LambdaApiServer.class);
+
+    public LambdaApiServer() {
+        super.initialise();
+    }
 
     @Override
     protected boolean requiresEndpointInfo() {

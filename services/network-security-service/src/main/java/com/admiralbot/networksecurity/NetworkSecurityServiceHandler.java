@@ -16,8 +16,8 @@ import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.model.KmsException;
 
@@ -37,7 +37,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
     private final IGroupManager groupManager = chooseGroupManager();
     private final INetworkAnalyser networkAnalyser = chooseNetworkAnalyser();
 
-    private final Logger logger = LogManager.getLogger(NetworkSecurityServiceHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(NetworkSecurityServiceHandler.class);
 
     @Override
     public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroupRequest request) {

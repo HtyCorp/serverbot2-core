@@ -6,8 +6,8 @@ import com.admiralbot.workflows.model.ExecutionState;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ public class LambdaHandler implements RequestStreamHandler {
         AppContext.setLambda();
     }
 
-    private final Logger logger = LogManager.getLogger(LambdaHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(LambdaHandler.class);
 
     private final Gson gson = new Gson();
     private final StepHandler stepHandler = new StepHandler();

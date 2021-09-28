@@ -1,12 +1,9 @@
 package com.admiralbot.framework.client;
 
 import com.admiralbot.sharedutil.AppContext;
-import com.admiralbot.sharedutil.Utils;
-import com.amazonaws.xray.AWSXRay;
-import com.amazonaws.xray.entities.Entity;
-import com.amazonaws.xray.entities.TraceHeader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.admiralbot.sharedutil.XrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.signer.Aws4Signer;
 import software.amazon.awssdk.auth.signer.params.Aws4SignerParams;
@@ -23,7 +20,7 @@ public class SigV4HttpClient {
 
     private final AppContext appContext;
 
-    private static final Logger logger = LogManager.getLogger(SigV4HttpClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(SigV4HttpClient.class);
 
     public SigV4HttpClient(AppContext appContext) {
         Objects.requireNonNull(appContext, "SigV4HttpClient requires a non-null app context");
@@ -38,9 +35,9 @@ public class SigV4HttpClient {
 
         // Propagate Xray trace ID into request headers if one is found
         Map<String, List<String>> extraHeaders = new HashMap<>(1);
-        Utils.ifNotNull(AWSXRay.getTraceEntity(), Entity::getTraceId, traceId -> {
+        Optional.ofNullable(XrayUtils.getTraceHeader()).ifPresent(traceId -> {
             logger.debug("Adding discovered Trace ID to HTTP headers");
-            extraHeaders.put(TraceHeader.HEADER_KEY, List.of(traceId.toString()));
+            extraHeaders.put(XrayUtils.TRACE_ID_HEADER_KEY, List.of(traceId));
         });
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()

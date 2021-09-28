@@ -7,8 +7,8 @@ import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.server.HttpApiServer;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.Utils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -29,7 +29,7 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
     private final DynamoMessageTable messageTable;
     private final SlashCommandUpdater slashCommandUpdater;
 
-    private final Logger logger = LogManager.getLogger(RelayServiceHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(RelayServiceHandler.class);
 
     @Override
     protected Class<IDiscordService> getModelClass() {

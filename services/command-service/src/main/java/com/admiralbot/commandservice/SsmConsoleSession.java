@@ -2,12 +2,13 @@ package com.admiralbot.commandservice;
 
 import com.admiralbot.sharedconfig.CommandLambdaConfig;
 import com.admiralbot.sharedutil.AppContext;
+import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -29,7 +30,7 @@ public class SsmConsoleSession {
     private static final HttpClient httpClient = HttpClient.newBuilder().build();
     private static final StsClient stsClient = SdkUtils.client(StsClient.builder());
 
-    private final Logger logger = LogManager.getLogger(SsmConsoleSession.class);
+    private final Logger logger = LoggerFactory.getLogger(SsmConsoleSession.class);
 
     private final String instanceId;
     private final String sessionName;
@@ -80,7 +81,7 @@ public class SsmConsoleSession {
         String sessionStringJson = sessionObject.toString();
         String sessionStringEncoded = URLEncoder.encode(sessionStringJson, StandardCharsets.UTF_8);
 
-        logger.debug(() -> "Dumping obfuscated session string:\n"
+        LogUtils.debug(logger, () -> "Dumping obfuscated session string:\n"
                 + sessionStringJson.replace(credentials.secretAccessKey(), "***REDACTED***"));
 
         String getSigninTokenUrl = "https://signin.aws.amazon.com/federation"
@@ -89,7 +90,7 @@ public class SsmConsoleSession {
                 + "&SessionType=json"
                 + "&Session=" + sessionStringEncoded;
 
-        logger.debug(() -> "Dumping obfuscated URL:\n"
+        LogUtils.debug(logger, () -> "Dumping obfuscated URL:\n"
                 + getSigninTokenUrl.replace(URLEncoder.encode(credentials.secretAccessKey(), StandardCharsets.UTF_8),
                 "REDACTED"));
 
@@ -123,5 +124,4 @@ public class SsmConsoleSession {
         logger.debug("Got federation access key ID " + accessKeyId);
         return StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey));
     }
-
 }

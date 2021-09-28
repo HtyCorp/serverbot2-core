@@ -7,9 +7,6 @@ import com.admiralbot.framework.client.ApiClient;
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.sharedutil.XrayUtils;
-import com.amazonaws.xray.AWSXRay;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.Channel;
@@ -21,6 +18,8 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.MessageDecoration;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +47,7 @@ public class DiscordRelay {
             Intent.GUILD_MESSAGES
     };
 
-    private final Logger logger = LogManager.getLogger(DiscordRelay.class);
+    private final Logger logger = LoggerFactory.getLogger(DiscordRelay.class);
 
     private final CommandArgParser commandArgParser;
     private final ChannelMap channelMap;
@@ -101,13 +100,13 @@ public class DiscordRelay {
     private <T> void asyncExecute(String segmentName, Consumer<T> handler, T event) {
         handlerQueue.execute(() -> {
             try {
-                AWSXRay.beginSegment(segmentName);
+                XrayUtils.beginSegment(segmentName);
                 handler.accept(event);
             } catch (Exception e) {
                 logger.error("Uncaught exception during {} handling", segmentName, e);
-                AWSXRay.getCurrentSegment().addException(e);
+                XrayUtils.addSegmentException(e);
             } finally {
-                AWSXRay.endSegment();
+                XrayUtils.endSegment();
             }
         });
     }

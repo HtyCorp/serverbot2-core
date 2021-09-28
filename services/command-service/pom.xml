@@ -13,7 +13,7 @@
     <artifactId>command-service</artifactId>
     
     <properties>
-        <module.assemblyJarMainClass>com.admiralbot.commandservice.MainServer</module.assemblyJarMainClass>
+        <module.mainClass>com.admiralbot.commandservice.MainServer</module.mainClass>
     </properties>
 
     <build>
@@ -70,11 +70,6 @@
             <groupId>io.mamish.serverbot2</groupId>
             <artifactId>service-framework</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-lambda-java-core</artifactId>
         </dependency>
 
         <dependency>

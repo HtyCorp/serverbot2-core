@@ -10,8 +10,8 @@ import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Pair;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import software.amazon.awssdk.core.SdkBytes;
 
 import java.io.FileReader;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class ServiceHandler implements IAppDaemon {
 
     private final Gson gson = new Gson();
-    private final Logger logger = LogManager.getLogger(ServiceHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(ServiceHandler.class);
 
     private Process runningAppProcess;
     private SessionSftpServer sessionSftpServer;
