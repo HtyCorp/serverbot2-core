@@ -16,7 +16,7 @@ phases:
       # Skip step if Graal is already installed
       - |
         if [[ -f "${JAVA_HOME}" ]]; then
-          echo "GraalVM ${GRAAL_ARTIFACT}" already installed" && exit 0;
+          echo "GraalVM ${GRAAL_ARTIFACT} already installed" && exit 0;
         fi
       # Prepare JAVA_HOME directory and download/unzip GraalVM JDK
       - "mkdir -p \"${JAVA_HOME}\""
