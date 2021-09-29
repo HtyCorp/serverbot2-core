@@ -14,7 +14,10 @@ phases:
       # Install NPM to 'global' local repo
       - "npm install -g aws-cdk@${CDK_VERSION}"
       # Skip step if Graal is already installed
-      - "[[ -f \"${JAVA_HOME}\" ]] && echo 'GraalVM ${GRAAL_ARTIFACT} installed' && exit 0"
+      - |
+        if [[ -f "${JAVA_HOME}" ]]; then
+          echo "GraalVM ${GRAAL_ARTIFACT}" already installed" && exit 0;
+        fi
       # Prepare JAVA_HOME directory and download/unzip GraalVM JDK
       - "mkdir -p \"${JAVA_HOME}\""
       - "curl -L \"${GRAAL_DOWNLOAD_PREFIX}/${GRAAL_RELEASE}/${GRAAL_ARTIFACT}.tar.gz\" | tar xzvC \"${JAVA_HOME}\""
