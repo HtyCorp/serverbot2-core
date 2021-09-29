@@ -5,8 +5,7 @@ env:
     CDK_VERSION: "1.111.0"
     GRAAL_RELEASE: "vm-21.2.0"
     GRAAL_ARTIFACT: "graalvm-ce-java11-linux-amd64-21.2.0"
-    JAVA_HOME: "/usr/local/lib/graalvm/${GRAAL_ARTIFACT}"
-    PATH: "${JAVA_HOME}/bin:${PATH}"
+    JAVA_HOME: "/usr/local/lib/graalvm/vm-21.2.0"
     GRAAL_DOWNLOAD_PREFIX: "https://github.com/graalvm/graalvm-ce-builds/releases/download"
 
 phases:
@@ -19,7 +18,8 @@ phases:
       # Prepare JAVA_HOME directory and download/unzip GraalVM JDK
       - "mkdir -p \"${JAVA_HOME}\""
       - "curl -L \"${GRAAL_DOWNLOAD_PREFIX}/${GRAAL_RELEASE}/${GRAAL_ARTIFACT}.tar.gz\" | tar xzvC \"${JAVA_HOME}\""
-      - "gu -v install native-image"
+      - "/usr/local/lib/graalvm/${GRAAL_RELEASE}/java -version"
+      - "/usr/local/lib/graalvm/${GRAAL_RELEASE}/gu -v install native-image"
   build:
     commands:
       # Compile Java modules
