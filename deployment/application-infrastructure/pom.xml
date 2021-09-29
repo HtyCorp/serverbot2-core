@@ -55,6 +55,11 @@
 
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>echo-debug-service-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
             <artifactId>command-service-model</artifactId>
             <version>${project.version}</version>
         </dependency>

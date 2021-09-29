@@ -84,8 +84,6 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
     }
 
     private APIGatewayProxyResponseEvent generateErrorIfInvalidRequest(APIGatewayProxyRequestEvent request) {
-        System.out.println("request="+request);
-        System.out.println("endpointInfo="+getEndpointInfo());
         if (!request.getHttpMethod().equalsIgnoreCase(getEndpointInfo().httpMethod().toString())) {
             return standardResponse(405).withBody("{\"message\":\"Method not allowed\"}");
         }

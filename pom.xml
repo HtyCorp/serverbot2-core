@@ -137,6 +137,8 @@
         <module>services/workflows-handler</module>
         <module>models/url-shortener-service-model</module>
         <module>buildtools/native-image-annotations</module>
+        <module>models/echo-debug-service-model</module>
+        <module>services/echo-debug-service</module>
     </modules>
 
     <dependencyManagement>

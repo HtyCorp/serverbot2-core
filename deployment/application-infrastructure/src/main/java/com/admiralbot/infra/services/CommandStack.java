@@ -3,7 +3,7 @@ package com.admiralbot.infra.services;
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.discordrelay.model.service.IDiscordService;
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
-import com.admiralbot.infra.constructs.NativeLambdaMicroservice;
+import com.admiralbot.infra.constructs.EcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
@@ -64,7 +64,7 @@ public class CommandStack extends Stack {
 
         // Service
 
-        NativeLambdaMicroservice service = new NativeLambdaMicroservice(this, "Service", parent, "command-service");
+        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "command-service");
 
         Permissions.addManagedPoliciesToRole(service.getRole(),
                 ManagedPolicies.STEP_FUNCTIONS_FULL_ACCESS,
@@ -83,7 +83,7 @@ public class CommandStack extends Stack {
         );
 
         ServiceApi api = new ServiceApi(this, "Api", parent, ICommandService.class);
-        api.addNativeLambdaRoute(ICommandService.class, service);
+        api.addEcsRoute(ICommandService.class, service);
 
     }
 }
