@@ -94,8 +94,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         // The path reported by APIGW v2 includes the stage prefix, e.g. an API configured with serviceName="example"
         // and uriPath="/" would expect the APIGW-reported path to be "/example/".
         // The extra slug prefix is added by the APIGW's custom domain feature on a normal "/" customer request.
-        String apiPathWithServiceName = Joiner.slash("",
-                getEndpointInfo().serviceName(), getEndpointInfo().uriPath());
+        String apiPathWithServiceName = "/" + getEndpointInfo().serviceName() + getEndpointInfo().uriPath();
         if (!apiPathWithServiceName.equalsIgnoreCase(request.getRequestContext().getHttp().getPath())) {
             return standardResponse(404, "{\"message\":\"Not found\"}");
         }
