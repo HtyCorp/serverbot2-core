@@ -3,10 +3,10 @@ package com.admiralbot.framework.server;
 import com.admiralbot.framework.exception.server.FrameworkInternalException;
 import com.admiralbot.framework.server.lambdaruntime.LambdaInvocation;
 import com.admiralbot.framework.server.lambdaruntime.LambdaRuntimeClient;
-import com.admiralbot.sharedutil.Joiner;
+import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.XrayUtils;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,11 +68,15 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         if (invocation.getXrayTraceId() != null) {
             XrayUtils.setTraceId(invocation.getXrayTraceId());
         }
-        Future<String> responseFuture = threadExecutor.submit(() ->
-                getRequestDispatcher().handleRequest(invocation.getApiGatewayEvent().getBody()));
+
+        String requestBody = invocation.getApiGatewayEvent().getBody();
+        LogUtils.info(logger, () -> "Request body:\n" + requestBody);
+
+        Future<String> responseFuture = threadExecutor.submit(() -> getRequestDispatcher().handleRequest(requestBody));
 
         try {
             String responseBody = responseFuture.get(maxExecutionTimeMs, TimeUnit.MILLISECONDS);
+            LogUtils.infoDump(logger, "Response body:", responseBody);
             return standardResponse(200, responseBody);
         } catch (ExecutionException e) {
             throw new FrameworkInternalException("Invocation encountered an error: " + e.getMessage(), e);

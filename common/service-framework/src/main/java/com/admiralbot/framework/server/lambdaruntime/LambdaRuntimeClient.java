@@ -63,8 +63,6 @@ public class LambdaRuntimeClient {
         String body = getBody(response);
         log.info("Gateway proxy request JSON:\n" + body);
         APIGatewayV2HTTPEvent apiRequest = gson.fromJson(body, APIGatewayV2HTTPEvent.class);
-        LogUtils.infoDump(log, "Gateway proxy request:", apiRequest);
-        log.info("API request JSON:\n" + apiRequest.getBody());
 
         long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, DEADLINE_MS_HEADER))
                 .orElseThrow(() -> new IllegalStateException("Lambda response missing deadline header")));
