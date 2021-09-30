@@ -21,9 +21,9 @@ phases:
           mkdir -p "${JAVA_HOME}"
           GRAAL_DOWNLOAD="https://github.com/graalvm/graalvm-ce-builds/releases/download"
           curl -Lo graal.tar.gz "${GRAAL_DOWNLOAD}/${GRAAL_RELEASE}/${GRAAL_ARTIFACT}.tar.gz"
-          tar -xzf graal.tar.gz -C "${JAVA_HOME}"
-          /usr/local/lib/graalvm/${GRAAL_RELEASE}/bin/java -version
-          /usr/local/lib/graalvm/${GRAAL_RELEASE}/bin/gu -v install native-image
+          tar -xzf graal.tar.gz -C "${JAVA_HOME}" --strip 1 # Remove 'container' dir inside tarball
+          ${JAVA_HOME}/bin/java -version
+          ${JAVA_HOME}/bin/gu -v install native-image
         fi
   build:
     commands:
