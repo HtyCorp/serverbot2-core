@@ -63,7 +63,7 @@
     "allPublicFields": true
   },
   {
-    "name": "APIGatewayV2HTTPResponse",
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredClasses": true,
