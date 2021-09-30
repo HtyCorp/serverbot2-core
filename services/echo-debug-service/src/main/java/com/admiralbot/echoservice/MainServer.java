@@ -6,7 +6,7 @@ import com.admiralbot.sharedutil.AppContext;
 
 public class MainServer extends LambdaProxyApiServer<IEchoService> {
 
-    static {
+    public static void main(String[] args) {
         AppContext.setLambda();
         new MainServer();
     }
