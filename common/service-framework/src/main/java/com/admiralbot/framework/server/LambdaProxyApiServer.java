@@ -3,9 +3,10 @@ package com.admiralbot.framework.server;
 import com.admiralbot.framework.exception.server.FrameworkInternalException;
 import com.admiralbot.framework.server.lambdaruntime.LambdaInvocation;
 import com.admiralbot.framework.server.lambdaruntime.LambdaRuntimeClient;
+import com.admiralbot.sharedutil.Joiner;
 import com.admiralbot.sharedutil.XrayUtils;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,10 @@ import java.util.concurrent.*;
 
 public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
-    private static final String SERVER_HEADER_VALUE = "AdmiralbotCustomLambdaProxy";
+    private static final Map<String,String> STANDARD_RESPONSE_HEADERS = Map.of(
+            "Content-Type", "application/json",
+            "Server", "AdmiralbotCustomLambdaProxy"
+    );
 
     private static final Logger logger = LoggerFactory.getLogger(LambdaProxyApiServer.class);
 
@@ -43,7 +47,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         while(true) {
             LambdaInvocation invocation = runtimeClient.getNextInvocation();
             try {
-                APIGatewayProxyResponseEvent responseEvent = handleInvocation(invocation);
+                APIGatewayV2HTTPResponse responseEvent = handleInvocation(invocation);
                 runtimeClient.postInvocationResponse(invocation.getId(), responseEvent);
             } catch (Exception invokeException) {
                 logger.error("Internal error during invocation handling", invokeException);
@@ -53,10 +57,10 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         }
     }
 
-    private APIGatewayProxyResponseEvent handleInvocation(LambdaInvocation invocation) {
+    private APIGatewayV2HTTPResponse handleInvocation(LambdaInvocation invocation) {
         long maxExecutionTimeMs = invocation.getDeadlineMs() - Instant.now().toEpochMilli();
 
-        APIGatewayProxyResponseEvent errorResponse = generateErrorIfInvalidRequest(invocation.getApiGatewayRequest());
+        APIGatewayV2HTTPResponse errorResponse = generateErrorIfInvalidRequest(invocation.getApiGatewayEvent());
         if (errorResponse != null) {
             return errorResponse;
         }
@@ -65,12 +69,11 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
             XrayUtils.setTraceId(invocation.getXrayTraceId());
         }
         Future<String> responseFuture = threadExecutor.submit(() ->
-                getRequestDispatcher().handleRequest(invocation.getApiGatewayRequest().getBody()));
+                getRequestDispatcher().handleRequest(invocation.getApiGatewayEvent().getBody()));
 
         try {
             String responseBody = responseFuture.get(maxExecutionTimeMs, TimeUnit.MILLISECONDS);
-            return standardResponse(200)
-                    .withBody(responseBody);
+            return standardResponse(200, responseBody);
         } catch (ExecutionException e) {
             throw new FrameworkInternalException("Invocation encountered an error: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -83,20 +86,28 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
 
     }
 
-    private APIGatewayProxyResponseEvent generateErrorIfInvalidRequest(APIGatewayProxyRequestEvent request) {
-        if (!request.getHttpMethod().equalsIgnoreCase(getEndpointInfo().httpMethod().toString())) {
-            return standardResponse(405).withBody("{\"message\":\"Method not allowed\"}");
+    private APIGatewayV2HTTPResponse generateErrorIfInvalidRequest(APIGatewayV2HTTPEvent request) {
+        String apiExpectedHttpMethod = getEndpointInfo().httpMethod().toString();
+        if (!apiExpectedHttpMethod.equalsIgnoreCase(request.getRequestContext().getHttp().getMethod())) {
+            return standardResponse(405, "{\"message\":\"Method not allowed\"}");
         }
-        if (!request.getPath().equalsIgnoreCase(getEndpointInfo().uriPath())) {
-            return standardResponse(404).withBody("{\"message\":\"Not found\"}");
+        // The path reported by APIGW v2 includes the stage prefix, e.g. an API configured with serviceName="example"
+        // and uriPath="/" would expect the APIGW-reported path to be "/example/".
+        // The extra slug prefix is added by the APIGW's custom domain feature on a normal "/" customer request.
+        String apiPathWithServiceName = Joiner.slash("",
+                getEndpointInfo().serviceName(), getEndpointInfo().uriPath());
+        if (!apiPathWithServiceName.equalsIgnoreCase(request.getRequestContext().getHttp().getPath())) {
+            return standardResponse(404, "{\"message\":\"Not found\"}");
         }
         return null;
     }
 
-    private APIGatewayProxyResponseEvent standardResponse(int statusCode) {
-        return new APIGatewayProxyResponseEvent()
+    private APIGatewayV2HTTPResponse standardResponse(int statusCode, String body) {
+        return APIGatewayV2HTTPResponse.builder()
                 .withStatusCode(statusCode)
-                .withHeaders(Map.of("Server", SERVER_HEADER_VALUE));
+                .withHeaders(STANDARD_RESPONSE_HEADERS)
+                .withBody(body)
+                .build();
     }
 
 }

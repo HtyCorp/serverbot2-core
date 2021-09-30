@@ -1,8 +1,8 @@
 package com.admiralbot.framework.server.lambdaruntime;
 
 import com.admiralbot.sharedutil.LogUtils;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +20,21 @@ import java.util.stream.Collectors;
 
 public class LambdaRuntimeClient {
 
+    // Name of env var containing runtime API endpoint value
+    private static final String API_ENDPOINT_ENV_VAR = "AWS_LAMBDA_RUNTIME_API";
+
+    // Lambda runtime API paths
     private static final String API_VERSION_PATH = "/2018-06-01";
     private static final String NEXT_INVOCATION_PATH = "/runtime/invocation/next";
     private static final String INIT_ERROR_PATH = "/runtime/init/error";
     private static final String INVOCATION_RESPONSE_PATH_FORMAT = "/runtime/invocation/%s/response";
     private static final String INVOCATION_ERROR_PATH_FORMAT = "/runtime/invocation/%s/error";
 
-    private static final String API_ENDPOINT_ENV_VAR = "AWS_LAMBDA_RUNTIME_API";
+    // Lambda runtime API response header names
+    private static final String INVOCATION_ID_HEADER = "Lambda-Runtime-Aws-Request-Id";
+    private static final String DEADLINE_MS_HEADER = "Lambda-Runtime-Deadline-Ms";
+    private static final String LAMBDA_ARN_HEADER = "Lambda-Runtime-Invoked-Function-Arn";
+    private static final String XRAY_TRACE_ID_HEADER = "Lambda-Runtime-Trace-Id";
 
     private static final Logger log = LoggerFactory.getLogger(LambdaRuntimeClient.class);
     private static final Gson gson = new Gson();
@@ -37,7 +45,9 @@ public class LambdaRuntimeClient {
 
     public LambdaRuntimeClient() {
         apiEndpointHost = Objects.requireNonNull(System.getenv(API_ENDPOINT_ENV_VAR));
+        // The HTTP client for invocation long-polling needs an infinite timeout
         httpClientNoTimeout = UrlConnectionHttpClient.builder().socketTimeout(Duration.ZERO).build();
+        // The HTTP client for all other paths can use a much lower timeout (response should be basically instant)
         httpClientStandard = UrlConnectionHttpClient.builder().socketTimeout(Duration.ofSeconds(3)).build();
     }
 
@@ -52,22 +62,22 @@ public class LambdaRuntimeClient {
                 null, null);
         String body = getBody(response);
         log.info("Gateway proxy request JSON:\n" + body);
-        APIGatewayProxyRequestEvent apiRequest = gson.fromJson(body, APIGatewayProxyRequestEvent.class);
+        APIGatewayV2HTTPEvent apiRequest = gson.fromJson(body, APIGatewayV2HTTPEvent.class);
         LogUtils.infoDump(log, "Gateway proxy request:", apiRequest);
         log.info("API request JSON:\n" + apiRequest.getBody());
 
-        long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, LambdaInvocation.DEADLINE_MS_HEADER))
+        long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, DEADLINE_MS_HEADER))
                 .orElseThrow(() -> new IllegalStateException("Lambda response missing deadline header")));
         return new LambdaInvocation(
                 apiRequest,
-                getHeader(response, LambdaInvocation.INVOCATION_ID_HEADER),
+                getHeader(response, INVOCATION_ID_HEADER),
                 deadlineMs,
-                getHeader(response, LambdaInvocation.LAMBDA_ARN_HEADER),
-                getHeader(response, LambdaInvocation.XRAY_TRACE_ID_HEADER)
+                getHeader(response, LAMBDA_ARN_HEADER),
+                getHeader(response, XRAY_TRACE_ID_HEADER)
         );
     }
 
-    public void postInvocationResponse(String requestId, APIGatewayProxyResponseEvent response) {
+    public void postInvocationResponse(String requestId, APIGatewayV2HTTPResponse response) {
         String path = String.format(INVOCATION_RESPONSE_PATH_FORMAT, requestId);
         call(SdkHttpMethod.POST, path, null, gson.toJson(response));
     }

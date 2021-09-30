@@ -1,6 +1,6 @@
 [
   {
-    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent",
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredClasses": true,
@@ -9,7 +9,7 @@
     "allPublicFields": true
   },
   {
-    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent$ProxyRequestContext",
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredClasses": true,
@@ -18,7 +18,7 @@
     "allPublicFields": true
   },
   {
-    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent$RequestIdentity",
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext$CognitoIdentity",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredClasses": true,
@@ -27,7 +27,43 @@
     "allPublicFields": true
   },
   {
-    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent",
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext$IAM",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext$Http",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext$Authorizer",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent$RequestContext$Authorizer$JWT",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "APIGatewayV2HTTPResponse",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredClasses": true,
@@ -39,6 +75,8 @@
     "name": "com.admiralbot.framework.exception.ServerExceptionDto",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
     "allDeclaredFields": true,
     "allPublicFields": true
   },
