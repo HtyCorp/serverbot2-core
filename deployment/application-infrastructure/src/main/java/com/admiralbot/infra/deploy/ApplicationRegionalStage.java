@@ -33,6 +33,10 @@ public class ApplicationRegionalStage extends Stage {
         commonStack = new CommonStack(this, "CommonResources");
         serviceClusterStack = new ServiceClusterStack(this, "ServiceCluster");
 
+        // Experimental/native Lambda services
+        new EchoDebugStack(this, "EchoDebugService");
+
+        // Standard/working ECS services
         new IpAuthorizerStack(this, "IpAuthorizerApi");
         new UrlShortenerStack(this, "UrlShortenerApi");
         new RelayStack(this, "DiscordRelay");
