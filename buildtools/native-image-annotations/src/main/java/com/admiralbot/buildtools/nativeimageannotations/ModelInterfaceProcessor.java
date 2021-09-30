@@ -124,12 +124,14 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
         String reflectJson = requiredClassNames.stream()
                 .sorted()
                 .map(name -> "{\"name\":\"" + name + "\"" +
-                        ",\"allDeclaredFields\":true" +
                         ",\"allDeclaredConstructors\":true" +
+                        ",\"allPublicConstructors\":true" +
+                        ",\"allDeclaredFields\":true" +
+                        ",\"allPublicFields\":true" +
                         "}")
                 .collect(Collectors.joining(",\n", "[\n", "\n]"));
 
-        writeNativeImageResourceFile(originElement, "reflect-config.json", reflectJson.toString());
+        writeNativeImageResourceFile(originElement, "reflect-config.json", reflectJson);
     }
 
     private void writeNativeImageResourceFile(TypeElement originElement, String fileName, String fileContent) {

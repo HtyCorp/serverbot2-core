@@ -13,6 +13,8 @@ import spark.Spark;
 
 public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
+    private static final String SERVER_HEADER_VALUE = "AdmiralbotHttpProxy";
+
     private final Logger logger = LoggerFactory.getLogger(HttpApiServer.class);
     private final Gson gson = new GsonBuilder().serializeNulls().create();
 
@@ -39,6 +41,9 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
             XrayUtils.beginSegment(getSimpleServiceName(), request.headers(XrayUtils.TRACE_ID_HEADER_KEY));
 
+            response.type("application/json");
+            response.header("Server", SERVER_HEADER_VALUE);
+
             try {
 
                 XrayUtils.beginSubsegment("HandleRequest");
@@ -50,7 +55,6 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
 
                 XrayUtils.endSubsegment();
 
-                response.header("server", "Serverbot2 API");
                 return responseBody;
 
             } catch (Exception e) {

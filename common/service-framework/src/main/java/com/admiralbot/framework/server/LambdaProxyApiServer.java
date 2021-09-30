@@ -15,7 +15,7 @@ import java.util.concurrent.*;
 
 public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<ModelType> {
 
-    private static final String SERVER_HEADER_VALUE = "AdmiralbotNativeLambda";
+    private static final String SERVER_HEADER_VALUE = "AdmiralbotCustomLambdaProxy";
 
     private static final Logger logger = LoggerFactory.getLogger(LambdaProxyApiServer.class);
 
