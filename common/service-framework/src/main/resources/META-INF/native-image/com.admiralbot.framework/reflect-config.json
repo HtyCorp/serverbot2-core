@@ -9,6 +9,24 @@
     "allPublicFields": true
   },
   {
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent.ProxyRequestContext",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent.RequestIdentity",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,

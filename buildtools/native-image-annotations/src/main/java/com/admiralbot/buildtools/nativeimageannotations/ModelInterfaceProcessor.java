@@ -1,6 +1,10 @@
 package com.admiralbot.buildtools.nativeimageannotations;
 
 import com.admiralbot.sharedutil.Joiner;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -16,8 +20,8 @@ import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SupportedAnnotationTypes({
@@ -26,6 +30,18 @@ import java.util.stream.Stream;
 })
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class ModelInterfaceProcessor extends AbstractProcessor {
+
+    // Ref: https://www.graalvm.org/reference-manual/native-image/Reflection/
+    private static final List<String> ENABLED_REFLECTION_PROPERTIES = List.of(
+            "allDeclaredConstructors",
+            "allPublicConstructors",
+            "allDeclaredFields",
+            "allPublicFields",
+            "allDeclaredClasses",
+            "allPublicClasses"
+    );
+
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -116,22 +132,20 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void createProxyResourceFile(TypeElement originElement, String interfaceClassName) {
-        String fileContent = "[[\"" + interfaceClassName + "\"]]";
-        writeNativeImageResourceFile(originElement, "proxy-config.json", fileContent);
+        String proxyConfigJson = "[[\"" + interfaceClassName + "\"]]";
+        writeNativeImageResourceFile(originElement, "proxy-config.json", proxyConfigJson);
     }
 
     private void createReflectionResourceFile(TypeElement originElement, Set<String> requiredClassNames) {
-        String reflectJson = requiredClassNames.stream()
-                .sorted()
-                .map(name -> "{\"name\":\"" + name + "\"" +
-                        ",\"allDeclaredConstructors\":true" +
-                        ",\"allPublicConstructors\":true" +
-                        ",\"allDeclaredFields\":true" +
-                        ",\"allPublicFields\":true" +
-                        "}")
-                .collect(Collectors.joining(",\n", "[\n", "\n]"));
+        JsonArray reflectionConfigItems = new JsonArray();
+        requiredClassNames.stream().sorted().forEach(className -> {
+            JsonObject classItem = new JsonObject();
+            classItem.addProperty("name", className);
+            ENABLED_REFLECTION_PROPERTIES.forEach(property -> classItem.addProperty(property, true));
+            reflectionConfigItems.add(classItem);
+        });
 
-        writeNativeImageResourceFile(originElement, "reflect-config.json", reflectJson);
+        writeNativeImageResourceFile(originElement, "reflect-config.json", gson.toJson(reflectionConfigItems));
     }
 
     private void writeNativeImageResourceFile(TypeElement originElement, String fileName, String fileContent) {
