@@ -63,10 +63,15 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     private void processAnnotatedInterface(TypeElement interfaceType) {
         Set<String> requiredClassNames = new HashSet<>();
 
+        // Add actual interface type
+        requiredClassNames.add(getQualifiedTypeName(interfaceType));
+
+        // Add types for each operation (method) within the interface
         interfaceType.getEnclosedElements().stream()
                 .filter(element -> element.getKind().equals(ElementKind.METHOD))
                 .forEach(element -> registerOperation((ExecutableElement) element, requiredClassNames));
 
+        // Create proxy and reflect config files under META-INF
         createProxyResourceFile(interfaceType, interfaceType.getQualifiedName().toString());
         createReflectionResourceFile(interfaceType, requiredClassNames);
     }
