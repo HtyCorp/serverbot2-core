@@ -3,7 +3,6 @@ package com.admiralbot.buildtools.nativeimageannotations;
 import com.admiralbot.sharedutil.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -19,9 +18,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 @SupportedAnnotationTypes({
@@ -32,13 +29,19 @@ import java.util.stream.Stream;
 public class ModelInterfaceProcessor extends AbstractProcessor {
 
     // Ref: https://www.graalvm.org/reference-manual/native-image/Reflection/
-    private static final List<String> ENABLED_REFLECTION_PROPERTIES = List.of(
+    private static final List<String> FIELD_REFLECT_FLAGS = List.of(
+            "allDeclaredClasses",
+            "allPublicClasses",
             "allDeclaredConstructors",
             "allPublicConstructors",
             "allDeclaredFields",
-            "allPublicFields",
+            "allPublicFields"
+    );
+    private static final List<String> INTERFACE_REFLECT_FLAGS = List.of(
             "allDeclaredClasses",
-            "allPublicClasses"
+            "allPublicClasses",
+            "allDeclaredMethods",
+            "allPublicMethods"
     );
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -61,40 +64,41 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void processAnnotatedInterface(TypeElement interfaceType) {
-        Set<String> requiredClassNames = new HashSet<>();
+        Set<JsonObject> classConfigEntries = new HashSet<>();
 
         // Add actual interface type
-        requiredClassNames.add(getQualifiedTypeName(interfaceType));
+        classConfigEntries.add(createReflectConfigEntry(getQualifiedTypeName(interfaceType), INTERFACE_REFLECT_FLAGS));
 
         // Add types for each operation (method) within the interface
         interfaceType.getEnclosedElements().stream()
                 .filter(element -> element.getKind().equals(ElementKind.METHOD))
-                .forEach(element -> registerOperation((ExecutableElement) element, requiredClassNames));
+                .forEach(element -> registerOperation((ExecutableElement) element, classConfigEntries));
 
         // Create proxy and reflect config files under META-INF
-        createProxyResourceFile(interfaceType, interfaceType.getQualifiedName().toString());
-        createReflectionResourceFile(interfaceType, requiredClassNames);
+        createProxyConfigResourceFile(interfaceType, interfaceType.getQualifiedName().toString());
+        createReflectConfigResourceFile(interfaceType, classConfigEntries);
     }
 
-    private void registerOperation(ExecutableElement method, Set<String> classesToRegister) {
+    private void registerOperation(ExecutableElement method, Set<JsonObject> classConfigEntries) {
         if (method.getParameters().size() != 1) {
             throw new RuntimeException("Operation method must have a single request argument");
         }
         TypeElement requestType = getTypeElement(method.getParameters().get(0).asType());
         TypeElement responseType = getTypeElement(method.getReturnType());
-        registerFieldTypes(requestType, classesToRegister);
-        registerFieldTypes(responseType, classesToRegister);
+        registerFieldTypes(requestType, classConfigEntries);
+        registerFieldTypes(responseType, classConfigEntries);
     }
 
-    private void registerFieldTypes(TypeElement type, Set<String> requiredClassNames) {
-        boolean notSeenBefore = requiredClassNames.add(getQualifiedTypeName(type));
+    private void registerFieldTypes(TypeElement type, Set<JsonObject> classConfigEntries) {
+        JsonObject classConfigEntry = createReflectConfigEntry(getQualifiedTypeName(type), FIELD_REFLECT_FLAGS);
+        boolean notSeenBefore = classConfigEntries.add(classConfigEntry);
         // Don't recurse into this type if we have seen it before
         if (notSeenBefore) {
             type.getEnclosedElements().stream()
                     .filter(this::isInstanceFieldElement)
                     .flatMap(element -> getTypesOfInterest(element.asType()))
                     .map(this::getTypeElement)
-                    .forEach(fieldType -> registerFieldTypes(fieldType, requiredClassNames));
+                    .forEach(fieldType -> registerFieldTypes(fieldType, classConfigEntries));
         }
     }
 
@@ -136,21 +140,22 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
         return fullName;
     }
 
-    private void createProxyResourceFile(TypeElement originElement, String interfaceClassName) {
+    private static JsonObject createReflectConfigEntry(String className, List<String> flagSet) {
+        JsonObject interfaceConfigEntry = new JsonObject();
+        interfaceConfigEntry.addProperty("name", className);
+        flagSet.forEach(flag -> interfaceConfigEntry.addProperty(flag, true));
+        return interfaceConfigEntry;
+    }
+
+    private void createProxyConfigResourceFile(TypeElement originElement, String interfaceClassName) {
         String proxyConfigJson = "[[\"" + interfaceClassName + "\"]]";
         writeNativeImageResourceFile(originElement, "proxy-config.json", proxyConfigJson);
     }
 
-    private void createReflectionResourceFile(TypeElement originElement, Set<String> requiredClassNames) {
-        JsonArray reflectionConfigItems = new JsonArray();
-        requiredClassNames.stream().sorted().forEach(className -> {
-            JsonObject classItem = new JsonObject();
-            classItem.addProperty("name", className);
-            ENABLED_REFLECTION_PROPERTIES.forEach(property -> classItem.addProperty(property, true));
-            reflectionConfigItems.add(classItem);
-        });
-
-        writeNativeImageResourceFile(originElement, "reflect-config.json", gson.toJson(reflectionConfigItems));
+    private void createReflectConfigResourceFile(TypeElement originElement, Set<JsonObject> classConfigEntries) {
+        List<JsonObject> finalEntries = new ArrayList<>(classConfigEntries);
+        finalEntries.sort(Comparator.comparing(e -> e.get("name").getAsString()));
+        writeNativeImageResourceFile(originElement, "reflect-config.json", gson.toJson(finalEntries));
     }
 
     private void writeNativeImageResourceFile(TypeElement originElement, String fileName, String fileContent) {
