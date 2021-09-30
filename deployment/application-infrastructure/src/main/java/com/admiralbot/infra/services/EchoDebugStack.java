@@ -21,6 +21,7 @@ public class EchoDebugStack extends Stack {
         Permissions.addExecuteApi(this, service, IGameMetadataService.class);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IEchoService.class);
+        api.addNativeLambdaRoute(IEchoService.class, service);
     }
 
 }
