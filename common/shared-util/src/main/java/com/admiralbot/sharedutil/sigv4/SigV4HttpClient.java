@@ -1,4 +1,4 @@
-package com.admiralbot.framework.client;
+package com.admiralbot.sharedutil.sigv4;
 
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.sharedutil.XrayUtils;
@@ -27,14 +27,19 @@ public class SigV4HttpClient {
         this.appContext = appContext;
     }
 
-    public SigV4HttpResponse post(String uri, String body, String serviceName)
+    public SigV4HttpResponse post(String uri, String body, String serviceName) throws IOException {
+        return post(uri, body, serviceName, Map.of());
+    }
+
+    public SigV4HttpResponse post(String uri, String body, String serviceName, Map<String,String> headers)
             throws IOException {
 
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
         ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
 
         // Propagate Xray trace ID into request headers if one is found
-        Map<String, List<String>> extraHeaders = new HashMap<>(1);
+        Map<String,List<String>> extraHeaders = new HashMap<>();
+        headers.forEach((k, v) -> extraHeaders.put(k, List.of(v)));
         Optional.ofNullable(XrayUtils.getTraceHeader()).ifPresent(traceId -> {
             logger.debug("Adding discovered Trace ID to HTTP headers");
             extraHeaders.put(XrayUtils.TRACE_ID_HEADER_KEY, List.of(traceId));

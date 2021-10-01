@@ -17,6 +17,8 @@ import com.admiralbot.framework.server.LambdaApiServer;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.*;
+import com.admiralbot.sharedutil.sigv4.SigV4HttpClient;
+import com.admiralbot.sharedutil.sigv4.SigV4HttpResponse;
 import com.google.gson.*;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.lambda.LambdaClient;

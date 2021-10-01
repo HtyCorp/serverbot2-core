@@ -1,4 +1,4 @@
-package com.admiralbot.framework.client;
+package com.admiralbot.sharedutil.sigv4;
 
 import java.util.Optional;
 
