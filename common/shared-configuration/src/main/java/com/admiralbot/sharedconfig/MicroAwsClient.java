@@ -51,20 +51,34 @@ public class MicroAwsClient {
     private static String fetch(String id, String service, String serviceTarget, String requestKey,
                                 List<String> responseKeyPath) {
         log.info("Invoking {}/{} with request {}={}", service, serviceTarget, requestKey, id);
+
+        // Invoke API over HTTP
+        SigV4HttpResponse response;
         try {
             String regionalUri = String.format("https://%s.%s.amazonaws.com/",
                     service, AppContext.get().getRegion().toString().toLowerCase());
             String requestJson = String.format("{\"%s\":\"%s\"}", requestKey, id);
-            SigV4HttpResponse response = getClient().post(regionalUri, requestJson, service, Map.of(
+            response = getClient().post(regionalUri, requestJson, service, Map.of(
                     "Accept-Encoding", "identity",
                     "Content-Type", "application/x-amz-json-1.1",
                     "X-Amz-Target", serviceTarget
             ));
-            String parameterBody = response.getBody().orElseThrow();
+        } catch (IOException e) {
+            throw new ConfigValueNotFoundException("Fetch: API invocation failed", e);
+        }
+
+        // Validate response and get body/JSON
+        String parameterBody = response.getBody().orElseThrow(() -> new ConfigValueNotFoundException("Empty body"));
+        if (response.getStatusCode() != 200) {
+            throw new ConfigValueNotFoundException(response.getStatusCode() + " status code");
+        }
+
+        // Extract config value and throw exception if lookup fails (i.e. value not present in JSON)
+        try {
             JsonObject parameterJson = JsonParser.parseString(parameterBody).getAsJsonObject();
             return jsonPathGetString(parameterJson, responseKeyPath);
-        } catch (IOException e) {
-            throw new RuntimeException("Value fetch on service <" + service + "> failed", e);
+        } catch (RuntimeException e) {
+            throw new ConfigValueNotFoundException("Failed to extract config value from JSON", e);
         }
     }
 

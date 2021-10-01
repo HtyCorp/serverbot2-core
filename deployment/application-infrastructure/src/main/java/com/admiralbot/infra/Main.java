@@ -2,6 +2,7 @@ package com.admiralbot.infra;
 
 import com.admiralbot.infra.deploy.*;
 import com.admiralbot.infra.util.Util;
+import com.admiralbot.sharedconfig.ConfigValueNotFoundException;
 import com.admiralbot.sharedconfig.DeployConfig;
 import com.admiralbot.sharedconfig.Parameter;
 import com.admiralbot.sharedutil.AppContext;
@@ -10,7 +11,6 @@ import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
 import software.amazon.awscdk.core.*;
 import software.amazon.awscdk.pipelines.CdkPipeline;
-import software.amazon.awssdk.services.ssm.model.ParameterNotFoundException;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +36,7 @@ public class Main {
 
             synthesizeDevPipeline(devEnvironment);
 
-        } catch (ParameterNotFoundException e1) {
+        } catch (ConfigValueNotFoundException e1) {
             System.err.println("No dev environment definition found, trying deployment manifest instead...");
 
             String deploymentManifestJson;
@@ -48,7 +48,7 @@ public class Main {
                 DeploymentManifest deploymentManifest = gson.fromJson(deploymentManifestJson, DeploymentManifest.class);
                 synthesizeFullPipeline(deploymentManifest);
 
-            } catch (ParameterNotFoundException e2) {
+            } catch (ConfigValueNotFoundException e2) {
                 throw new RuntimeException("Could not locate any environment definitions from SSM parameters", e2);
             }
 
