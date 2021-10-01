@@ -76,7 +76,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
 
         try {
             String responseBody = responseFuture.get(maxExecutionTimeMs, TimeUnit.MILLISECONDS);
-            LogUtils.infoDump(logger, "Response body:", responseBody);
+            LogUtils.info(logger, () -> "Response body:\n" + responseBody);
             return standardResponse(200, responseBody);
         } catch (ExecutionException e) {
             throw new FrameworkInternalException("Invocation encountered an error: " + e.getMessage(), e);
