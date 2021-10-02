@@ -43,8 +43,8 @@ phases:
         (
         cd web/url-shortener-frontend/edge-function && python3 <<EOF
         import pip, tempfile, random
-        tempfile._Random = lambda: random.Random('fixed-seed-for-determistic-pip-install')
-        pip._internal.main(['install', '-t', '.', '-r', 'requirements.txt'])
+        tempfile._Random = lambda: random.Random('fixed-seed-for-deterministic-pip-install')
+        pip.main(['install', '-t', '.', '-r', 'requirements.txt'])
         EOF
         )
       # Synthesize application/service CDK stacks for application deployment
