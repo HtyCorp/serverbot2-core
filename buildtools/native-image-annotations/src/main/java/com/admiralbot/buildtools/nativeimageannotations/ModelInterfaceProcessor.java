@@ -18,8 +18,13 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Stream;
+
+import static java.util.Comparator.comparing;
 
 @SupportedAnnotationTypes({
         "com.admiralbot.framework.common.FrameworkApiModel",
@@ -44,7 +49,7 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
             "allPublicMethods"
     );
 
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -64,41 +69,41 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void processAnnotatedInterface(TypeElement interfaceType) {
-        Set<JsonObject> classConfigEntries = new HashSet<>();
+        SortedSet<JsonObject> sortedConfigEntries = new TreeSet<>(comparing(e -> e.get("name").getAsString()));
 
         // Add actual interface type
-        classConfigEntries.add(createReflectConfigEntry(getQualifiedTypeName(interfaceType), INTERFACE_REFLECT_FLAGS));
+        sortedConfigEntries.add(createReflectConfigEntry(getQualifiedTypeName(interfaceType), INTERFACE_REFLECT_FLAGS));
 
-        // Add types for each operation (method) within the interface
+        // Add types for each method (i.e. API operation) within the interface
         interfaceType.getEnclosedElements().stream()
                 .filter(element -> element.getKind().equals(ElementKind.METHOD))
-                .forEach(element -> registerOperation((ExecutableElement) element, classConfigEntries));
+                .forEach(methodElement -> addTypesForMethod((ExecutableElement) methodElement, sortedConfigEntries));
 
         // Create proxy and reflect config files under META-INF
-        createProxyConfigResourceFile(interfaceType, interfaceType.getQualifiedName().toString());
-        createReflectConfigResourceFile(interfaceType, classConfigEntries);
+        createProxyConfigResourceFile(interfaceType, getQualifiedTypeName(interfaceType));
+        createReflectConfigResourceFile(interfaceType, sortedConfigEntries);
     }
 
-    private void registerOperation(ExecutableElement method, Set<JsonObject> classConfigEntries) {
+    private void addTypesForMethod(ExecutableElement method, SortedSet<JsonObject> sortedConfigEntries) {
         if (method.getParameters().size() != 1) {
             throw new RuntimeException("Operation method must have a single request argument");
         }
         TypeElement requestType = getTypeElement(method.getParameters().get(0).asType());
         TypeElement responseType = getTypeElement(method.getReturnType());
-        registerFieldTypes(requestType, classConfigEntries);
-        registerFieldTypes(responseType, classConfigEntries);
+        registerFieldTypes(requestType, sortedConfigEntries);
+        registerFieldTypes(responseType, sortedConfigEntries);
     }
 
-    private void registerFieldTypes(TypeElement type, Set<JsonObject> classConfigEntries) {
+    private void registerFieldTypes(TypeElement type, SortedSet<JsonObject> sortedConfigEntries) {
         JsonObject classConfigEntry = createReflectConfigEntry(getQualifiedTypeName(type), FIELD_REFLECT_FLAGS);
-        boolean notSeenBefore = classConfigEntries.add(classConfigEntry);
+        boolean notSeenBefore = sortedConfigEntries.add(classConfigEntry);
         // Don't recurse into this type if we have seen it before
         if (notSeenBefore) {
             type.getEnclosedElements().stream()
                     .filter(this::isInstanceFieldElement)
                     .flatMap(element -> getTypesOfInterest(element.asType()))
                     .map(this::getTypeElement)
-                    .forEach(fieldType -> registerFieldTypes(fieldType, classConfigEntries));
+                    .forEach(fieldType -> registerFieldTypes(fieldType, sortedConfigEntries));
         }
     }
 
@@ -118,7 +123,7 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
             Stream<TypeMirror> argTypes = declaredType.getTypeArguments().stream().flatMap(this::getTypesOfInterest);
             return Stream.concat(Stream.of(rawType), argTypes);
         }
-        if (type.getKind().isPrimitive()) {
+        if (type.getKind().isPrimitive() || type.getKind().equals(TypeKind.VOID)) {
             return Stream.empty();
         }
         throw new RuntimeException(type + ": not a supported type kind " + type.getKind());
@@ -140,11 +145,11 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
         return fullName;
     }
 
-    private static JsonObject createReflectConfigEntry(String className, List<String> flagSet) {
-        JsonObject interfaceConfigEntry = new JsonObject();
-        interfaceConfigEntry.addProperty("name", className);
-        flagSet.forEach(flag -> interfaceConfigEntry.addProperty(flag, true));
-        return interfaceConfigEntry;
+    private static JsonObject createReflectConfigEntry(String className, List<String> configFlags) {
+        JsonObject classConfigEntry = new JsonObject();
+        classConfigEntry.addProperty("name", className);
+        configFlags.forEach(flag -> classConfigEntry.addProperty(flag, true));
+        return classConfigEntry;
     }
 
     private void createProxyConfigResourceFile(TypeElement originElement, String interfaceClassName) {
@@ -152,18 +157,19 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
         writeNativeImageResourceFile(originElement, "proxy-config.json", proxyConfigJson);
     }
 
-    private void createReflectConfigResourceFile(TypeElement originElement, Set<JsonObject> classConfigEntries) {
-        List<JsonObject> finalEntries = new ArrayList<>(classConfigEntries);
-        finalEntries.sort(Comparator.comparing(e -> e.get("name").getAsString()));
-        writeNativeImageResourceFile(originElement, "reflect-config.json", gson.toJson(finalEntries));
+    private void createReflectConfigResourceFile(TypeElement originElement, SortedSet<JsonObject> sortedConfigEntries) {
+        writeNativeImageResourceFile(originElement, "reflect-config.json", GSON.toJson(sortedConfigEntries));
     }
 
     private void writeNativeImageResourceFile(TypeElement originElement, String fileName, String fileContent) {
-        String interfaceName = originElement.getQualifiedName().toString();
+        // 'Origin' is a vague term for the originally annotated object that triggered this processing,
+        // which is used by IDEs and such to determine when to run the processor again.
+        // We use it as an origin and as a way to differentiate config files under META-INF
+        String originName = originElement.getQualifiedName().toString();
         try (Writer resourceFileWriter = processingEnv.getFiler().createResource(
                 StandardLocation.CLASS_OUTPUT,
                 "",
-                Joiner.slash("META-INF", "native-image", interfaceName, fileName),
+                Joiner.slash("META-INF", "native-image", originName, fileName),
                 originElement)
                 .openWriter()
         ){
