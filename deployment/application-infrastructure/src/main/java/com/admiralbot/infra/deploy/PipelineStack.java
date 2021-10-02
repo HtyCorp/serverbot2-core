@@ -69,6 +69,8 @@ public class PipelineStack extends Stack {
                 .environment(codeBuildBuildEnvironment)
                 .cache(Cache.bucket(cacheBucket, cacheOptions))
                 .build();
+        // Allow CodeBuild project to fetch required SSM parameters
+        // Note: This should probably be done via the buildspec env configuration instead
         codeBuildProject.addToRolePolicy(PolicyStatement.Builder.create()
                 .effect(Effect.ALLOW)
                 .actions(List.of("ssm:GetParameter"))
@@ -76,6 +78,16 @@ public class PipelineStack extends Stack {
                         "arn:aws:ssm:*:*:parameter/"+DeployConfig.DEPLOYMENT_MANIFEST_PARAM_NAME,
                         "arn:aws:ssm:*:*:parameter/"+DeployConfig.DEV_ENVIRONMENT_PARAM_NAME
                 )).build());
+        // Enable SSM Session Manager connections for CodeBuild project
+        codeBuildProject.addToRolePolicy(PolicyStatement.Builder.create()
+                .effect(Effect.ALLOW)
+                .actions(List.of(
+                        "ssmmessages:CreateControlChannel",
+                        "ssmmessages:CreateDataChannel",
+                        "ssmmessages:OpenControlChannel",
+                        "ssmmessages:OpenDataChannel"
+                )).resources(List.of("*"))
+                .build());
 
         CodeBuildAction codeBuildAction = CodeBuildAction.Builder.create()
                 .project(codeBuildProject)
