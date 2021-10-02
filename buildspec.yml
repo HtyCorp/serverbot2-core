@@ -7,10 +7,12 @@ env:
     GRAAL_RELEASE: "vm-21.2.0"
     GRAAL_ARTIFACT: "graalvm-ce-java11-linux-amd64-21.2.0"
     JAVA_HOME: "/usr/local/lib/graalvm/vm-21.2.0"
-    PYC_NONCE_PREFIX: "/tmp/pip-target"
+    SOURCE_DATE_EPOCH: "1622959566" # Arbitrary: consistent with pom.xml epoch for sentimental reasons
 
 phases:
   install:
+    runtime-version:
+      python: 3.8
     commands:
       # Install NPM to 'global' local repo
       - "npm install -g aws-cdk@${CDK_VERSION}"
@@ -33,22 +35,18 @@ phases:
       # Compile Java modules
       - "mvn clean install -Dmaven.test.skip=true"
       # Prep python dependencies (CDK will zip up the asset automatically)
-      - "(cd web/url-shortener-frontend/edge-function && pip3 install -t . -r requirements.txt)"
-      # Making Python builds reproducible is worth the effort since it prevents unnecessary CF edge function deploys
-      # In *.pyc files, replace header timestamp word with a constant word
+      # This is slightly hacked compared to regular `pip` to make it reproducible, which prevents unnecessary CF edge
+      # Lambda deployments and saves significant deployment time.
+      # -> SOURCE_DATE_EPOCH switches compilation to write source hashes instead of timestamps in .pyc files
+      # -> tempfile monkeypatch seeds its RNG to use the same /tmp directory names, which end up in .pyc files too
       - |
-        python3 <<EOF
-        import mmap, pathlib
-        for path in pathlib.Path('web/url-shortener-frontend/edge-function').rglob('*.pyc'):
-          with open(str(path),'r+b') as pycfile:
-            m = mmap.mmap(pycfile.fileno(), 0)
-            # Just a recent epoch timestamp, no special significance
-            m[8:12] = (1633017930).to_bytes(4, byteorder='little')
+        (
+        cd web/url-shortener-frontend/edge-function && python3 <<EOF
+        import pip, tempfile, random
+        tempfile._Random = lambda: random.Random('fixed-seed-for-determistic-pip-install')
+        pip._internal.main(['install', '-t', '.', '-r', 'requirements.txt'])
         EOF
-      # In *.pyc files, replace random pip-generated paths with a constant string
-      - |
-        find web/url-shortener-frontend/edge-function -type f -name '*.pyc' -print0 \
-        | xargs -0 sed -i -E "s|${PYC_NONCE_PREFIX}-\w{8}|${PYC_NONCE_PREFIX}-tampered|g"
+        )
       # Synthesize application/service CDK stacks for application deployment
       - "mkdir -p gen/cloud-assembly"
       - "(cd deployment/application-infrastructure/ && cdk synth -o ../../gen/cloud-assembly)"
