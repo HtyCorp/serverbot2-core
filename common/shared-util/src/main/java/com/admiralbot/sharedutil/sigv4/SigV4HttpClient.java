@@ -39,7 +39,7 @@ public class SigV4HttpClient {
 
         // Propagate Xray trace ID into request headers if one is found
         Map<String,List<String>> extraHeaders = new HashMap<>(headers.size()+2);
-        headers.put("Content-Type", "application/json");
+        extraHeaders.put("Content-Type", List.of("application/json"));
         headers.forEach((k, v) -> extraHeaders.put(k, List.of(v)));
         Optional.ofNullable(XrayUtils.getTraceHeader()).ifPresent(traceId -> {
             logger.debug("Adding discovered Trace ID to HTTP headers");
