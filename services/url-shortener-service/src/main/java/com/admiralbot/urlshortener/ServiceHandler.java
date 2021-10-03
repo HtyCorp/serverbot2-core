@@ -7,16 +7,15 @@ import com.admiralbot.framework.exception.server.ResourceExpiredException;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.*;
-import com.admiralbot.sharedutil.annotation.ForceClassInitializeAtBuildTime;
 import com.admiralbot.urlshortener.model.*;
 import com.admiralbot.urlshortener.tokenv1.V1TokenProcessor;
 import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBean;
+import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBeanSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URLEncoder;
@@ -27,16 +26,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@ForceClassInitializeAtBuildTime
 public class ServiceHandler implements IUrlShortener {
 
     static {
         XrayUtils.setServiceName("UrlShortener");
         AppContext.setLambda();
     }
-
-    // Initialised at native-image build time to avoid runtime reflection
-    private static final TableSchema<V1UrlInfoBean> beanSchema = TableSchema.fromBean(V1UrlInfoBean.class);
 
     private final Logger logger = LoggerFactory.getLogger(ServiceHandler.class);
 
@@ -45,7 +40,7 @@ public class ServiceHandler implements IUrlShortener {
             .build();
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
-            beanSchema);
+            V1UrlInfoBeanSchema.INSTANCE);
     private final V1TokenProcessor v1Processor = new V1TokenProcessor();
 
     private final Pattern basicValidUrlPattern = Pattern.compile("(?<schema>[a-z]+)://"

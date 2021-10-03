@@ -3,7 +3,6 @@ package com.admiralbot.gamemetadata.metastore;
 import com.admiralbot.gamemetadata.model.GameReadyState;
 import com.admiralbot.sharedconfig.GameMetadataConfig;
 import com.admiralbot.sharedutil.SdkUtils;
-import com.admiralbot.sharedutil.annotation.ForceClassInitializeAtBuildTime;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -13,16 +12,13 @@ import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedExce
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@ForceClassInitializeAtBuildTime
 public class DynamoTableMetadataStore implements IMetadataStore {
-
-    // Initialised at native-image build time to avoid runtime reflection
-    private static final TableSchema<GameMetadataBean> beanShema = TableSchema.fromBean(GameMetadataBean.class);
 
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
             .build();
-    private final DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME, beanShema);
+    private final DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
+            GameMetadataBeanSchema.INSTANCE);
 
     @Override
     public void putIfMissing(GameMetadataBean item) {

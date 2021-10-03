@@ -20,7 +20,7 @@ public class GameMetadataBean {
     private String instanceQueueName;
     private String taskCompletionToken;
 
-    public GameMetadataBean() { }
+    public GameMetadataBean() { /* Default for mapper */ }
 
     public GameMetadataBean(String gameName) {
         this.gameName = gameName;

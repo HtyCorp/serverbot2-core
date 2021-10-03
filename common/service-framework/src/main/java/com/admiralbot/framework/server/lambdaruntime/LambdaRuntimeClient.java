@@ -1,6 +1,5 @@
 package com.admiralbot.framework.server.lambdaruntime;
 
-import com.admiralbot.sharedutil.LogUtils;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.google.gson.Gson;

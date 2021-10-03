@@ -70,9 +70,9 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
                 .forEach(methodElement -> addTypesForMethod((ExecutableElement) methodElement, sortedConfigEntries));
 
         // Create proxy and reflect config files under META-INF
-        NativeImageResourceWriter resourceWriter = new NativeImageResourceWriter(processingEnv);
-        resourceWriter.writeString(interfaceType, "proxy-config.json", "[[\"" + interfaceName + "\"]]");
-        resourceWriter.writeJson(interfaceType, "reflect-config.json", sortedConfigEntries);
+        FileWriter resourceWriter = new FileWriter(processingEnv);
+        resourceWriter.writeNativeImageResource(interfaceType, "proxy-config.json", "[[\"" + interfaceName + "\"]]");
+        resourceWriter.writeNativeImageResourceJson(interfaceType, "reflect-config.json", sortedConfigEntries);
     }
 
     private void addTypesForMethod(ExecutableElement method, SortedSet<JsonObject> sortedConfigEntries) {

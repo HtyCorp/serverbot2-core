@@ -29,7 +29,7 @@ public class ForceBuildTimeInitProcessor extends AbstractProcessor {
             throw new RuntimeException("Empty qualified name for type <" + annotatedType + ">");
         }
         String classInitOption = "Args=--initialize-at-build-time=" + typeName;
-        NativeImageResourceWriter resourceWriter = new NativeImageResourceWriter(processingEnv);
-        resourceWriter.writeString(annotatedType, "native-image.properties", classInitOption);
+        FileWriter resourceWriter = new FileWriter(processingEnv);
+        resourceWriter.writeNativeImageResource(annotatedType, "native-image.properties", classInitOption);
     }
 }

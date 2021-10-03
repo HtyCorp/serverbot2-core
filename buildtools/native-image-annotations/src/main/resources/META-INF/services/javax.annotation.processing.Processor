@@ -1,2 +1,3 @@
 com.admiralbot.buildtools.nativeimageannotations.ModelInterfaceProcessor
 com.admiralbot.buildtools.nativeimageannotations.ForceBuildTimeInitProcessor
+com.admiralbot.buildtools.nativeimageannotations.DynamoDBSchemaProcessor
