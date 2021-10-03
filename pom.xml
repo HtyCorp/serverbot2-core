@@ -69,6 +69,7 @@
                             --enable-http
                             --enable-https
                             --initialize-at-build-time=org.slf4j
+                            -H:+PrintClassInitialization
                         </buildArgs>
                     </configuration>
                 </plugin>

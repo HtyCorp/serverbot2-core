@@ -3,6 +3,7 @@ package com.admiralbot.gamemetadata.metastore;
 import com.admiralbot.gamemetadata.model.GameReadyState;
 import com.admiralbot.sharedconfig.GameMetadataConfig;
 import com.admiralbot.sharedutil.SdkUtils;
+import com.admiralbot.sharedutil.annotation.ForceClassInitializeAtBuildTime;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -12,6 +13,7 @@ import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedExce
 import java.util.Optional;
 import java.util.stream.Stream;
 
+@ForceClassInitializeAtBuildTime
 public class DynamoTableMetadataStore implements IMetadataStore {
 
     // Initialised at native-image build time to avoid runtime reflection

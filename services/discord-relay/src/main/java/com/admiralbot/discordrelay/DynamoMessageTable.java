@@ -2,12 +2,14 @@ package com.admiralbot.discordrelay;
 
 import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.SdkUtils;
+import com.admiralbot.sharedutil.annotation.ForceClassInitializeAtBuildTime;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+@ForceClassInitializeAtBuildTime
 public class DynamoMessageTable {
 
     // Initialised at native-image build time to avoid runtime reflection

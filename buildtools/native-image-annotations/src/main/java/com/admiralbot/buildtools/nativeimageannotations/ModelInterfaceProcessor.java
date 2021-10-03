@@ -1,8 +1,5 @@
 package com.admiralbot.buildtools.nativeimageannotations;
 
-import com.admiralbot.sharedutil.Joiner;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -15,9 +12,6 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.StandardLocation;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -49,15 +43,10 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
             "allPublicMethods"
     );
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (TypeElement annotationElement : annotations) {
-            for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(annotationElement)) {
-                processAnnotatedElement(annotatedElement);
-            }
-        }
+        annotations.forEach(annotation -> roundEnv.getElementsAnnotatedWith(annotation)
+                .forEach(this::processAnnotatedElement));
         return true;
     }
 
@@ -69,10 +58,11 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void processAnnotatedInterface(TypeElement interfaceType) {
+        String interfaceName = getQualifiedTypeName(interfaceType);
         SortedSet<JsonObject> sortedConfigEntries = new TreeSet<>(comparing(e -> e.get("name").getAsString()));
 
         // Add actual interface type
-        sortedConfigEntries.add(createReflectConfigEntry(getQualifiedTypeName(interfaceType), INTERFACE_REFLECT_FLAGS));
+        sortedConfigEntries.add(createReflectConfigEntry(interfaceName, INTERFACE_REFLECT_FLAGS));
 
         // Add types for each method (i.e. API operation) within the interface
         interfaceType.getEnclosedElements().stream()
@@ -80,8 +70,9 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
                 .forEach(methodElement -> addTypesForMethod((ExecutableElement) methodElement, sortedConfigEntries));
 
         // Create proxy and reflect config files under META-INF
-        createProxyConfigResourceFile(interfaceType, getQualifiedTypeName(interfaceType));
-        createReflectConfigResourceFile(interfaceType, sortedConfigEntries);
+        NativeImageResourceWriter resourceWriter = new NativeImageResourceWriter(processingEnv);
+        resourceWriter.writeString(interfaceType, "proxy-config.json", "[[\"" + interfaceName + "\"]]");
+        resourceWriter.writeJson(interfaceType, "reflect-config.json", sortedConfigEntries);
     }
 
     private void addTypesForMethod(ExecutableElement method, SortedSet<JsonObject> sortedConfigEntries) {
@@ -150,32 +141,5 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
         classConfigEntry.addProperty("name", className);
         configFlags.forEach(flag -> classConfigEntry.addProperty(flag, true));
         return classConfigEntry;
-    }
-
-    private void createProxyConfigResourceFile(TypeElement originElement, String interfaceClassName) {
-        String proxyConfigJson = "[[\"" + interfaceClassName + "\"]]";
-        writeNativeImageResourceFile(originElement, "proxy-config.json", proxyConfigJson);
-    }
-
-    private void createReflectConfigResourceFile(TypeElement originElement, SortedSet<JsonObject> sortedConfigEntries) {
-        writeNativeImageResourceFile(originElement, "reflect-config.json", GSON.toJson(sortedConfigEntries));
-    }
-
-    private void writeNativeImageResourceFile(TypeElement originElement, String fileName, String fileContent) {
-        // 'Origin' is a vague term for the originally annotated object that triggered this processing,
-        // which is used by IDEs and such to determine when to run the processor again.
-        // We use it as an origin and as a way to differentiate config files under META-INF
-        String originName = originElement.getQualifiedName().toString();
-        try (Writer resourceFileWriter = processingEnv.getFiler().createResource(
-                StandardLocation.CLASS_OUTPUT,
-                "",
-                Joiner.slash("META-INF", "native-image", originName, fileName),
-                originElement)
-                .openWriter()
-        ){
-            resourceFileWriter.write(fileContent);
-        } catch (IOException ioe) {
-            throw new RuntimeException("Resource file write failed: " + ioe.getMessage());
-        }
     }
 }

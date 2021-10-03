@@ -7,6 +7,7 @@ import com.admiralbot.framework.exception.server.ResourceExpiredException;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.*;
+import com.admiralbot.sharedutil.annotation.ForceClassInitializeAtBuildTime;
 import com.admiralbot.urlshortener.model.*;
 import com.admiralbot.urlshortener.tokenv1.V1TokenProcessor;
 import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBean;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ForceClassInitializeAtBuildTime
 public class ServiceHandler implements IUrlShortener {
 
     static {
