@@ -9,8 +9,10 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.SdkBytes;
 
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -69,7 +71,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
             XrayUtils.setTraceId(invocation.getXrayTraceId());
         }
 
-        String requestBody = invocation.getApiGatewayEvent().getBody();
+        String requestBody = getRequestBody(invocation.getApiGatewayEvent());
         LogUtils.info(logger, () -> "Request body:\n" + requestBody);
 
         Future<String> responseFuture = threadExecutor.submit(() -> getRequestDispatcher().handleRequest(requestBody));
@@ -103,6 +105,16 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
             return standardResponse(404, "{\"message\":\"Not found\"}");
         }
         return null;
+    }
+
+    private static String getRequestBody(APIGatewayV2HTTPEvent request) {
+        if (request.getIsBase64Encoded()) {
+            String contentType = request.getHeaders().get("content-type");
+            logger.info("Decoding base64-encoded request body (for Content-Type=" + contentType + ")");
+            return SdkBytes.fromByteArray(Base64.getDecoder().decode(request.getBody())).asUtf8String();
+        } else {
+            return request.getBody();
+        }
     }
 
     private APIGatewayV2HTTPResponse standardResponse(int statusCode, String body) {
