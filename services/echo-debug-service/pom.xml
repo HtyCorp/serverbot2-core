@@ -18,10 +18,12 @@
 
     <build>
         <plugins>
+            <!-- Disabled to prevent unnecessary (and long-running) native-image job
             <plugin>
                 <groupId>org.graalvm.nativeimage</groupId>
                 <artifactId>native-image-maven-plugin</artifactId>
             </plugin>
+            -->
         </plugins>
     </build>
 

@@ -33,7 +33,8 @@ public class ApplicationRegionalStage extends Stage {
         commonStack = new CommonStack(this, "CommonResources");
         serviceClusterStack = new ServiceClusterStack(this, "ServiceCluster");
 
-        // Previously used for native Lambda experimentation, currently disabled
+        // Previously used for native Lambda experimentation, currently disabled.
+        // If enabling this, remember to re-enable native-image plugin in echo/pom.xml.
         // new EchoDebugStack(this, "EchoDebugService");
 
         // Active services
