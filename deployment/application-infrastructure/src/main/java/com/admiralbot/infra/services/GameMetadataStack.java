@@ -1,7 +1,7 @@
 package com.admiralbot.infra.services;
 
 import com.admiralbot.gamemetadata.model.IGameMetadataService;
-import com.admiralbot.infra.constructs.EcsMicroservice;
+import com.admiralbot.infra.constructs.NativeLambdaMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.GameMetadataConfig;
@@ -38,11 +38,12 @@ public class GameMetadataStack extends Stack {
                 .projectionType(ProjectionType.ALL)
                 .build());
 
-        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "game-metadata-service");
+        NativeLambdaMicroservice service = new NativeLambdaMicroservice(this, "Service", parent,
+                "game-metadata-service");
         metadataTable.grantFullAccess(service);
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IGameMetadataService.class);
-        api.addEcsRoute(IGameMetadataService.class, service);
+        api.addNativeLambdaRoute(IGameMetadataService.class, service);
 
     }
 

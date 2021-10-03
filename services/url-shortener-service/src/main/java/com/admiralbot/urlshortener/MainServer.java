@@ -1,13 +1,13 @@
 package com.admiralbot.urlshortener;
 
-import com.admiralbot.framework.server.HttpApiServer;
+import com.admiralbot.framework.server.LambdaProxyApiServer;
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 
-public class MainServer extends HttpApiServer<IUrlShortener> {
+public class MainServer extends LambdaProxyApiServer<IUrlShortener> {
 
     public static void main(String[] args) {
-        AppContext.setContainer();
+        AppContext.setLambda();
         new MainServer();
     }
 

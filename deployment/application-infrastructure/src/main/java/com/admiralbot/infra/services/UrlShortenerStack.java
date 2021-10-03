@@ -1,6 +1,6 @@
 package com.admiralbot.infra.services;
 
-import com.admiralbot.infra.constructs.EcsMicroservice;
+import com.admiralbot.infra.constructs.NativeLambdaMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
@@ -37,11 +37,12 @@ public class UrlShortenerStack extends Stack {
 
         // Add standard microservice and API
 
-        EcsMicroservice microservice = new EcsMicroservice(this, "Service", parent, "url-shortener-service");
-        urlTable.grantFullAccess(microservice.getRole());
+        NativeLambdaMicroservice service = new NativeLambdaMicroservice(this, "Service", parent,
+                "url-shortener-service");
+        urlTable.grantFullAccess(service.getRole());
 
         ServiceApi api = new ServiceApi(this, "Api", parent, IUrlShortener.class);
-        api.addEcsRoute(IUrlShortener.class, microservice);
+        api.addNativeLambdaRoute(IUrlShortener.class, service);
 
     }
 

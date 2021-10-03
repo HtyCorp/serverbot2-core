@@ -1,6 +1,6 @@
 package com.admiralbot.infra.services;
 
-import com.admiralbot.infra.constructs.EcsMicroservice;
+import com.admiralbot.infra.constructs.NativeLambdaMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
@@ -13,7 +13,7 @@ import software.amazon.awscdk.services.ec2.CfnPrefixList;
 import software.amazon.awscdk.services.ec2.Peer;
 import software.amazon.awscdk.services.ec2.Port;
 import software.amazon.awscdk.services.ec2.SecurityGroup;
-import software.amazon.awscdk.services.iam.Role;
+import software.amazon.awscdk.services.iam.IRole;
 
 import java.util.List;
 
@@ -39,9 +39,10 @@ public class NetSecStack extends Stack {
                 Port.tcp(NetSecConfig.APP_INSTANCE_SFTP_PORT),
                 "Custom SFTP port for Apache SSHD / SFTP");
 
-        EcsMicroservice service = new EcsMicroservice(this, "Service", parent, "network-security-service");
+        NativeLambdaMicroservice service = new NativeLambdaMicroservice(this, "Service", parent,
+                "network-security-service");
 
-        Role taskRole = service.getRole();
+        IRole taskRole = service.getRole();
         Permissions.addManagedPoliciesToRole(taskRole,
                 ManagedPolicies.EC2_FULL_ACCESS,
                 ManagedPolicies.LOGS_FULL_ACCESS
@@ -55,7 +56,7 @@ public class NetSecStack extends Stack {
                 "kms:GenerateDataKey");
 
         ServiceApi api = new ServiceApi(this, "Api", parent, INetworkSecurity.class);
-        api.addEcsRoute(INetworkSecurity.class, service);
+        api.addNativeLambdaRoute(INetworkSecurity.class, service);
 
     }
 
