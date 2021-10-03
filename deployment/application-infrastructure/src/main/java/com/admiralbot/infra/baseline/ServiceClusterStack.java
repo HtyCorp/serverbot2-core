@@ -77,15 +77,16 @@ public class ServiceClusterStack extends Stack {
                 .launchTemplateSpecification(makeLatestTemplateSpecification(launchTemplatesByHardwareType.get(AmiHardwareType.STANDARD)))
                 .overrides(List.of(
                         /* Criteria for choosing spot instance types:
-                         * - Must support ECS ENI trunking (currently m5, r5, c5, a1, m6g, r6g, c6g)
-                         * - 2..16GB memory since we're running several Java microservices
-                         * - Need memory more than CPU so avoid c-class unless spot availability is lacking without it
-                         * - Don't use ARM types just yet (should be fine with Java on ECS, but needs testing)
+                         * - ENI trunking not required (awsvpc network mode not used due to NAT cost)
+                         * - CPU/memory balance in favour of memory due to Java usage (no c-class types)
+                         * - 2GB memory or only slightly more since all but one service has been migrated to Lambda
+                         * - Don't use ARM types yet (would probably work, but with some config effort)
+                         * Note: These were much more critical when everything was ECS, not so much now.
                          */
-                        makeInstanceTypeOverride("m5.large", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("m5a.large", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("r5.large", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("r5a.large", AmiHardwareType.STANDARD)
+                        makeInstanceTypeOverride("t3a.small", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3.small", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3a.medium", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3.medium", AmiHardwareType.STANDARD)
                 ))
                 .build();
         InstancesDistributionProperty capacityOptimisedInstanceDistribution = InstancesDistributionProperty.builder()
@@ -106,7 +107,7 @@ public class ServiceClusterStack extends Stack {
                 // Observation: When capacity is 0, managed scaling seems to interpret this as "100% utilization",
                 // resulting in capacity increase. This loops forever. Avoid it by setting minimum size = 1.
                 .minSize("1")
-                .maxSize("2")
+                .maxSize("3")
                 .desiredCapacity("1")
                 .vpcZoneIdentifier(servicePublicSubnetIds)
                 .mixedInstancesPolicy(autoScalingMixedInstancesPolicy)
