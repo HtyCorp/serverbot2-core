@@ -1,4 +1,4 @@
-package com.admiralbot.buildtools.nativeimageannotations;
+package com.admiralbot.buildtools.nativeimagesupport;
 
 import com.google.gson.JsonObject;
 
