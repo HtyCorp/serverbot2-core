@@ -1,6 +1,6 @@
 package com.admiralbot.infra.services;
 
-import com.admiralbot.framework.common.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
 import com.admiralbot.infra.deploy.ApplicationGlobalStage;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;

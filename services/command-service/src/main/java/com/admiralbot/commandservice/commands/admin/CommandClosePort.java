@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.admin;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 4, name = "closeport", numRequiredFields = 2, description = "Close a firewall port on a game server")
 public class CommandClosePort extends AbstractCommandDto {

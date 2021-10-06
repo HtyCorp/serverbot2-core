@@ -1,7 +1,7 @@
 package com.admiralbot.networksecurity.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 3, name = "GenerateIpAuthUrl", numRequiredFields = 1,
         description = "Generate a presigned URL a user can visit to authorise their IP for server access")

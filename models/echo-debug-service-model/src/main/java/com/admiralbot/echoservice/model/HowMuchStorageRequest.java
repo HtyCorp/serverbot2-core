@@ -1,7 +1,7 @@
 package com.admiralbot.echoservice.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 1, name = "HowMuchStorage", numRequiredFields = 1, description = "Get some storage stats")
 public class HowMuchStorageRequest {

@@ -5,6 +5,7 @@ import com.admiralbot.sharedutil.SdkUtils;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class DynamoMessageTable {
@@ -12,8 +13,9 @@ public class DynamoMessageTable {
     private final DynamoDbEnhancedClient ddbClient = DynamoDbEnhancedClient.builder()
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
             .build();
+    // Note: this still runs in standard Java so don't use ImageCache for table schema
     private final DynamoDbTable<DynamoMessageItem> messageTable = ddbClient.table(DiscordConfig.MESSAGE_TABLE_NAME,
-            DynamoMessageItemSchema.INSTANCE);
+            TableSchema.fromBean(DynamoMessageItem.class));
 
     public boolean has(String externalId) {
         return consistentGet(externalId) != null;

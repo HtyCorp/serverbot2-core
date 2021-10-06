@@ -1,7 +1,7 @@
 package com.admiralbot.networksecurity.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 1, name = "DescribeSecurityGroup", numRequiredFields = 1, description = "Describe the (simplified) security group")
 public class DescribeSecurityGroupRequest {

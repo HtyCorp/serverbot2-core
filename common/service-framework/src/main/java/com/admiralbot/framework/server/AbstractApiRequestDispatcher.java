@@ -1,9 +1,9 @@
 package com.admiralbot.framework.server;
 
-import com.admiralbot.framework.common.ApiActionDefinition;
-import com.admiralbot.framework.common.ApiDefinitionSet;
 import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.server.*;
+import com.admiralbot.framework.modelling.ApiActionDefinition;
+import com.admiralbot.framework.modelling.ApiDefinitionSet;
 import com.admiralbot.sharedutil.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

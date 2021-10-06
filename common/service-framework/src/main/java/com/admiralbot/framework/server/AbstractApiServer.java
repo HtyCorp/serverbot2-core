@@ -1,6 +1,6 @@
 package com.admiralbot.framework.server;
 
-import com.admiralbot.framework.common.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
 import com.admiralbot.sharedutil.IDUtils;
 import com.admiralbot.sharedutil.XrayUtils;
 

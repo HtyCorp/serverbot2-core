@@ -2,8 +2,8 @@ package com.admiralbot.commandservice;
 
 import com.admiralbot.commandservice.commands.common.CommandHelp;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
-import com.admiralbot.framework.common.ApiActionDefinition;
-import com.admiralbot.framework.common.ApiDefinitionSet;
+import com.admiralbot.framework.modelling.ApiActionDefinition;
+import com.admiralbot.framework.modelling.ApiDefinitionSet;
 
 import java.util.stream.Collectors;
 

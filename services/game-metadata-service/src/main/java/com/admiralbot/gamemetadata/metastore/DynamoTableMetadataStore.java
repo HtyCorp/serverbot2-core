@@ -1,6 +1,7 @@
 package com.admiralbot.gamemetadata.metastore;
 
 import com.admiralbot.gamemetadata.model.GameReadyState;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedconfig.GameMetadataConfig;
 import com.admiralbot.sharedutil.SdkUtils;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -18,7 +19,7 @@ public class DynamoTableMetadataStore implements IMetadataStore {
             .dynamoDbClient(SdkUtils.client(DynamoDbClient.builder()))
             .build();
     private final DynamoDbTable<GameMetadataBean> table = ddbClient.table(GameMetadataConfig.TABLE_NAME,
-            GameMetadataBeanSchema.INSTANCE);
+            ImageCache.getTableSchema(GameMetadataBean.class));
 
     @Override
     public void putIfMissing(GameMetadataBean item) {

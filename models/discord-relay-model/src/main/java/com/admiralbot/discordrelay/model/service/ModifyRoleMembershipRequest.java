@@ -1,7 +1,7 @@
 package com.admiralbot.discordrelay.model.service;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 2, name = "ModifyRoleMembership", numRequiredFields = 3,
         description = "Add or remove a user from a channel-view role")

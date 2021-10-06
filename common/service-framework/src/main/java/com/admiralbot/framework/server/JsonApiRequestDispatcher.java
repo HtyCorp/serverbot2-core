@@ -1,10 +1,10 @@
 package com.admiralbot.framework.server;
 
-import com.admiralbot.framework.common.ApiActionDefinition;
 import com.admiralbot.framework.exception.ServerExceptionDto;
 import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.exception.server.UnparsableInputException;
+import com.admiralbot.framework.modelling.ApiActionDefinition;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedutil.Pair;
 import com.google.gson.*;

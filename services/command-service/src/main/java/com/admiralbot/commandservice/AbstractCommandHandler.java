@@ -3,7 +3,7 @@ package com.admiralbot.commandservice;
 import com.admiralbot.commandservice.commands.common.CommandHelp;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
-import com.admiralbot.framework.common.ApiDefinitionSet;
+import com.admiralbot.framework.modelling.ApiDefinitionSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

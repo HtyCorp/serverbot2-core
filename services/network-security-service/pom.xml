@@ -19,8 +19,8 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.graalvm.nativeimage</groupId>
-                <artifactId>native-image-maven-plugin</artifactId>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
@@ -65,7 +65,6 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>cloudwatchlogs</artifactId>
         </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-encryption-sdk-java -->
 <!--        <dependency>-->

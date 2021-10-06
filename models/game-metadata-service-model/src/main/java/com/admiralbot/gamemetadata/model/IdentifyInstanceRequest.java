@@ -1,7 +1,7 @@
 package com.admiralbot.gamemetadata.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 8, name = "IdentifyInstance", numRequiredFields = 1,
         description = "Find the game metadata for a given host instance ID")

@@ -1,7 +1,7 @@
 package com.admiralbot.commandservice.commands.welcome;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 1, name = "leave", numRequiredFields = 0,
         description = "Leave the main server bot channel - this hides it from your view to reduce message spam")

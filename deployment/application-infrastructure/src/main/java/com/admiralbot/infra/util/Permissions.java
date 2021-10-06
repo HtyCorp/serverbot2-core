@@ -1,6 +1,6 @@
 package com.admiralbot.infra.util;
 
-import com.admiralbot.framework.common.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
 import software.amazon.awscdk.core.Stack;

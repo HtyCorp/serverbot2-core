@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.welcome;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 5, name = "ip", numRequiredFields = 0,
         description = "List the IP addresses of all running games or a specific game")

@@ -15,8 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <awssdk.version>2.16.95</awssdk.version>
-        <graalvm.version>21.2.0</graalvm.version>
+        <awssdk.version>2.17.52</awssdk.version>
     </properties>
 
     <build>
@@ -46,30 +45,31 @@
         </plugins>
         <pluginManagement>
             <plugins>
+                <!-- https://mvnrepository.com/artifact/org.graalvm.buildtools/native-maven-plugin -->
                 <plugin>
-                    <groupId>org.graalvm.nativeimage</groupId>
-                    <artifactId>native-image-maven-plugin</artifactId>
-                    <version>${graalvm.version}</version>
+                    <groupId>org.graalvm.buildtools</groupId>
+                    <artifactId>native-maven-plugin</artifactId>
+                    <version>0.9.5</version>
                     <executions>
                         <execution>
                             <goals>
-                                <goal>native-image</goal>
+                                <goal>build</goal>
                             </goals>
                             <phase>package</phase>
                         </execution>
                     </executions>
                     <configuration>
-                        <!-- Looks like this hasn't been updated yet for this option to work correctly. -->
-                        <!-- This would be nice but it doesn't `mkdir` correctly. -->
-                        <!--<outputDirectory>${project.build.directory}/lambdazip</outputDirectory>-->
-                        <imageName>service-native-image</imageName>
                         <mainClass>${module.mainClass}</mainClass>
+                        <imageName>bootstrap</imageName>
+                        <outputDirectory>${project.build.directory}/deployzip</outputDirectory>
+                        <!-- Note build-time initialization is configured in native-image-support/resources,
+                             due to a parsing issue encountered when including arguments here -->
                         <buildArgs>
                             --no-fallback
                             --enable-http
                             --enable-https
-                            --initialize-at-build-time=org.slf4j
-                            -H:+PrintClassInitialization
+                            --native-image-info
+                            --verbose
                         </buildArgs>
                     </configuration>
                 </plugin>
@@ -119,6 +119,7 @@
         <module>agents/app-daemon</module>
         <module>buildtools/native-image-support</module>
         <module>common/service-framework</module>
+        <module>common/service-framework-modelling</module>
         <module>common/shared-configuration</module>
         <module>common/shared-util</module>
         <module>common/test-utilities</module>
@@ -198,9 +199,6 @@
                 <artifactId>commons-text</artifactId>
                 <version>1.8</version>
             </dependency>
-
-
-
         </dependencies>
     </dependencyManagement>
 

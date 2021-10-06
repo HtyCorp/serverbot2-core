@@ -1,7 +1,7 @@
 package com.admiralbot.discordrelay.model.service;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 0, name = "NewMessage", numRequiredFields = 1,
         description = "Send a message through Discord to the chosen channels or user")

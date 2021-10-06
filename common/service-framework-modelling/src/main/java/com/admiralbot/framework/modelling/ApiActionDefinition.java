@@ -1,4 +1,4 @@
-package com.admiralbot.framework.common;
+package com.admiralbot.framework.modelling;
 
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Pair;

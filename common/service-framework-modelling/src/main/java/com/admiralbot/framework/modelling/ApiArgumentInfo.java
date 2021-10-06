@@ -1,4 +1,4 @@
-package com.admiralbot.framework.common;
+package com.admiralbot.framework.modelling;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,10 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface ApiRequestInfo {
+@Target(ElementType.FIELD)
+public @interface ApiArgumentInfo {
     int order();
-    String name();
-    int numRequiredFields();
     String description();
 }

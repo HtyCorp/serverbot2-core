@@ -1,6 +1,6 @@
 package com.admiralbot.framework.server;
 
-import com.admiralbot.framework.common.ApiHttpMethod;
+import com.admiralbot.framework.modelling.ApiHttpMethod;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.XrayUtils;

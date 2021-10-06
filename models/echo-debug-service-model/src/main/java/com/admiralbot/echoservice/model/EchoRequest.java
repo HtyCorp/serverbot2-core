@@ -1,7 +1,7 @@
 package com.admiralbot.echoservice.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(name = "Echo", order = 0, numRequiredFields = 1,
         description = "Does exactly what you expect")

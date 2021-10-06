@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>native-image-annotations</artifactId>
+    <artifactId>native-image-support</artifactId>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -33,8 +33,17 @@
     <dependencies>
         <dependency>
             <groupId>io.mamish.serverbot2</groupId>
+            <artifactId>service-framework-modelling</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.mamish.serverbot2</groupId>
             <artifactId>shared-util</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>dynamodb-enhanced</artifactId>
         </dependency>
     </dependencies>
 

@@ -1,10 +1,8 @@
 package com.admiralbot.urlshortener;
 
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
-@DynamoDbBean
 public abstract class BaseUrlInfoBean {
 
     protected String id;

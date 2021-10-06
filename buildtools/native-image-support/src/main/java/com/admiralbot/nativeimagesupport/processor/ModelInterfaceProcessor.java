@@ -1,4 +1,4 @@
-package com.admiralbot.buildtools.nativeimagesupport;
+package com.admiralbot.nativeimagesupport.processor;
 
 import com.google.gson.JsonObject;
 
@@ -21,8 +21,8 @@ import java.util.stream.Stream;
 import static java.util.Comparator.comparing;
 
 @SupportedAnnotationTypes({
-        "com.admiralbot.framework.common.FrameworkApiModel",
-        "com.admiralbot.framework.common.ApiEndpointInfo"
+        "com.admiralbot.framework.modelling.FrameworkApiModel",
+        "com.admiralbot.framework.modelling.ApiEndpointInfo"
 })
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class ModelInterfaceProcessor extends AbstractProcessor {
@@ -58,7 +58,7 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void processAnnotatedInterface(TypeElement interfaceType) {
-        String interfaceName = getQualifiedTypeName(interfaceType);
+        String interfaceName = ProcessorUtil.getBinaryName(processingEnv, interfaceType);
         SortedSet<JsonObject> sortedConfigEntries = new TreeSet<>(comparing(e -> e.get("name").getAsString()));
 
         // Add actual interface type
@@ -70,7 +70,7 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
                 .forEach(methodElement -> addTypesForMethod((ExecutableElement) methodElement, sortedConfigEntries));
 
         // Create proxy and reflect config files under META-INF
-        FileWriter resourceWriter = new FileWriter(processingEnv);
+        ResourceWriter resourceWriter = new ResourceWriter(processingEnv);
         resourceWriter.writeNativeImageResource(interfaceType, "proxy-config.json", "[[\"" + interfaceName + "\"]]");
         resourceWriter.writeNativeImageResourceJson(interfaceType, "reflect-config.json", sortedConfigEntries);
     }
@@ -86,7 +86,8 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
     }
 
     private void registerFieldTypes(TypeElement type, SortedSet<JsonObject> sortedConfigEntries) {
-        JsonObject classConfigEntry = createReflectConfigEntry(getQualifiedTypeName(type), FIELD_REFLECT_FLAGS);
+        JsonObject classConfigEntry = createReflectConfigEntry(ProcessorUtil.getBinaryName(processingEnv, type),
+                FIELD_REFLECT_FLAGS);
         boolean notSeenBefore = sortedConfigEntries.add(classConfigEntry);
         // Don't recurse into this type if we have seen it before
         if (notSeenBefore) {
@@ -126,14 +127,6 @@ public class ModelInterfaceProcessor extends AbstractProcessor {
             throw new RuntimeException("Couldn't map type '" + type + "' to a unique type element");
         }
         return element;
-    }
-
-    private String getQualifiedTypeName(TypeElement element) {
-        String fullName = element.getQualifiedName().toString();
-        if (fullName.isEmpty()) {
-            throw new RuntimeException("Couldn't map element '" + element + "' to a qualified name");
-        }
-        return fullName;
     }
 
     private static JsonObject createReflectConfigEntry(String className, List<String> configFlags) {

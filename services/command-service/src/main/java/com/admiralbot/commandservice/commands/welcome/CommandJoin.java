@@ -1,7 +1,7 @@
 package com.admiralbot.commandservice.commands.welcome;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 0, name = "join", numRequiredFields = 0,
         description = "Join the main server bot channel (normally hidden to reduce spam) so you can interact with it")

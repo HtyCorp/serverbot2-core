@@ -1,7 +1,7 @@
 package com.admiralbot.networksecurity.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 20, name = "GetAuthorizationByIp", numRequiredFields = 1,
         description = "Check if the input IP address is authorized")

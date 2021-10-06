@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.servers;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 14, name = "editgame", numRequiredFields = 1,
         description = "Start a game's host without running the actual game server")

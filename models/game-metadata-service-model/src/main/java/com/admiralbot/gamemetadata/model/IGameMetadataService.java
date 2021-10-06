@@ -1,8 +1,8 @@
 package com.admiralbot.gamemetadata.model;
 
-import com.admiralbot.framework.common.ApiAuthType;
-import com.admiralbot.framework.common.ApiEndpointInfo;
-import com.admiralbot.framework.common.ApiHttpMethod;
+import com.admiralbot.framework.modelling.ApiAuthType;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiHttpMethod;
 
 @ApiEndpointInfo(serviceName = "gamemetadata", uriPath = "/", httpMethod = ApiHttpMethod.POST, authType = ApiAuthType.IAM)
 public interface IGameMetadataService {

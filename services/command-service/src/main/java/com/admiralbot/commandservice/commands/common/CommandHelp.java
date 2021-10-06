@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.common;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 // This is referenced by all channel-specific model interfaces because they each run a different version of 'help',
 // i.e. they all give output about their own specific commands.

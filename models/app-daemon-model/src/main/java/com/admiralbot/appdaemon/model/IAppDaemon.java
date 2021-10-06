@@ -1,6 +1,6 @@
 package com.admiralbot.appdaemon.model;
 
-import com.admiralbot.framework.common.FrameworkApiModel;
+import com.admiralbot.framework.modelling.FrameworkApiModel;
 
 // This interface is pretty unique and doesn't work like a normal service, so no endpoint info is defined.
 // Will eventually be replaced with a 'gateway' service to standardise things.

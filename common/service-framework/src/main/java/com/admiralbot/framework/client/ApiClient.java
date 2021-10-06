@@ -1,9 +1,5 @@
 package com.admiralbot.framework.client;
 
-import com.admiralbot.framework.common.ApiActionDefinition;
-import com.admiralbot.framework.common.ApiDefinitionSet;
-import com.admiralbot.framework.common.ApiEndpointInfo;
-import com.admiralbot.framework.common.ApiHttpMethod;
 import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.ServerExceptionDto;
 import com.admiralbot.framework.exception.ServerExceptionParser;
@@ -13,6 +9,10 @@ import com.admiralbot.framework.exception.client.ApiClientParseException;
 import com.admiralbot.framework.exception.server.GatewayClientException;
 import com.admiralbot.framework.exception.server.GatewayServerException;
 import com.admiralbot.framework.exception.server.SerializationException;
+import com.admiralbot.framework.modelling.ApiActionDefinition;
+import com.admiralbot.framework.modelling.ApiDefinitionSet;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiHttpMethod;
 import com.admiralbot.framework.server.LambdaApiServer;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;

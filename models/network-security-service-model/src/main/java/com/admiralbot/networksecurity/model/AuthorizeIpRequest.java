@@ -1,7 +1,7 @@
 package com.admiralbot.networksecurity.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 4, name = "AuthorizeIp", numRequiredFields = 2,
         description = "Add inbound security group rules allowing this user IP, or replace the IP in their existing rules")

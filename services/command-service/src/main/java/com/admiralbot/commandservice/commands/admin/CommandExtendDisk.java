@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.admin;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 13, name = "extenddisk", numRequiredFields = 2,
         description = "Expand a server's disk to the requested size in GB. Use with caution!")

@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.servers;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 1, name = "games", numRequiredFields = 0,
         description = "List all games or get info on a game")

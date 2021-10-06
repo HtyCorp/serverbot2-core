@@ -4,13 +4,13 @@ import com.admiralbot.framework.exception.server.NoSuchResourceException;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.exception.server.ResourceExpiredException;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.UrlShortenerConfig;
 import com.admiralbot.sharedutil.*;
 import com.admiralbot.urlshortener.model.*;
 import com.admiralbot.urlshortener.tokenv1.V1TokenProcessor;
 import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBean;
-import com.admiralbot.urlshortener.tokenv1.V1UrlInfoBeanSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -40,7 +40,7 @@ public class ServiceHandler implements IUrlShortener {
             .build();
 
     private final DynamoDbTable<V1UrlInfoBean> v1table = ddbClient.table(UrlShortenerConfig.DYNAMO_TABLE_NAME,
-            V1UrlInfoBeanSchema.INSTANCE);
+            ImageCache.getTableSchema(V1UrlInfoBean.class));
     private final V1TokenProcessor v1Processor = new V1TokenProcessor();
 
     private final Pattern basicValidUrlPattern = Pattern.compile("(?<schema>[a-z]+)://"

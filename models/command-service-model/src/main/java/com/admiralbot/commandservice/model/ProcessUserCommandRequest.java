@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.model;
 
 import com.admiralbot.discordrelay.model.service.MessageChannel;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 import java.util.List;
 

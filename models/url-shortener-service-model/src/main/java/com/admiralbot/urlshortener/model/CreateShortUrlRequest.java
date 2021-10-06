@@ -1,7 +1,7 @@
 package com.admiralbot.urlshortener.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 0, name = "CreateShortUrl", numRequiredFields = 2,
         description = "Create a shortened URL that can be fetched to get a longer URL")

@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.admin;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 6, name = "backupnow", numRequiredFields = 1,
         description = "Create a server backup right now")

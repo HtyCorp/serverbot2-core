@@ -1,7 +1,7 @@
 package com.admiralbot.gamemetadata.model;
 
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 6, name = "CreateGame", numRequiredFields = 2,
         description = "Create an uninitialised entry in game metadata table")

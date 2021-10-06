@@ -1,8 +1,8 @@
 package com.admiralbot.commandservice.commands.admin;
 
 import com.admiralbot.commandservice.commands.AbstractCommandDto;
-import com.admiralbot.framework.common.ApiArgumentInfo;
-import com.admiralbot.framework.common.ApiRequestInfo;
+import com.admiralbot.framework.modelling.ApiArgumentInfo;
+import com.admiralbot.framework.modelling.ApiRequestInfo;
 
 @ApiRequestInfo(order = 3, name = "openport", numRequiredFields = 2, description = "Open a firewall port on a game server")
 public class CommandOpenPort extends AbstractCommandDto {

@@ -1,7 +1,7 @@
 package com.admiralbot.infra.constructs;
 
-import com.admiralbot.framework.common.ApiAuthType;
-import com.admiralbot.framework.common.ApiEndpointInfo;
+import com.admiralbot.framework.modelling.ApiAuthType;
+import com.admiralbot.framework.modelling.ApiEndpointInfo;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.DeployConfig;

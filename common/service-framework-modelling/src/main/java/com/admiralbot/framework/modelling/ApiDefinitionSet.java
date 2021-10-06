@@ -1,4 +1,4 @@
-package com.admiralbot.framework.common;
+package com.admiralbot.framework.modelling;
 
 import java.lang.reflect.Method;
 import java.util.*;
