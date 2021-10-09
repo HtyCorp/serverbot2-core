@@ -1,5 +1,7 @@
 package com.admiralbot.framework.server.lambdaruntime;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
 import com.google.gson.Gson;
@@ -36,7 +38,8 @@ public class LambdaRuntimeClient {
     private static final String XRAY_TRACE_ID_HEADER = "Lambda-Runtime-Trace-Id";
 
     private static final Logger log = LoggerFactory.getLogger(LambdaRuntimeClient.class);
-    private static final Gson gson = new Gson();
+
+    private static final Gson GSON = ImageCache.getGson();
 
     private final String apiEndpointHost;
     private final SdkHttpClient httpClientStandard;
@@ -53,7 +56,7 @@ public class LambdaRuntimeClient {
     public void postInitError(String errorMessage, String errorType, List<String> stackTrace) {
         Map<String,String> headers = Map.of(LambdaError.ERROR_TYPE_HEADER, errorType);
         LambdaError lambdaError = new LambdaError(errorMessage, errorType, stackTrace);
-        call(SdkHttpMethod.POST, INIT_ERROR_PATH, headers, gson.toJson(lambdaError));
+        call(SdkHttpMethod.POST, INIT_ERROR_PATH, headers, GSON.toJson(lambdaError));
     }
 
     public LambdaInvocation getNextInvocation() {
@@ -61,7 +64,8 @@ public class LambdaRuntimeClient {
                 null, null);
         String body = getBody(response);
         log.info("Gateway proxy request JSON:\n" + body);
-        APIGatewayV2HTTPEvent apiRequest = gson.fromJson(body, APIGatewayV2HTTPEvent.class);
+        @RegisterGsonType
+        APIGatewayV2HTTPEvent apiRequest = GSON.fromJson(body, APIGatewayV2HTTPEvent.class);
 
         long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, DEADLINE_MS_HEADER))
                 .orElseThrow(() -> new IllegalStateException("Lambda response missing deadline header")));
@@ -74,9 +78,9 @@ public class LambdaRuntimeClient {
         );
     }
 
-    public void postInvocationResponse(String requestId, APIGatewayV2HTTPResponse response) {
+    public void postInvocationResponse(String requestId, @RegisterGsonType APIGatewayV2HTTPResponse response) {
         String path = String.format(INVOCATION_RESPONSE_PATH_FORMAT, requestId);
-        call(SdkHttpMethod.POST, path, null, gson.toJson(response));
+        call(SdkHttpMethod.POST, path, null, GSON.toJson(response));
     }
 
     public void postInvocationError(String requestId, String errorMessage, String errorType, List<String> stackTrace) {
@@ -84,7 +88,7 @@ public class LambdaRuntimeClient {
         Map<String,String> headers = Map.of(LambdaError.ERROR_TYPE_HEADER, errorType);
 
         LambdaError lambdaError = new LambdaError(errorMessage, errorType, stackTrace);
-        call(SdkHttpMethod.POST, path, headers, gson.toJson(lambdaError));
+        call(SdkHttpMethod.POST, path, headers, GSON.toJson(lambdaError));
     }
 
     private String getHeader(HttpExecuteResponse response, String key) {

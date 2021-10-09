@@ -4,6 +4,7 @@ import com.admiralbot.framework.exception.server.NoSuchResourceException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
 import com.admiralbot.framework.exception.server.ResourceAlreadyExistsException;
 import com.admiralbot.framework.exception.server.ResourceExpiredException;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.networksecurity.crypto.Crypto;
 import com.admiralbot.networksecurity.firewall.DiscordUserAuthInfo;
 import com.admiralbot.networksecurity.firewall.DiscordUserAuthType;
@@ -15,7 +16,6 @@ import com.admiralbot.networksecurity.netanalysis.INetworkAnalyser;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.NetSecConfig;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
@@ -32,7 +32,7 @@ public class NetworkSecurityServiceHandler implements INetworkSecurity {
     private static final Pattern BASIC_IP_REGEX = Pattern.compile("(\\d{1,3}\\.){3}(\\d{1,3})");
     private static final int PLACEHOLDER_AGE_FOR_NO_ACTIVITY = Integer.MAX_VALUE / 2;
 
-    private final Gson gson = new GsonBuilder().serializeNulls().create();
+    private final Gson gson = ImageCache.getGson();
     private final Crypto crypto = new Crypto();
     private final IGroupManager groupManager = chooseGroupManager();
     private final INetworkAnalyser networkAnalyser = chooseNetworkAnalyser();

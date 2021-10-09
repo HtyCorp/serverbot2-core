@@ -1,7 +1,9 @@
 package com.admiralbot.networksecurity.firewall;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
 import com.google.gson.annotations.SerializedName;
 
+@RegisterGsonType
 public class DiscordUserAuthInfo {
 
     // Uses shorter serialised name since space is limited in PL entry description field

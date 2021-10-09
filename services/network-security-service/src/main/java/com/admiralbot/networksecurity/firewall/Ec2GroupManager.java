@@ -4,6 +4,7 @@ import com.admiralbot.framework.exception.server.NoSuchResourceException;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.ResourceAlreadyExistsException;
 import com.admiralbot.framework.exception.server.ServiceLimitException;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.networksecurity.crypto.Crypto;
 import com.admiralbot.networksecurity.model.ManagedSecurityGroup;
 import com.admiralbot.networksecurity.model.PortPermission;
@@ -15,7 +16,6 @@ import com.admiralbot.sharedutil.Pair;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
@@ -39,7 +39,7 @@ public class Ec2GroupManager implements IGroupManager {
     private final String PREFIX_LIST_DATA_KEY_TAG_KEY = "EncryptedDataKey";
 
     private final Crypto crypto;
-    private final Gson gson = new GsonBuilder().serializeNulls().create();
+    private final Gson gson = ImageCache.getGson();
 
     private final Pattern NUMERIC_ID_PATTERN = Pattern.compile("\\d+");
 

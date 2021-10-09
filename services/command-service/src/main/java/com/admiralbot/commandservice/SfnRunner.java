@@ -1,5 +1,6 @@
 package com.admiralbot.commandservice;
 
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedutil.IDUtils;
 import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.workflows.model.ExecutionState;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class SfnRunner {
 
-    private final Gson gson = new Gson();
+    private static final Gson GSON = ImageCache.getGson();
 
     private SfnClient sfnClient;
     private Map<Machines,String> stateMachineArns;
@@ -44,7 +45,7 @@ public class SfnRunner {
                 IDUtils.randomUUID(),
                 IDUtils.randomUUID()
         );
-        String inputStateJson = gson.toJson(inputState);
+        String inputStateJson = GSON.toJson(inputState);
         String executionId = generateExecutionId(commandSourceId, sourceUserId);
         sfnClient.startExecution(r -> r.stateMachineArn(stateMachineArns.get(targetMachine))
                 .name(executionId)

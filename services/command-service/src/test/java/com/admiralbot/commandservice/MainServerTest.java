@@ -4,6 +4,7 @@ import com.admiralbot.commandservice.handlers.RootCommandHandler;
 import com.admiralbot.commandservice.model.ProcessUserCommandRequest;
 import com.admiralbot.commandservice.model.ProcessUserCommandResponse;
 import com.admiralbot.discordrelay.model.service.MessageChannel;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
@@ -22,8 +23,9 @@ public class MainServerTest {
     private static final String DUMMY_USER_NAME = "TestyMcTester#9876";
     private static final String DUMMY_MESSAGE_ID = "23456789012345678";
 
+    private static final Gson GSON = ImageCache.getGson();
+
     private final Logger logger = Logger.getLogger("LambdaHandlerTest");
-    private final Gson gson = new Gson();
 
     @BeforeAll
     static void disableXray() {
@@ -75,7 +77,7 @@ public class MainServerTest {
                 DUMMY_USER_NAME);
         ProcessUserCommandResponse response = commandHandler.processUserCommand(request);
 
-        logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + gson.toJson(response));
+        logger.info("request = " + Arrays.toString(requestArgs) + ", response = " + GSON.toJson(response));
 
         Assertions.assertEquals(expectedResponseMessage, response.getMessageContent());
     }

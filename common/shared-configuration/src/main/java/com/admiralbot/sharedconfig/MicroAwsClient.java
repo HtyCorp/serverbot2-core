@@ -3,7 +3,6 @@ package com.admiralbot.sharedconfig;
 import com.admiralbot.sharedutil.AppContext;
 import com.admiralbot.sharedutil.sigv4.SigV4HttpClient;
 import com.admiralbot.sharedutil.sigv4.SigV4HttpResponse;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -22,7 +21,6 @@ import java.util.Map;
 public class MicroAwsClient {
 
     private static final Logger log = LoggerFactory.getLogger(MicroAwsClient.class);
-    private static final Gson GSON = new Gson();
 
     private static volatile SigV4HttpClient client = null;
 

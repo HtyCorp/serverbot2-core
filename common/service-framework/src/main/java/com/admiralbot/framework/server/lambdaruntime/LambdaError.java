@@ -1,7 +1,10 @@
 package com.admiralbot.framework.server.lambdaruntime;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+
 import java.util.List;
 
+@RegisterGsonType
 public class LambdaError {
 
     public static final String ERROR_TYPE_HEADER = "Lambda-Runtime-Function-Error-Type";

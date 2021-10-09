@@ -1,5 +1,8 @@
 package com.admiralbot.workflows.model;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+
+@RegisterGsonType
 public class ExecutionState {
 
     // Provided by client starting state machine

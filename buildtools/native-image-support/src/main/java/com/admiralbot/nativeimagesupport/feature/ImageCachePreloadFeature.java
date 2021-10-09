@@ -2,6 +2,9 @@ package com.admiralbot.nativeimagesupport.feature;
 
 import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.nativeimagesupport.processor.ResourcePaths;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
 import org.graalvm.nativeimage.ImageSingletons;
 import org.graalvm.nativeimage.hosted.Feature;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
@@ -20,16 +23,30 @@ import java.util.function.Function;
 @SuppressWarnings("unused")
 public class ImageCachePreloadFeature implements Feature {
 
+    private static final Gson GSON = new Gson();
+
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         ClassLoader appClassLoader = access.getApplicationClassLoader();
-        Map<Class<?>, TableSchema<?>> tableSchemas = preloadInstances(appClassLoader,
-                ResourcePaths.TABLE_SCHEMAS_RESOURCE.path(), TableSchema::fromBean);
+        Gson adaptedGson = createAdaptedGson(appClassLoader);
+        Map<Class<?>, TableSchema<?>> tableSchemas = createTableSchemas(appClassLoader);
 
-        // Placeholder empty maps as input
-        ImageCache runtimeCache = new ImageCache(Map.of(), Map.of(), tableSchemas);
+        // Placeholder for API defs, still need to implement that
+        ImageCache runtimeCache = new ImageCache(adaptedGson, Map.of(), tableSchemas);
 
         ImageSingletons.add(ImageCache.class, runtimeCache);
+    }
+
+    private Map<Class<?>, TableSchema<?>> createTableSchemas(ClassLoader appClassLoader) {
+        return preloadInstances(appClassLoader, ResourcePaths.TABLE_SCHEMAS_RESOURCE.path(), TableSchema::fromBean);
+    }
+
+    private Gson createAdaptedGson(ClassLoader appClassLoader) {
+        Map<Class<?>, TypeAdapter<?>> typeAdapters = preloadInstances(appClassLoader,
+                ResourcePaths.GSON_ADAPTERS_RESOURCE.path(), GSON::getAdapter);
+        var gson = new GsonBuilder();
+        typeAdapters.forEach(gson::registerTypeAdapter);
+        return gson.create();
     }
 
     private <V> Map<Class<?>,V> preloadInstances(ClassLoader appClassLoader, String resourcePath,
