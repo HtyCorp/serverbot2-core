@@ -1,7 +1,7 @@
 package com.admiralbot.nativeimagesupport.processor;
 
 
-import com.admiralbot.sharedutil.Utils;
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -9,11 +9,14 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypesException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SupportedAnnotationTypes({"com.admiralbot.nativeimagesupport.annotation.RegisterGsonType"})
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
@@ -23,29 +26,36 @@ public class GsonAdapterProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         annotations.forEach(annotation -> {
             String typeList = roundEnv.getElementsAnnotatedWith(annotation).stream()
-                    .map(this::getTargetTypeFromElement)
+                    .flatMap(this::getTypesFromElement)
                     .map(typeElement -> ProcessorUtil.getBinaryName(processingEnv, typeElement))
                     .collect(Collectors.joining("\n"));
             new ResourceWriter(processingEnv).writeResourceContent(ResourcePaths.GSON_ADAPTERS_RESOURCE.path(),
                     typeList);
         });
-
         return true;
     }
 
-    // TODO: Needs better inspection ability over generics
-    // TODO: Needs to be able to use field type (i.e. annotation on JSON object field rather than on TypeAdapter)
-    private TypeElement getTargetTypeFromElement(Element element) {
-        if (Utils.equalsAny(element.getKind(),
-                ElementKind.CLASS, ElementKind.ENUM)) {
-            return (TypeElement) element;
-        } else if (Utils.equalsAny(element.getKind(),
-                ElementKind.FIELD, ElementKind.LOCAL_VARIABLE, ElementKind.PARAMETER)) {
-            DeclaredType type = (DeclaredType) element.asType();
-            String baseQualifiedName = processingEnv.getTypeUtils().erasure(type).toString();
-            return processingEnv.getElementUtils().getTypeElement(baseQualifiedName);
-        } else {
-            throw new RuntimeException("Unexpected element kind: " + element.getKind());
+    private Stream<TypeElement> getTypesFromElement(Element element) {
+        RegisterGsonType annotation = element.getAnnotation(RegisterGsonType.class);
+        List<TypeElement> typesToRegister = new ArrayList<>();
+        List<DeclaredType> explicitTypes = getTypeMirrorsFromAnnotation(annotation);
+        if (annotation.includeThis() || explicitTypes.isEmpty()) {
+            typesToRegister.add((TypeElement) element);
+        }
+        explicitTypes.forEach(type -> {
+            typesToRegister.add((TypeElement) type.asElement());
+        });
+        return typesToRegister.stream();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<DeclaredType> getTypeMirrorsFromAnnotation(RegisterGsonType annotation) {
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            annotation.types();
+            throw new RuntimeException("Should never reach here!");
+        } catch (MirroredTypesException expectedException) {
+            return (List<DeclaredType>) expectedException.getTypeMirrors();
         }
     }
 }

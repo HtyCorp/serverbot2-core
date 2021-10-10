@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RegisterGsonType(types = {APIGatewayV2HTTPEvent.class, APIGatewayV2HTTPResponse.class})
 public class LambdaRuntimeClient {
 
     // Name of env var containing runtime API endpoint value
@@ -64,7 +65,6 @@ public class LambdaRuntimeClient {
                 null, null);
         String body = getBody(response);
         log.info("Gateway proxy request JSON:\n" + body);
-        @RegisterGsonType
         APIGatewayV2HTTPEvent apiRequest = GSON.fromJson(body, APIGatewayV2HTTPEvent.class);
 
         long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, DEADLINE_MS_HEADER))
@@ -78,7 +78,7 @@ public class LambdaRuntimeClient {
         );
     }
 
-    public void postInvocationResponse(String requestId, @RegisterGsonType APIGatewayV2HTTPResponse response) {
+    public void postInvocationResponse(String requestId, APIGatewayV2HTTPResponse response) {
         String path = String.format(INVOCATION_RESPONSE_PATH_FORMAT, requestId);
         call(SdkHttpMethod.POST, path, null, GSON.toJson(response));
     }
