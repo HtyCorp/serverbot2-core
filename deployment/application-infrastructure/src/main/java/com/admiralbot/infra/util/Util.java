@@ -86,6 +86,10 @@ public class Util {
 
     }
 
+    public static Path mavenModulePackagePath(String moduleName) {
+        return Util.codeBuildPath("services", moduleName, "target", "deployzip");
+    }
+
     public static Path mavenJarPath(String moduleName) {
         // Almost all the useful JAR artifacts are in the services directory so make this an easy default
         return mavenJarPath(moduleName, "services");

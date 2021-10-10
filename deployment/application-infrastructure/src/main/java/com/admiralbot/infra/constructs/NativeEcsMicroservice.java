@@ -35,7 +35,7 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
     private final Role taskRole;
     private final Service internalDiscoveryService;
 
-    public NativeEcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String internalName) {
+    public NativeEcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String moduleName) {
         super(parent, id);
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")
@@ -56,18 +56,12 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
                 .build();
 
         // Prepare Docker dir for CDK
-
-        Path jarSrc = Util.mavenJarPath(internalName);
         InputStream dockerfileSrc = generateDockerfileStream(appStage.getEnv());
 
-        Path serviceDockerDir = Util.codeBuildPath("application-infrastructure", "target", "docker", internalName);
-        Path jarDst = serviceDockerDir.resolve("service-worker.jar");
-        Path dockerfileDst = serviceDockerDir.resolve("Dockerfile");
+        Path servicePackagePath = Util.mavenModulePackagePath(moduleName);
+        Path dockerfileDst = servicePackagePath.resolve("Dockerfile");
 
         try {
-            //noinspection ResultOfMethodCallIgnored
-            serviceDockerDir.toFile().mkdirs();
-            Files.copy(jarSrc, jarDst, StandardCopyOption.REPLACE_EXISTING);
             Files.copy(dockerfileSrc, dockerfileDst, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("Failed to copy files to docker directory", e);
@@ -75,7 +69,7 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
 
         // Main container: service instance built from above fat JAR
 
-        String friendlyLogGroupName = Joiner.slash(DeployConfig.SERVICE_LOGS_PREFIX, "ecs", internalName);
+        String friendlyLogGroupName = Joiner.slash(DeployConfig.SERVICE_LOGS_PREFIX, "ecs", moduleName);
         LogGroup serverLogGroup = LogGroup.Builder.create(this, "ServerLogGroup")
                 .logGroupName(friendlyLogGroupName)
                 .retention(RetentionDays.ONE_YEAR)
@@ -83,12 +77,12 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
                 .build();
         LogDriver serverLogDriver = LogDriver.awsLogs(AwsLogDriverProps.builder()
                 .logGroup(serverLogGroup)
-                .streamPrefix(internalName)
+                .streamPrefix(moduleName)
                 .build());
         ContainerDefinition serviceContainer = taskDefinition.addContainer("ServiceContainer", ContainerDefinitionOptions.builder()
-                .memoryLimitMiB(896)
+                .memoryLimitMiB(224)
                 .essential(true)
-                .image(ContainerImage.fromAsset(serviceDockerDir.toString()))
+                .image(ContainerImage.fromAsset(servicePackagePath.toString()))
                 .logging(serverLogDriver)
                 // See Xray daemon definition in ServiceClusterStack: this is the default host gateway IP on ECS AMI
                 .environment(Map.of("AWS_XRAY_DAEMON_ADDRESS", "169.254.172.1:2000"))
@@ -102,7 +96,7 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
         // Cloud Map options for service discovery (used by API Gateway)
 
         CloudMapOptions cloudMapOptions = CloudMapOptions.builder()
-                .name(internalName)
+                .name(moduleName)
                 .cloudMapNamespace(appStage.getCommonResources().getInternalServiceNamespace())
                 .dnsRecordType(DnsRecordType.SRV)
                 .dnsTtl(Duration.seconds(CommonConfig.SERVICES_INTERNAL_DNS_TTL_SECONDS))
