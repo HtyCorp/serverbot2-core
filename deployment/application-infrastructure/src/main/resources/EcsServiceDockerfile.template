@@ -1,4 +1,4 @@
 FROM ${accountId}.dkr.ecr.${region}.amazonaws.com/corretto-mirror:latest
 WORKDIR /opt/service
-COPY ./service-worker.jar bin/service-worker.jar
-CMD java -Xms832M -Xmx832M -jar bin/service-worker.jar
+COPY ./bootstrap bin/bootstrap
+CMD bin/bootstrap

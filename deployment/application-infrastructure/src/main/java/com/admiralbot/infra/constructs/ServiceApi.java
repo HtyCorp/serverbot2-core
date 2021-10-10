@@ -123,9 +123,9 @@ public class ServiceApi extends Construct {
                 .build());
     }
 
-    public void addEcsRoute(Class<?> serviceInterfaceClass, EcsMicroservice ecsMicroservice) {
+    public void addEcsRoute(Class<?> serviceInterfaceClass, NativeEcsMicroservice nativeEcsMicroservice) {
         doAddRoute(serviceInterfaceClass, endpointInfo -> HttpServiceDiscoveryIntegration.Builder.create()
-                .service(ecsMicroservice.getInternalDiscoveryService())
+                .service(nativeEcsMicroservice.getInternalDiscoveryService())
                 .method(getEndpointHttpMethod(endpointInfo))
                 .vpcLink(commonVpcLink)
                 .build());

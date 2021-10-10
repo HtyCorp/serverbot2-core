@@ -79,14 +79,14 @@ public class ServiceClusterStack extends Stack {
                         /* Criteria for choosing spot instance types:
                          * - ENI trunking not required (awsvpc network mode not used due to NAT cost)
                          * - CPU/memory balance in favour of memory due to Java usage (no c-class types)
-                         * - 2GB memory or only slightly more since all but one service has been migrated to Lambda
-                         * - Don't use ARM types yet (would probably work, but with some config effort)
+                         * - Very low memory required: only one services still running ECS, and it's native
+                         * - Don't use ARM types yet (no significant cost savings under when using Spot)
                          * Note: These were much more critical when everything was ECS, not so much now.
                          */
-                        makeInstanceTypeOverride("t3a.small", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3.small", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3a.medium", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3.medium", AmiHardwareType.STANDARD)
+                        makeInstanceTypeOverride("t3a.micro", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3.micro", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3a.nano", AmiHardwareType.STANDARD),
+                        makeInstanceTypeOverride("t3.nano", AmiHardwareType.STANDARD)
                 ))
                 .build();
         InstancesDistributionProperty capacityOptimisedInstanceDistribution = InstancesDistributionProperty.builder()

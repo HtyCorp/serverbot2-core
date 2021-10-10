@@ -2,7 +2,7 @@ package com.admiralbot.infra.services;
 
 import com.admiralbot.commandservice.model.ICommandService;
 import com.admiralbot.discordrelay.model.service.IDiscordService;
-import com.admiralbot.infra.constructs.EcsMicroservice;
+import com.admiralbot.infra.constructs.NativeEcsMicroservice;
 import com.admiralbot.infra.constructs.ServiceApi;
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
 import com.admiralbot.infra.util.ManagedPolicies;
@@ -33,7 +33,7 @@ public class RelayStack extends Stack {
                 .partitionKey(messageTablePartitionKey)
                 .build();
 
-        EcsMicroservice service = new EcsMicroservice(this, "EcsMicroservice", parent, "discord-relay");
+        NativeEcsMicroservice service = new NativeEcsMicroservice(this, "EcsMicroservice", parent, "discord-relay");
         Permissions.addConfigPathRead(this, service, DiscordConfig.PATH_ALL);
         Permissions.addExecuteApi(this, service, ICommandService.class);
         Permissions.addManagedPoliciesToRole(service.getRole(), ManagedPolicies.SQS_FULL_ACCESS);

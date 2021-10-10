@@ -30,12 +30,12 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 
-public class EcsMicroservice extends Construct implements IGrantable {
+public class NativeEcsMicroservice extends Construct implements IGrantable {
 
     private final Role taskRole;
     private final Service internalDiscoveryService;
 
-    public EcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String internalName) {
+    public NativeEcsMicroservice(Stack parent, String id, ApplicationRegionalStage appStage, String internalName) {
         super(parent, id);
 
         taskRole = Role.Builder.create(this, "DiscordRelayRole")
@@ -46,8 +46,6 @@ public class EcsMicroservice extends Construct implements IGrantable {
         // Important ref: https://aws.amazon.com/blogs/containers/how-amazon-ecs-manages-cpu-and-memory-resources/
         // Setting a task size restricts tasks to a hard CPU quota/limit when we want them to use any spare CPU
         // capacity available; instead, memory limits are set at container level.
-        // Note capacity of an m5.large is approx. 2048 CPU, ~7764 MB.
-        // Good divisor is 8 tasks each running at 960MB limit (and 256 CPU though this is optional).
 
         TaskDefinition taskDefinition = TaskDefinition.Builder.create(this, "ServerTaskDefinition")
                 .compatibility(Compatibility.EC2)
