@@ -14,6 +14,7 @@
 
     <properties>
         <module.mainClass>com.admiralbot.discordrelay.DiscordRelay</module.mainClass>
+        <javacord.version>3.3.2</javacord.version>
     </properties>
 
     <build>
@@ -59,6 +60,7 @@
         <dependency>
             <groupId>org.javacord</groupId>
             <artifactId>javacord</artifactId>
+            <version>${javacord.version}</version>
             <type>pom</type>
         </dependency>
         <dependency>
