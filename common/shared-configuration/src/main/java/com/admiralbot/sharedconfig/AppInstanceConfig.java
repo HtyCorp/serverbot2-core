@@ -20,7 +20,10 @@ public class AppInstanceConfig {
     // Would need to work this as a new service or add into network-security, maybe.
     public static final String COMMON_INSTANCE_PROFILE_NAME = "CommonAppInstanceProfile";
 
-    public static final Parameter APP_DAEMON_JAR_S3_URL = new Parameter(PATH_PUBLIC, "app-daemon-jar-s3-url");
+    public static final Parameter APP_DAEMON_JAR_S3_URL = new Parameter(PATH_PUBLIC,
+            "app-daemon-jar-s3-url");
+    public static final Parameter APP_DAEMON_LINUX_BIN_S3_URL = new Parameter(PATH_PUBLIC,
+            "app-daemon-linux-bin-s3-url");
 
     public static final String APP_LOGS_GROUP_PREFIX = "serverbot2/app/serverlogs";
 

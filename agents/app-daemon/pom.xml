@@ -14,6 +14,7 @@
 
     <properties>
         <module.mainClass>com.admiralbot.appdaemon.AppDaemon</module.mainClass>
+        <bouncycastle.version>1.69</bouncycastle.version>
     </properties>
 
     <build>
@@ -21,6 +22,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
@@ -53,6 +58,18 @@
             <version>2.5.1</version>
         </dependency>
 
+        <!-- sshd-common optional dependencies needed at compile time -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpg-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sfn</artifactId>
@@ -60,6 +77,13 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>cloudwatchlogs</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.graalvm.nativeimage</groupId>
+            <artifactId>svm</artifactId>
+            <version>21.2.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

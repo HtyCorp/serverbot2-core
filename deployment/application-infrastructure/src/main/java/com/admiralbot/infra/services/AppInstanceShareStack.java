@@ -30,9 +30,23 @@ public class AppInstanceShareStack extends Stack {
         Asset appDaemonJarAsset = Asset.Builder.create(this, "AppDaemonJarAsset")
                 .path(appDaemonJarPath)
                 .build();
-        S3Artifact appDaemonArtifact = new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
-                appDaemonJarAsset, parent.getCommonResources().getDeployedArtifactBucket(), "app-daemon",
-                ".jar", AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
+        new S3Artifact(this, "AppDaemonJarArtifact", new S3ArtifactProps(
+                appDaemonJarAsset, parent.getCommonResources().getDeployedArtifactBucket(),
+                "app-daemon", ".jar",
+                AppInstanceConfig.APP_DAEMON_JAR_S3_URL.getName()
+        ));
+
+        // Same as above but for native artifact (to be distributed to new instances)
+
+        String appDaemonLinuxBinPath = Util.codeBuildPath("agents", "app-daemon", "target", "deployzip",
+                "bootstrap").toString();
+        Asset appDaemonLinuxBinAsset = Asset.Builder.create(this, "AppDaemonLinuxBinAsset")
+                .path(appDaemonLinuxBinPath)
+                .build();
+        new S3Artifact(this, "AppDaemonLinuxBinArtifact", new S3ArtifactProps(
+                appDaemonLinuxBinAsset, parent.getCommonResources().getDeployedArtifactBucket(),
+                "app-daemon-linux-bin", "",
+                AppInstanceConfig.APP_DAEMON_LINUX_BIN_S3_URL.getName()
         ));
 
         // TODO: Need to come up with better permission scoping. This role is user-exposed so attack surface is
