@@ -3,6 +3,8 @@ package com.admiralbot.appdaemon;
 import com.admiralbot.appdaemon.model.*;
 import com.admiralbot.framework.exception.server.RequestHandlingException;
 import com.admiralbot.framework.exception.server.RequestValidationException;
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedconfig.AppInstanceConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Joiner;
@@ -23,8 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ServiceHandler implements IAppDaemon {
 
-    private final Gson gson = new Gson();
-    private final Logger logger = LoggerFactory.getLogger(ServiceHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(ServiceHandler.class);
+    private static final Gson GSON = ImageCache.getGson();
 
     private Process runningAppProcess;
     private SessionSftpServer sessionSftpServer;
@@ -81,7 +83,7 @@ public class ServiceHandler implements IAppDaemon {
         logger.debug("runProcess: parsing game config file");
 
         FileReader gameConfigFile = new FileReader(configDir.resolve("launch.cfg").toFile());
-        GameConfigFile config = gson.fromJson(gameConfigFile, GameConfigFile.class);
+        GameConfigFile config = GSON.fromJson(gameConfigFile, GameConfigFile.class);
 
         if (config.getLaunchCommand() == null || config.getLaunchCommand().isEmpty()) {
             logger.error("Missing launch command in game config file");
@@ -157,7 +159,7 @@ public class ServiceHandler implements IAppDaemon {
          */
 
         String lsblkJson = runBashCommand("lsblk --json", 2);
-        LsblkOutput lsblk = gson.fromJson(lsblkJson, LsblkOutput.class);
+        LsblkOutput lsblk = GSON.fromJson(lsblkJson, LsblkOutput.class);
         Pair<String,String> rootDeviceAndPartition = lsblk.blockDevices.stream()
                 // Only get root devices with partitions
                 .filter(device -> device.children != null
@@ -187,7 +189,7 @@ public class ServiceHandler implements IAppDaemon {
         // all of the space on the disk.
 
         String modifiedLsblkJson = runBashCommand("lsblk --json", 2);
-        LsblkOutput modifiedLsblk = gson.fromJson(modifiedLsblkJson, LsblkOutput.class);
+        LsblkOutput modifiedLsblk = GSON.fromJson(modifiedLsblkJson, LsblkOutput.class);
         LsblkBlockDevice modifiedRootPartition = modifiedLsblk.blockDevices.stream()
                 .filter(device -> device.children != null)
                 .flatMap(device -> device.children.stream())
@@ -198,6 +200,7 @@ public class ServiceHandler implements IAppDaemon {
 
     }
 
+    @RegisterGsonType
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private static class LsblkOutput {
         @SerializedName("blockdevices")

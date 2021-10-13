@@ -1,8 +1,11 @@
 package com.admiralbot.appdaemon;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+
 import java.util.List;
 import java.util.Map;
 
+@RegisterGsonType
 public class GameConfigFile {
 
     private List<String> launchCommand;

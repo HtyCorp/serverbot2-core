@@ -1,5 +1,7 @@
 package com.admiralbot.appdaemon;
 
+import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedutil.LogUtils;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 // TODO: Might need to update to IMDSv2 (not sure if instance-identity category is restricted in V2 mode)
+@RegisterGsonType
 public class InstanceMetadata {
 
     private String accountId;
@@ -23,7 +26,7 @@ public class InstanceMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(InstanceMetadata.class);
 
-    private static final Gson gson = new Gson();
+    private static final Gson gson = ImageCache.getGson();
     private static final URI identityMetadataUri =
             URI.create("http://169.254.169.254/latest/dynamic/instance-identity/document");
     private static final HttpClient http = HttpClient.newBuilder().build();

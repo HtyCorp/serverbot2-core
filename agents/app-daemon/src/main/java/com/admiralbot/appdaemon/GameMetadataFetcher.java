@@ -19,7 +19,6 @@ public class GameMetadataFetcher {
     }
 
     public static GameMetadata fetch() {
-        logger.debug("Fetch: getting instance metadata");
         InstanceMetadata instanceMetadata = InstanceMetadata.fetch();
         logger.debug("Identifying instance through GMS");
         return gameMetadataService.identifyInstance(
