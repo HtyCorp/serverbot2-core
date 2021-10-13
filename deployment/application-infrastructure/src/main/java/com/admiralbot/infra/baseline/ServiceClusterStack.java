@@ -84,9 +84,7 @@ public class ServiceClusterStack extends Stack {
                          * Note: These were much more critical when everything was ECS, not so much now.
                          */
                         makeInstanceTypeOverride("t3a.micro", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3.micro", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3a.nano", AmiHardwareType.STANDARD),
-                        makeInstanceTypeOverride("t3.nano", AmiHardwareType.STANDARD)
+                        makeInstanceTypeOverride("t3.micro", AmiHardwareType.STANDARD)
                 ))
                 .build();
         InstancesDistributionProperty capacityOptimisedInstanceDistribution = InstancesDistributionProperty.builder()
