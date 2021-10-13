@@ -215,10 +215,17 @@
             <artifactId>aws-core</artifactId>
         </dependency>
 
-        <!-- This is a dependency of shared-util and by extension everything else -->
+        <!-- Alternate simplified client for AWS SDK, with better startup characteristics than Apache client -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>url-connection-client</artifactId>
+        </dependency>
+        <!-- Remove Apache client by setting its scope to provided (takes precedence over any transitive imports) -->
+        <!-- ideally we could set a global exclusion for apache-client but Maven doesn't support that yet -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->

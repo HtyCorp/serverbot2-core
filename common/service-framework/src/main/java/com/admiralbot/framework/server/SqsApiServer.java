@@ -3,6 +3,7 @@ package com.admiralbot.framework.server;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.LogUtils;
+import com.admiralbot.sharedutil.SdkUtils;
 import com.admiralbot.sharedutil.XrayUtils;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
 
     private static final String THREAD_NAME = "SqsApiRequestReceiverThread";
 
-    private final SqsClient sqsClient = SqsClient.create();
+    private final SqsClient sqsClient = SdkUtils.client(SqsClient.builder());
     private final String receiveQueueName;
 
     private final Logger logger = LoggerFactory.getLogger(SqsApiServer.class);

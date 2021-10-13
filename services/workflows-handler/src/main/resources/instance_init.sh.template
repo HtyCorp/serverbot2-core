@@ -57,6 +57,7 @@ PARAM_NAME='/app-instance-share/public/app-daemon-linux-bin-s3-url'
 DAEMON_S3_URL=$(aws ssm get-parameter --name "$PARAM_NAME"  --query Parameter.Value --output text)
 echo "[INFO] Artifact S3 URL is '$DAEMON_S3_URL'"
 aws s3 cp "$DAEMON_S3_URL" /opt/serverbot2/daemon/app-daemon-bin
+chmod 744 /opt/serverbot2/daemon/app-daemon-bin
 echo "[INFO] Running daemon executable..."
 /opt/serverbot2/daemon/app-daemon-bin
 EOF
