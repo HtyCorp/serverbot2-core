@@ -1,0 +1,12 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\Qorg/apache/sshd/sshd-version.properties\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
+    }
+  ]},
+  "bundles":[]
+}

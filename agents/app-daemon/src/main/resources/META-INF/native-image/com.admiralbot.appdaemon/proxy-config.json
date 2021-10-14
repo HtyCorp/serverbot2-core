@@ -1,6 +1,14 @@
 [
-  ["org.apache.sshd.common.channel.ChannelListener"],
-  ["org.apache.sshd.common.forward.PortForwardingEventListener"],
-  ["org.apache.sshd.common.session.SessionListener"],
-  ["org.apache.sshd.server.subsystem.sftp.SftpEventListener"]
+  {
+    "interfaces":["org.apache.sshd.common.channel.ChannelListener"]}
+  ,
+  {
+    "interfaces":["org.apache.sshd.common.forward.PortForwardingEventListener"]}
+  ,
+  {
+    "interfaces":["org.apache.sshd.common.session.SessionListener"]}
+  ,
+  {
+    "interfaces":["org.apache.sshd.server.subsystem.sftp.SftpEventListener"]}
+  
 ]
