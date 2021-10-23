@@ -51,16 +51,6 @@ public class PipelineStack extends Stack {
                 .branch(sourceBranch)
                 .build();
 
-        // Shelving this until I can figure out if pipelines lib can allow multiple source artifacts
-//        String generatedBucketName = IDUtils.kebab("serverbot2-pipeline-manifest-copy",
-//                Util.defaultAccount(), Util.defaultRegion());
-//        S3SourceAction s3ManifestSource = S3SourceAction.Builder.create()
-//                .actionName("PullS3ManifestFile")
-//                .bucket(Bucket.fromBucketName(this, "ManifestCopyBucket", generatedBucketName))
-//                .bucketKey("manifest.zip")
-//                .output(manifestArtifact)
-//                .build();
-
         BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
                 .buildImage(LinuxBuildImage.STANDARD_4_0)
                 .computeType(ComputeType.LARGE)

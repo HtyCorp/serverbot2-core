@@ -4,9 +4,9 @@ env:
   shell: bash
   variables:
     CDK_VERSION: "1.111.0"
-    GRAAL_RELEASE: "21.3.0-dev-20211008_1804"
-    GRAAL_ARTIFACT: "graalvm-ce-java11-linux-amd64-dev"
-    JAVA_HOME: "/usr/local/lib/graalvm/21.3.0-dev-20211008"
+    GRAAL_RELEASE: "vm-21.3.0"
+    GRAAL_ARTIFACT: "graalvm-ce-java17-linux-amd64-21.3.0"
+    JAVA_HOME: "/usr/local/lib/graalvm/21.3.0"
     SOURCE_DATE_EPOCH: "1622959566" # Arbitrary: consistent with pom.xml epoch for sentimental reasons
 
 phases:
@@ -22,7 +22,7 @@ phases:
           echo "GraalVM ${GRAAL_ARTIFACT} already installed"
         else
           mkdir -p "${JAVA_HOME}"
-          GRAAL_DOWNLOAD="https://github.com/graalvm/graalvm-ce-dev-builds/releases/download/"
+          GRAAL_DOWNLOAD="https://github.com/graalvm/graalvm-ce-builds/releases/download/"
           curl -Lo graal.tar.gz "${GRAAL_DOWNLOAD}/${GRAAL_RELEASE}/${GRAAL_ARTIFACT}.tar.gz"
           tar -xzf graal.tar.gz -C "${JAVA_HOME}" --strip 1 # Remove 'container' dir inside tarball
           ${JAVA_HOME}/bin/java -version
