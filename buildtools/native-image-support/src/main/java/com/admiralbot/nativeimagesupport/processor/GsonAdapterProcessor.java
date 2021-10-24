@@ -42,9 +42,7 @@ public class GsonAdapterProcessor extends AbstractProcessor {
         if (annotation.includeThis() || explicitTypes.isEmpty()) {
             typesToRegister.add((TypeElement) element);
         }
-        explicitTypes.forEach(type -> {
-            typesToRegister.add((TypeElement) type.asElement());
-        });
+        explicitTypes.forEach(type -> typesToRegister.add((TypeElement) type.asElement()));
         return typesToRegister.stream();
     }
 

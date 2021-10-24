@@ -1,3 +1,3 @@
+com.admiralbot.nativeimagesupport.processor.GsonAdapterProcessor
 com.admiralbot.nativeimagesupport.processor.ModelInterfaceProcessor
 com.admiralbot.nativeimagesupport.processor.DynamoDBSchemaProcessor
-com.admiralbot.nativeimagesupport.processor.GsonAdapterProcessor

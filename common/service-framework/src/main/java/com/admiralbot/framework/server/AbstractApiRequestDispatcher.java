@@ -4,6 +4,7 @@ import com.admiralbot.framework.exception.ApiException;
 import com.admiralbot.framework.exception.server.*;
 import com.admiralbot.framework.modelling.ApiActionDefinition;
 import com.admiralbot.framework.modelling.ApiDefinitionSet;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedutil.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,10 @@ public abstract class AbstractApiRequestDispatcher<ModelType, OutputType, RawInp
                                         boolean requiresEndpointInfo) {
         this.handlerInstance = handlerInstance;
         logger.trace("Building definition set for " + handlerInterfaceClass.getSimpleName());
-        this.apiDefinitionSet = new ApiDefinitionSet<>(handlerInterfaceClass, requiresEndpointInfo);
+        this.apiDefinitionSet = ImageCache.getApiDefinitionSet(handlerInterfaceClass);
+        if (requiresEndpointInfo && this.apiDefinitionSet.getEndpointInfo() == null) {
+            throw new IllegalArgumentException("API definition set doesn't contain endpoint info");
+        }
         logger.trace("Finished construction");
     }
 

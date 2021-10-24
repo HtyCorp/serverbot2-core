@@ -52,6 +52,14 @@ public class ImageCache {
     }
 
     @SuppressWarnings("unchecked")
+    public static <T> ApiDefinitionSet<T> getApiDefinitionSet(Class<T> modelInterface) throws NoSuchElementException {
+        if (isInImageCode) {
+            return (ApiDefinitionSet<T>) getFromCache(c -> c.apiDefinitionSets, modelInterface);
+        }
+        return new ApiDefinitionSet<>(modelInterface);
+    }
+
+    @SuppressWarnings("unchecked")
     public static <T> TableSchema<T> getTableSchema(Class<T> beanClass) throws NoSuchElementException {
         if (isInImageCode) {
             return (TableSchema<T>) getFromCache(c -> c.tableSchemas, beanClass);
@@ -59,10 +67,10 @@ public class ImageCache {
         return TableSchema.fromBean(beanClass);
     }
 
-    private static Object getFromCache(Function<ImageCache,Map<?,?>> mapGetter, Object key) {
+    private static <K,V> V getFromCache(Function<ImageCache,Map<K,V>> mapGetter, K key) {
         ImageCache cache = ImageSingletons.lookup(ImageCache.class);
-        Map<?,?> map = mapGetter.apply(cache);
-        Object item = map.get(key);
+        Map<K,V> map = mapGetter.apply(cache);
+        V item = map.get(key);
         if (item == null) {
             throw new NoSuchElementException("No value for key " + key);
         }

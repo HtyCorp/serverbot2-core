@@ -1,5 +1,6 @@
 package com.admiralbot.nativeimagesupport.feature;
 
+import com.admiralbot.framework.modelling.ApiDefinitionSet;
 import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.nativeimagesupport.processor.ResourcePaths;
 import com.google.gson.Gson;
@@ -29,16 +30,13 @@ public class ImageCachePreloadFeature implements Feature {
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         ClassLoader appClassLoader = access.getApplicationClassLoader();
         Gson adaptedGson = createAdaptedGson(appClassLoader);
+        Map<Class<?>, ApiDefinitionSet<?>> apiDefinitionSets = createApiDefinitionSets(appClassLoader);
         Map<Class<?>, TableSchema<?>> tableSchemas = createTableSchemas(appClassLoader);
 
         // Placeholder for API defs, still need to implement that
-        ImageCache runtimeCache = new ImageCache(adaptedGson, Map.of(), tableSchemas);
+        ImageCache runtimeCache = new ImageCache(adaptedGson, apiDefinitionSets, tableSchemas);
 
         ImageSingletons.add(ImageCache.class, runtimeCache);
-    }
-
-    private Map<Class<?>, TableSchema<?>> createTableSchemas(ClassLoader appClassLoader) {
-        return preloadInstances(appClassLoader, ResourcePaths.TABLE_SCHEMAS_RESOURCE.path(), TableSchema::fromBean);
     }
 
     private Gson createAdaptedGson(ClassLoader appClassLoader) {
@@ -47,6 +45,16 @@ public class ImageCachePreloadFeature implements Feature {
         var gson = new GsonBuilder();
         typeAdapters.forEach(gson::registerTypeAdapter);
         return gson.create();
+    }
+
+    private Map<Class<?>, ApiDefinitionSet<?>> createApiDefinitionSets(ClassLoader appClassLoader) {
+        return preloadInstances(appClassLoader, ResourcePaths.API_DEFINITION_SETS_RESOURCE.path(),
+                ApiDefinitionSet::new);
+    }
+
+    private Map<Class<?>, TableSchema<?>> createTableSchemas(ClassLoader appClassLoader) {
+        return preloadInstances(appClassLoader, ResourcePaths.TABLE_SCHEMAS_RESOURCE.path(),
+                TableSchema::fromBean);
     }
 
     private <V> Map<Class<?>,V> preloadInstances(ClassLoader appClassLoader, String resourcePath,

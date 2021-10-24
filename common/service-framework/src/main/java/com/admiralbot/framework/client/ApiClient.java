@@ -14,6 +14,7 @@ import com.admiralbot.framework.modelling.ApiDefinitionSet;
 import com.admiralbot.framework.modelling.ApiEndpointInfo;
 import com.admiralbot.framework.modelling.ApiHttpMethod;
 import com.admiralbot.framework.server.LambdaApiServer;
+import com.admiralbot.nativeimagesupport.cache.ImageCache;
 import com.admiralbot.sharedconfig.ApiConfig;
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.*;
@@ -117,7 +118,10 @@ public final class ApiClient {
      */
     private static <ModelType> ModelType makeProxyInstance(Class<ModelType> modelInterfaceClass,
                boolean requiresEndpointInfo, Function<ClientRequest,ServerResponse> requestSender) {
-        ApiDefinitionSet<ModelType> definitionSet = new ApiDefinitionSet<>(modelInterfaceClass, requiresEndpointInfo);
+        ApiDefinitionSet<ModelType> definitionSet = ImageCache.getApiDefinitionSet(modelInterfaceClass);
+        if (requiresEndpointInfo && definitionSet.getEndpointInfo() == null) {
+            throw new IllegalArgumentException("API definition set does not contain endpoint info");
+        }
         @SuppressWarnings("unchecked")
         ModelType modelType = (ModelType) Proxy.newProxyInstance(
                 ApiClient.class.getClassLoader(),

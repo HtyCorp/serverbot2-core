@@ -14,14 +14,11 @@ public class ApiDefinitionSet<ModelType> {
     private final Map<String, ApiActionDefinition> nameToDefinitionMap;
     private final Map<Class<?>, ApiActionDefinition> requestClassToDefinitionMap;
 
-    public ApiDefinitionSet(Class<ModelType> modelClass, boolean requireEndpointInfoPresent) {
+    public ApiDefinitionSet(Class<ModelType> modelClass) {
 
         assert modelClass.isInterface();
 
         endpointInfo = modelClass.getAnnotation(ApiEndpointInfo.class);
-        if (requireEndpointInfoPresent && endpointInfo == null) {
-            throw new IllegalArgumentException("Service model interface is missing endpoint info annotation");
-        }
 
         Stream<Method> allListenerInterfaceMethods;
         Function<Method, ApiActionDefinition> tryGenerateDefinition;
