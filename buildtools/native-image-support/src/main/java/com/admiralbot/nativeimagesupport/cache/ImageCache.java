@@ -1,7 +1,6 @@
 package com.admiralbot.nativeimagesupport.cache;
 
 import com.admiralbot.framework.modelling.ApiDefinitionSet;
-import com.admiralbot.sharedutil.ExceptionUtils;
 import com.google.gson.Gson;
 import org.graalvm.nativeimage.ImageInfo;
 import org.graalvm.nativeimage.ImageSingletons;
@@ -29,13 +28,18 @@ public class ImageCache {
      * 2) We are running a Graal JVM (inImageCode returns false)
      * 3) We are running a non-Graal JVM (ImageInfo class load fails, defaults to false)
      */
-    private static final boolean isInImageCode = ExceptionUtils.defaultOnThrow(ImageInfo::inImageCode,
-            NoClassDefFoundError.class, e -> {
-                log.info("Graal SDK load failed (no class def found: {}). Assuming we are running on a standard JVM",
-                        e.getMessage());
-                return false;
-            }
-    );
+    private static final boolean isInImageCode;
+    static {
+        boolean inImageCode;
+        try {
+            inImageCode = ImageInfo.inImageCode();
+        } catch (NoClassDefFoundError e) {
+            log.info("Graal SDK load failed (no class def found: {}). Assuming we are running on a standard JVM",
+                    e.getMessage());
+            inImageCode = false;
+        }
+        isInImageCode = inImageCode;
+    }
 
     public ImageCache(Gson adaptedGson, Map<Class<?>, ApiDefinitionSet<?>> apiDefinitionSets, Map<Class<?>,
             TableSchema<?>> tableSchemas) {
