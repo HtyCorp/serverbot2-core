@@ -40,7 +40,8 @@ import java.util.function.Function;
 
 public final class ApiClient {
 
-    private static final Gson gson = new Gson();
+    // Uses adapted GSON since it supports parsing ServerExceptionDto
+    private static final Gson GSON = ImageCache.getGson();
     private static final SqsRequestResponseClient sqsRequestResponse = new SqsRequestResponseClient();
 
     private ApiClient() {}
@@ -167,13 +168,13 @@ public final class ApiClient {
 
                             if (content != null && !content.isJsonNull()) {
                                 return (apiDefinition.hasResponseType())
-                                        ? gson.fromJson(content, apiDefinition.getResponseDataType())
+                                        ? apiDefinition.getResponseTypeAdapter().fromJsonTree(content)
                                         : null;
                             }
 
                             // If error provided, generate the exception (basic details only) and throw.
                             if (error != null && !error.isJsonNull()) {
-                                ServerExceptionDto info = gson.fromJson(error, ServerExceptionDto.class);
+                                ServerExceptionDto info = GSON.fromJson(error, ServerExceptionDto.class);
                                 throw ServerExceptionParser.fromName(
                                         info.getExceptionTypeName(),
                                         info.getExceptionMessage());
@@ -209,7 +210,7 @@ public final class ApiClient {
     }
 
     private static String annotatedJsonPayload(Object request, ApiActionDefinition apiDefinition, String requestId) {
-        JsonElement jsonTree = gson.toJsonTree(request);
+        JsonElement jsonTree = requestToJsonTree(request, apiDefinition);
         if (!jsonTree.isJsonObject()) {
             throw new SerializationException("Response object is not a JSON object. Java type is " + request.getClass());
         }
@@ -226,7 +227,16 @@ public final class ApiClient {
 
         jsonObject.addProperty(KEY, apiDefinition.getName());
         jsonObject.addProperty(RID, requestId);
-        return gson.toJson(jsonObject);
+        return GSON.toJson(jsonObject);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> JsonElement requestToJsonTree(T request, ApiActionDefinition definition) {
+        if (!definition.getRequestDataType().isInstance(request)) {
+            throw new SerializationException("Unexpected request object type: " + request.getClass());
+        }
+        TypeAdapter<T> adapter = (TypeAdapter<T>) definition.getRequestTypeAdapter();
+        return adapter.toJsonTree(request);
     }
 
     private static class ClientRequest {

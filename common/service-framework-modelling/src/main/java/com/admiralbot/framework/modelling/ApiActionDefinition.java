@@ -2,6 +2,8 @@ package com.admiralbot.framework.modelling;
 
 import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedutil.Pair;
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
  */
 public class ApiActionDefinition {
 
+    // Uses a default GSON instance since definitions should never be constructed at native-image runtime
+    private static final Gson GSON = new Gson();
+
     private final String name;
     private final String description;
     private final int order;
@@ -25,14 +30,14 @@ public class ApiActionDefinition {
 
     private final Class<?> requestDataType;
     private final Constructor<?> requestTypeConstructor;
+    private final TypeAdapter<?> requestTypeAdapter;
 
     private final boolean hasResponseType;
     private final Class<?> responseDataType;
-    private final Constructor<?> responseTypeConstructor;
+    private final TypeAdapter<?> responseTypeAdapter;
 
     private final List<Pair<Field, ApiArgumentInfo>> orderedFields;
     private final List<Field> orderedFieldsFieldView;
-    private final List<ApiArgumentInfo> orderedFieldsInfoView;
 
     private final String usageString;
     private final List<String> argumentDescriptionStrings;
@@ -51,15 +56,16 @@ public class ApiActionDefinition {
         this.targetMethod = targetMethod;
         this.requestDataType = requestType;
         this.requestTypeConstructor = requestType.getConstructor();
+        this.requestTypeAdapter = GSON.getAdapter(requestDataType);
 
         if (responseType == Void.TYPE) {
             this.hasResponseType = false;
             this.responseDataType = null;
-            this.responseTypeConstructor = null;
+            this.responseTypeAdapter = null;
         } else {
             this.hasResponseType = true;
             this.responseDataType = responseType;
-            this.responseTypeConstructor = responseType.getConstructor();
+            this.responseTypeAdapter = GSON.getAdapter(responseDataType);
         }
 
         this.orderedFields = Arrays.stream(requestType.getDeclaredFields())
@@ -69,7 +75,6 @@ public class ApiActionDefinition {
                 .collect(Collectors.toUnmodifiableList());
         orderedFields.forEach(f -> f.a().setAccessible(true));
         this.orderedFieldsFieldView = orderedFields.stream().map(Pair::a).collect(Collectors.toUnmodifiableList());
-        this.orderedFieldsInfoView = orderedFields.stream().map(Pair::b).collect(Collectors.toUnmodifiableList());
 
         StringBuilder sbUsage = new StringBuilder();
         sbUsage.append(CommonConfig.COMMAND_SIGIL_CHARACTER).append(getName());
@@ -118,6 +123,10 @@ public class ApiActionDefinition {
         return requestTypeConstructor;
     }
 
+    public TypeAdapter<?> getRequestTypeAdapter() {
+        return requestTypeAdapter;
+    }
+
     public boolean hasResponseType() {
         return hasResponseType;
     }
@@ -126,8 +135,8 @@ public class ApiActionDefinition {
         return responseDataType;
     }
 
-    public Constructor<?> getResponseTypeConstructor() {
-        return responseTypeConstructor;
+    public TypeAdapter<?> getResponseTypeAdapter() {
+        return responseTypeAdapter;
     }
 
     public List<Pair<Field, ApiArgumentInfo>> getOrderedFields() {
@@ -136,10 +145,6 @@ public class ApiActionDefinition {
 
     public List<Field> getOrderedFieldsFieldView() {
         return orderedFieldsFieldView;
-    }
-
-    public List<ApiArgumentInfo> getOrderedFieldsInfoView() {
-        return orderedFieldsInfoView;
     }
 
     public String getUsageString() {
