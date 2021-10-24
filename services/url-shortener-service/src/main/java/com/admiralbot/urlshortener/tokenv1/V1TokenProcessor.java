@@ -1,5 +1,6 @@
 package com.admiralbot.urlshortener.tokenv1;
 
+import com.admiralbot.sharedutil.ExceptionUtils;
 import com.admiralbot.sharedutil.Pair;
 import com.admiralbot.urlshortener.ITokenProcessor;
 import com.admiralbot.urlshortener.InvalidTokenException;
@@ -38,12 +39,8 @@ public class V1TokenProcessor implements ITokenProcessor<V1UrlInfoBean> {
     private final MessageDigest digest;
 
     public V1TokenProcessor() {
-        try {
-            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException("Somehow failed to get instance for mandatory cipher/digest", e);
-        }
+        cipher = ExceptionUtils.cantFail(() -> Cipher.getInstance("AES/CBC/PKCS5Padding"));
+        digest = ExceptionUtils.cantFail(() -> MessageDigest.getInstance("SHA-256"));
     }
 
     @Override

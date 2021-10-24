@@ -1,14 +1,17 @@
 package com.admiralbot.nativeimagesupport.processor;
 
+import com.admiralbot.sharedutil.ExceptionUtils;
 import com.admiralbot.sharedutil.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.codec.binary.Hex;
+import software.amazon.awssdk.core.SdkBytes;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
+import java.security.MessageDigest;
 
 /**
  * Warning: Don't instantiate this in any processor constructor since processingEnv may be null.
@@ -24,19 +27,20 @@ public class ResourceWriter {
         this.processingEnv = processingEnv;
     }
 
-    public void writeNativeImageResource(TypeElement originElement, String fileName, String contentString) {
-        writeNativeImageResourceContent(originElement, fileName, contentString);
-    }
-
-    public void writeNativeImageResourceJson(TypeElement originElement, String fileName, Object contentJson) {
+    public void writeNativeImageResourceJson(String fileName, Object contentJson) {
         String fileContent = GSON.toJson(contentJson);
-        writeNativeImageResourceContent(originElement, fileName, fileContent);
+        writeNativeImageResourceContent(fileName, fileContent);
     }
 
-    public void writeNativeImageResourceContent(TypeElement originElement, String fileName, String fileContent) {
-        String originName = ProcessorUtil.getQualifiedName(originElement);
-        String filePath = Joiner.slash("META-INF", "native-image", originName, fileName);
+    public void writeNativeImageResourceContent(String fileName, String fileContent) {
+        String filePath = Joiner.slash("META-INF", "native-image", getContentHash(fileContent), fileName);
         writeResourceContent(filePath, fileContent);
+    }
+
+    private static String getContentHash(String fileContent) {
+        MessageDigest md5 = ExceptionUtils.cantFail(() -> MessageDigest.getInstance("MD5"));
+        byte[] digestBytes = md5.digest(SdkBytes.fromUtf8String(fileContent).asByteArray());
+        return Hex.encodeHexString(digestBytes);
     }
 
     public void writeResourceContent(String filePath, String fileContent) {
