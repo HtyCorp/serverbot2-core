@@ -165,7 +165,7 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-xray-recorder-sdk-bom</artifactId>
-                <version>2.5.0</version>
+                <version>2.10.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -198,14 +198,14 @@
 
     <!-- Top-level dependencies for tests and logging only -->
     <dependencies>
-
-        <!-- Disabling Xray instrumentor since it has been difficult to implement and not really necessary -->
-        <!--
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-xray-recorder-sdk-aws-sdk-v2-instrumentor</artifactId>
         </dependency>
-        -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-xray-recorder-sdk-core</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

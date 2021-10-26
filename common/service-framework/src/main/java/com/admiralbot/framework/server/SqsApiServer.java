@@ -76,7 +76,8 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
 
                         // Propagate Xray trace information if available in message attributes
                         String traceHeader = extractTraceHeaderIfAvailable(message);
-                        XrayUtils.beginSegment("HandleRequest", traceHeader);
+                        XrayUtils.setTraceId(traceHeader);
+                        XrayUtils.beginSegment("HandleRequest");
 
                         try {
 

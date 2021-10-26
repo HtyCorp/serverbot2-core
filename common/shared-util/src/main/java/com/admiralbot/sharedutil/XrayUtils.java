@@ -1,12 +1,22 @@
 package com.admiralbot.sharedutil;
 
+import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.Segment;
+import com.amazonaws.xray.entities.Subsegment;
+
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public class XrayUtils {
 
-    public static final String TRACE_ID_HEADER_KEY = "X-Amzn-Trace-Id";
-    public static final String TRACE_ID_LAMBDA_ENV_VAR = "_X_AMZN_TRACE_ID";
+    public static final String TRACE_HEADER_HTTP_HEADER_KEY = "X-Amzn-Trace-Id";
+
+    private static final String SERVICE_NAME_PROPERTY = "com.amazonaws.xray.strategy.tracingName";
+    private static final String TRACE_HEADER_ENV_VAR = "_X_AMZN_TRACE_ID";
+    private static final String TRACE_HEADER_PROPERTY = "com.amazonaws.xray.traceHeader";
+    private static final String TRACING_ENABLED_PROPERTY = "com.amazonaws.xray.tracingEnabled";
+    private static final String MISSING_CONTEXT_STRATEGY_PROPERTY = "com.amazonaws.xray.strategy.contextMissingStrategy";
 
     private XrayUtils() {}
 
@@ -14,17 +24,17 @@ public class XrayUtils {
     // https://docs.aws.amazon.com/xray/latest/devguide/aws-x-ray-auto-instrumentation-agent-for-java.html#XRayAutoInstrumentationAgent-Configuration
 
     public static void setServiceName(String serviceName) {
-        setProperty("com.amazonaws.xray.strategy.tracingName", serviceName);
+        setProperty(SERVICE_NAME_PROPERTY, serviceName);
     }
 
     public static void setInstrumentationEnabled(boolean enabled) {
         // The ideal is to modify the equivalent env var, but modifying env vars in Java is not simple
         // Recent versions of AWS Xray Java SDK support this system property as an alternative
-        setProperty("com.amazonaws.xray.tracingEnabled", xrayBoolString(enabled));
+        setProperty(TRACING_ENABLED_PROPERTY, xrayBoolString(enabled));
     }
 
     public static void setTraceId(String traceId) {
-        System.setProperty("com.amazonaws.xray.traceHeader", traceId);
+        System.setProperty(TRACE_HEADER_PROPERTY, traceId);
     }
 
     enum XrayMissingContextStrategy {
@@ -32,7 +42,7 @@ public class XrayUtils {
     }
 
     public static void setMissingContextStrategy(XrayMissingContextStrategy strategy) {
-        setProperty("com.amazonaws.xray.strategy.contextMissingStrategy", strategy.name());
+        setProperty(MISSING_CONTEXT_STRATEGY_PROPERTY, strategy.name());
     }
 
     public static void setIgnoreMissingContext() {
@@ -45,36 +55,61 @@ public class XrayUtils {
      */
 
     public static String getTraceHeader() {
-        return System.getenv(TRACE_ID_LAMBDA_ENV_VAR);
+        return Optional.ofNullable(System.getenv(TRACE_HEADER_ENV_VAR))
+                .orElse(System.getProperty(TRACE_HEADER_PROPERTY));
     }
 
-    public static void beginSegment(String name) { }
+    public static Segment beginSegment(String name) {
+        return AWSXRay.beginSegment(name);
+    }
 
-    public static void beginSegment(String name, String parentTraceId) { }
+    public static void addSegmentException(Exception e) {
+        AWSXRay.getCurrentSegment().addException(e);
+    }
 
-    public static void addSegmentException(Exception e) { }
+    public static void endSegment() {
+        AWSXRay.endSegment();
+    }
 
-    public static void endSegment() { }
+    public static Subsegment beginSubsegment(String name) {
+        return AWSXRay.beginSubsegment(name);
+    }
 
-    public static void beginSubsegment(String name) { }
+    public static void addSubsegmentException(Exception e) {
+        AWSXRay.getCurrentSubsegment().addException(e);
+    }
 
-    public static void addSubsegmentException(Exception e) { }
+    public static void endSubsegment() {
+        AWSXRay.endSubsegment();
+    }
 
-    public static void endSubsegment() { }
-
-    public static <T> T subsegment(String name, Map<String,String> annotations, Callable<T> callable) {
+    public static <T> T subsegment(String name, Map<String,Object> annotations, Supplier<T> action) {
+        var subsegment = AWSXRay.beginSubsegment(name);
+        if (annotations != null) {
+            subsegment.setAnnotations(annotations);
+        }
         try {
-            return callable.call();
+            return action.get();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute subsegment routine", e);
+            subsegment.addException(e);
+            throw e;
+        } finally {
+            AWSXRay.endSubsegment();
         }
     }
 
-    public static void subsegment(String name, Map<String,String> annotations, Runnable runnable) {
+    public static void subsegment(String name, Map<String,Object> annotations, Runnable action) {
+        var subsegment = AWSXRay.beginSubsegment(name);
+        if (annotations != null) {
+            subsegment.setAnnotations(annotations);
+        }
         try {
-            runnable.run();
+            action.run();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to execute subsegment routine", e);
+            subsegment.addException(e);
+            throw e;
+        } finally {
+            AWSXRay.endSubsegment();
         }
     }
 

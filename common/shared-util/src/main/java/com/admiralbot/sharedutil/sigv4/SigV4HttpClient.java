@@ -43,7 +43,7 @@ public class SigV4HttpClient {
         headers.forEach((k, v) -> extraHeaders.put(k, List.of(v)));
         Optional.ofNullable(XrayUtils.getTraceHeader()).ifPresent(traceId -> {
             logger.debug("Adding discovered Trace ID to HTTP headers");
-            extraHeaders.put(XrayUtils.TRACE_ID_HEADER_KEY, List.of(traceId));
+            extraHeaders.put(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY, List.of(traceId));
         });
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()

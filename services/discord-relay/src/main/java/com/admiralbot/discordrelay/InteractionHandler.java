@@ -133,7 +133,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
         String errorReplyContent = MSG_COMMANDSERVICE_OTHER_EXCEPTION;
 
         try {
-            Map<String,String> annotations = Map.of("CommandSourceId", commandSourceId);
+            Map<String,Object> annotations = Map.of("CommandSourceId", commandSourceId);
             commandResponse = XrayUtils.subsegment("SubmitCommand", annotations, () -> {
                 ProcessUserCommandRequest commandRequest = new ProcessUserCommandRequest(
                         commandWords, appChannel, commandSourceId,
@@ -200,8 +200,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
                 }
             }
 
-            // If after all this the content is still null, that means the everything worked but the command did not
-            // specify any reply content (no commands currently do this but it's technically supported).
+            // If after all this the content is still null, that means everything worked but the command did not
+            // specify any reply content (no commands currently do this, but it's technically supported).
             if (replyMessageContent == null) {
                 logger.info("Setting reply content to generic completion message since CommandService returned none");
                 replyMessageContent = MSG_GENERIC_COMMAND_SUCCESS;

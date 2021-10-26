@@ -39,7 +39,7 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
             logger.info("Request headers:");
             logger.info(request.headers().toString());
 
-            XrayUtils.beginSegment(getSimpleServiceName(), request.headers(XrayUtils.TRACE_ID_HEADER_KEY));
+            XrayUtils.setTraceId(request.headers(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY));
 
             response.type("application/json");
             response.header("Server", SERVER_HEADER_VALUE);
