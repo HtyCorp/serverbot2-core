@@ -1,6 +1,7 @@
 package com.admiralbot.infra.constructs;
 
 import com.admiralbot.infra.deploy.ApplicationRegionalStage;
+import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.sharedconfig.CommonConfig;
@@ -11,12 +12,11 @@ import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.IGrantable;
 import software.amazon.awscdk.services.iam.IPrincipal;
 import software.amazon.awscdk.services.iam.IRole;
-import software.amazon.awscdk.services.lambda.Code;
-import software.amazon.awscdk.services.lambda.Function;
-import software.amazon.awscdk.services.lambda.IFunction;
+import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.lambda.Runtime;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class NativeLambdaMicroservice extends Construct implements IGrantable {
 
@@ -36,9 +36,12 @@ public class NativeLambdaMicroservice extends Construct implements IGrantable {
                 .memorySize(4096)
                 .timeout(Duration.seconds(15))
                 .handler("default") // not applicable to native Lambda right now
+                .tracing(Tracing.ACTIVE)
                 .build();
 
         Permissions.addConfigPathRead(parent, function, CommonConfig.PATH);
+        Permissions.addManagedPoliciesToRole(Objects.requireNonNull(function.getRole()),
+                ManagedPolicies.XRAY_DAEMON_WRITE_ACCESS);
     }
 
     public IFunction getFunction() {
