@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class AppDaemon {
 
     public static void main(String[] args) {
-        XrayUtils.setIgnoreMissingContext();
+        XrayUtils.setup();
         XrayUtils.setServiceName("AppDaemon");
         AppContext.setInstance();
         new AppDaemon();

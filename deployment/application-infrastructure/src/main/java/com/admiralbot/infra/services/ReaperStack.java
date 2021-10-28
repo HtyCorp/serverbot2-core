@@ -4,6 +4,7 @@ import com.admiralbot.infra.util.ManagedPolicies;
 import com.admiralbot.infra.util.Permissions;
 import com.admiralbot.infra.util.Util;
 import com.admiralbot.networksecurity.model.INetworkSecurity;
+import com.admiralbot.sharedconfig.CommonConfig;
 import com.admiralbot.sharedconfig.ReaperConfig;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Duration;
@@ -27,6 +28,8 @@ public class ReaperStack extends Stack {
 
         // NetSec permission required to invoke RevokeExpiredIps
         Permissions.addExecuteApi(this, functionRole, INetworkSecurity.class);
+        // Required to get basic API config to invoke above
+        Permissions.addConfigPathRead(this, functionRole, CommonConfig.PATH);
 
         Alias scheduledFunctionAlias = Util.highMemJavaFunction(this, "ReaperFunction", "resource-reaper",
                 "com.admiralbot.resourcereaper.ScheduledLambdaHandler",

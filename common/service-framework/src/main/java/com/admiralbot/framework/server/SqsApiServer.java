@@ -53,12 +53,6 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
      */
     private void runReceiveLoop() {
         try {
-            // The initialisation and polling SQS calls aren't of interest performance-wise but will throw an error if
-            // used outside a trace due to missing Xray context. This lines sets the Xray recorder to ignore these.
-            // This is only required because automatic client instrumentation is enabled (and can't be selectively
-            // disabled per-client like I hoped...).
-            XrayUtils.setIgnoreMissingContext();
-
             final String receiveQueueUrl = sqsClient.getQueueUrl(r -> r.queueName(receiveQueueName)).queueUrl();
 
             final List<String> receiveAttributeNames = List.of(

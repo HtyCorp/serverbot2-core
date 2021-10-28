@@ -1,10 +1,15 @@
 package com.admiralbot.sharedutil;
 
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.AWSXRayRecorder;
+import com.amazonaws.xray.AWSXRayRecorderBuilder;
+import com.amazonaws.xray.contexts.SegmentContextResolverChain;
+import com.amazonaws.xray.contexts.ThreadLocalSegmentContextResolver;
 import com.amazonaws.xray.entities.Entity;
 import com.amazonaws.xray.entities.Segment;
 import com.amazonaws.xray.entities.Subsegment;
 import com.amazonaws.xray.entities.TraceHeader;
+import com.amazonaws.xray.strategy.IgnoreErrorContextMissingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +54,19 @@ public class XrayUtils {
         setProperty(MISSING_CONTEXT_STRATEGY_PROPERTY, strategy.name());
     }
 
-    public static void setIgnoreMissingContext() {
+    public static void setup() {
         setMissingContextStrategy(XrayMissingContextStrategy.IGNORE_ERROR);
+
+        // Running this SDK in a Lambda without Xray enabled (not possible right not; no HTTP API integration)
+        // doesn't work well since the SDK assumes a Segment already exists. So we omit the Lambda resolver.
+        SegmentContextResolverChain contextChainNolambda = new SegmentContextResolverChain();
+        contextChainNolambda.addResolver(new ThreadLocalSegmentContextResolver());
+
+        AWSXRayRecorder modifiedRecorder = AWSXRayRecorderBuilder.standard()
+                .withContextMissingStrategy(new IgnoreErrorContextMissingStrategy())
+                .withSegmentContextResolverChain(contextChainNolambda)
+                .build();
+        AWSXRay.setGlobalRecorder(modifiedRecorder);
     }
 
     /*

@@ -49,7 +49,7 @@ public abstract class AbstractApiServer<ModelType> {
         String simpleServiceName = IDUtils.stripLeadingICharIfPresent(getModelClass().getSimpleName());
         XrayUtils.setServiceName(simpleServiceName);
         serverDisplayName = simpleServiceName + serverType();
-        XrayUtils.setIgnoreMissingContext();
+        XrayUtils.setup();
 
         // Make a new service handler and a dispatcher for it, so subclasses can route requests
 
