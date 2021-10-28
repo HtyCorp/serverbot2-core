@@ -84,8 +84,8 @@ public class NativeEcsMicroservice extends Construct implements IGrantable {
                 .essential(true)
                 .image(ContainerImage.fromAsset(servicePackagePath.toString()))
                 .logging(serverLogDriver)
-                // See Xray daemon definition in ServiceClusterStack: this is the default host gateway IP on ECS AMI
-                .environment(Map.of("AWS_XRAY_DAEMON_ADDRESS", "169.254.172.1:2000"))
+                // 172.17.0.1 is the default gateway for Docker bridge network
+                .environment(Map.of("AWS_XRAY_DAEMON_ADDRESS", "172.17.0.1:2000"))
                 .build());
         serviceContainer.addPortMappings(PortMapping.builder()
                 .protocol(Protocol.TCP)

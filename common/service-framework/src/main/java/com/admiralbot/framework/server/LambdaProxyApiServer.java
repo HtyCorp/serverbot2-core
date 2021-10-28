@@ -49,7 +49,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         while(true) {
             LambdaInvocation invocation = runtimeClient.getNextInvocation();
             try {
-                APIGatewayV2HTTPResponse responseEvent = handleInvocation(invocation);
+                APIGatewayV2HTTPResponse responseEvent = handleInvocationWithTrace(invocation);
                 runtimeClient.postInvocationResponse(invocation.getId(), responseEvent);
             } catch (Exception invokeException) {
                 logger.error("Internal error during invocation handling", invokeException);
@@ -59,16 +59,28 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         }
     }
 
-    private APIGatewayV2HTTPResponse handleInvocation(LambdaInvocation invocation) {
-        long maxExecutionTimeMs = invocation.getDeadlineMs() - Instant.now().toEpochMilli();
+    private APIGatewayV2HTTPResponse handleInvocationWithTrace(LambdaInvocation invocation) {
+        // TODO: Lean on active Lambda tracing once HTTP APIs support Xray integration
+        String apiTraceId = invocation.getApiGatewayEvent().getHeaders()
+                .get(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY.toLowerCase());
+        if (apiTraceId != null) {
+            XrayUtils.setTraceId(apiTraceId);
+        }
+        try {
+            XrayUtils.beginSegment(getSimpleServiceName() + "LambdaProxy");
+            return handleInvocation(invocation);
+        } catch (Exception e) {
+            XrayUtils.addSegmentException(e);
+            throw e;
+        } finally {
+            XrayUtils.endSegment();
+        }
+    }
 
+    private APIGatewayV2HTTPResponse handleInvocation(LambdaInvocation invocation) {
         APIGatewayV2HTTPResponse errorResponse = generateErrorIfInvalidRequest(invocation.getApiGatewayEvent());
         if (errorResponse != null) {
             return errorResponse;
-        }
-
-        if (invocation.getXrayTraceId() != null) {
-            XrayUtils.setTraceId(invocation.getXrayTraceId());
         }
 
         String requestBody = getRequestBody(invocation.getApiGatewayEvent());
@@ -77,6 +89,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         Future<String> responseFuture = threadExecutor.submit(() -> getRequestDispatcher().handleRequest(requestBody));
 
         try {
+            long maxExecutionTimeMs = invocation.getDeadlineMs() - Instant.now().toEpochMilli();
             String responseBody = responseFuture.get(maxExecutionTimeMs, TimeUnit.MILLISECONDS);
             LogUtils.info(logger, () -> "Response body:\n" + responseBody);
             return standardResponse(200, responseBody);
