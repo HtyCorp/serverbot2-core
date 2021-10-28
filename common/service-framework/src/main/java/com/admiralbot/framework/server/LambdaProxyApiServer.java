@@ -7,6 +7,7 @@ import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.XrayUtils;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse;
+import com.amazonaws.xray.entities.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.SdkBytes;
@@ -30,6 +31,11 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         return true;
     }
 
+    @Override
+    protected String serverType() {
+        return "LambdaProxy";
+    }
+
     private final LambdaRuntimeClient runtimeClient;
     private final ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
 
@@ -46,34 +52,25 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
     }
 
     private void lambdaInvocationHandlerLoop() {
+        // TODO: Rely on Lambda active tracing once HTTP APIs support Xray integration
         while(true) {
             LambdaInvocation invocation = runtimeClient.getNextInvocation();
+            String traceHeaderString = invocation.getApiGatewayEvent().getHeaders()
+                    .get(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY.toLowerCase());
             try {
-                APIGatewayV2HTTPResponse responseEvent = handleInvocationWithTrace(invocation);
-                runtimeClient.postInvocationResponse(invocation.getId(), responseEvent);
+                XrayUtils.beginSegment(getServerDisplayName(), traceHeaderString);
+                APIGatewayV2HTTPResponse response = XrayUtils.subsegment("HandleRequest", null,
+                        () -> handleInvocation(invocation));
+                XrayUtils.subsegment("PostResponse", null,
+                        () -> runtimeClient.postInvocationResponse(invocation.getId(), response));
             } catch (Exception invokeException) {
                 logger.error("Internal error during invocation handling", invokeException);
+                XrayUtils.addSegmentException(invokeException);
                 runtimeClient.postInvocationError(invocation.getId(), invokeException.toString(),
-                        invokeException.getClass().getSimpleName(), null);
+                        invokeException.getClass().getCanonicalName(), null);
+            } finally {
+                XrayUtils.endSegment();
             }
-        }
-    }
-
-    private APIGatewayV2HTTPResponse handleInvocationWithTrace(LambdaInvocation invocation) {
-        // TODO: Lean on active Lambda tracing once HTTP APIs support Xray integration
-        String apiTraceId = invocation.getApiGatewayEvent().getHeaders()
-                .get(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY.toLowerCase());
-        if (apiTraceId != null) {
-            XrayUtils.setTraceId(apiTraceId);
-        }
-        try {
-            XrayUtils.beginSegment(getSimpleServiceName() + "LambdaProxy");
-            return handleInvocation(invocation);
-        } catch (Exception e) {
-            XrayUtils.addSegmentException(e);
-            throw e;
-        } finally {
-            XrayUtils.endSegment();
         }
     }
 
@@ -86,7 +83,12 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
         String requestBody = getRequestBody(invocation.getApiGatewayEvent());
         LogUtils.info(logger, () -> "Request body:\n" + requestBody);
 
-        Future<String> responseFuture = threadExecutor.submit(() -> getRequestDispatcher().handleRequest(requestBody));
+        // Because this executes in another thread, we need to explicitly copy the Xray entity across
+        Entity traceEntity = XrayUtils.getEntity();
+        Future<String> responseFuture = threadExecutor.submit(() -> {
+            XrayUtils.setEntity(traceEntity);
+            return getRequestDispatcher().handleRequest(requestBody);
+        });
 
         try {
             long maxExecutionTimeMs = invocation.getDeadlineMs() - Instant.now().toEpochMilli();

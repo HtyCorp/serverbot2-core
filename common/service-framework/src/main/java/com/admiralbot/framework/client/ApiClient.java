@@ -124,12 +124,14 @@ public final class ApiClient {
             throw new IllegalArgumentException("API definition set does not contain endpoint info");
         }
         @SuppressWarnings("unchecked")
-        ModelType modelType = (ModelType) Proxy.newProxyInstance(
+        ModelType clientProxy = (ModelType) Proxy.newProxyInstance(
                 ApiClient.class.getClassLoader(),
                 new Class<?>[]{modelInterfaceClass},
                 new InvocationHandler() {
 
                     private final int serial = ThreadLocalRandom.current().nextInt();
+                    private final String clientName = IDUtils.stripLeadingICharIfPresent(
+                            modelInterfaceClass.getSimpleName()) + "Client";
 
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) {
@@ -145,68 +147,70 @@ public final class ApiClient {
                                     return toString();
                             }
 
-                            XrayUtils.beginSubsegment(modelInterfaceClass.getSimpleName() + "Client");
-
-                            Object requestPojo = args[0];
-                            ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(requestPojo.getClass());
-                            String requestId = IDUtils.randomUUID();
-                            String payload = annotatedJsonPayload(requestPojo, apiDefinition, requestId);
-
-                            ClientRequest clientRequest = new ClientRequest(definitionSet.getEndpointInfo(), payload, requestId);
-                            ServerResponse serverResponse = requestSender.apply(clientRequest);
-
-                            JsonObject response;
-                            try {
-                                response = JsonParser.parseString(serverResponse.getPayload()).getAsJsonObject();
-                            } catch (JsonSyntaxException | IllegalArgumentException e) {
-                                throw new ApiClientParseException("Server response is not well-formed JSON");
-                            }
-
-                            JsonElement content = response.get(ApiConfig.JSON_RESPONSE_CONTENT_KEY);
-                            JsonElement error = response.get(ApiConfig.JSON_RESPONSE_ERROR_KEY);
-                            JsonElement message = response.get(ApiConfig.JSON_RESPONSE_GATEWAY_MESSAGE_KEY);
-
-                            if (content != null && !content.isJsonNull()) {
-                                return (apiDefinition.hasResponseType())
-                                        ? apiDefinition.getResponseTypeAdapter().fromJsonTree(content)
-                                        : null;
-                            }
-
-                            // If error provided, generate the exception (basic details only) and throw.
-                            if (error != null && !error.isJsonNull()) {
-                                ServerExceptionDto info = GSON.fromJson(error, ServerExceptionDto.class);
-                                throw ServerExceptionParser.fromName(
-                                        info.getExceptionTypeName(),
-                                        info.getExceptionMessage());
-                            }
-
-                            // If other message provided, return it with type based on status code
-                            if (message != null && !message.isJsonNull()) {
-                                String messageStr = message.getAsString();
-                                if (serverResponse.hasStatusCode()) {
-                                    int statusCode = serverResponse.getStatusCode();
-                                    if (Utils.inRangeInclusive(statusCode, 400, 499)) {
-                                        throw new GatewayClientException(statusCode + ": " + messageStr);
-                                    } else {
-                                        throw new GatewayServerException(statusCode + ": " + messageStr);
-                                    }
-                                } else {
-                                    throw new GatewayServerException(messageStr);
-                                }
-                            }
-
-                            throw new ApiClientParseException("Server response didn't include any expected keys");
+                            return XrayUtils.subsegment(clientName, null,
+                                    () -> proxyInvoke(definitionSet, args[0], requestSender));
 
                         } catch (ApiException e) {
                             throw e; // Ensure the following RuntimeException catch doesn't override details
                         } catch (RuntimeException e) {
                             throw new ApiClientException("Unexpected error while making client request", e);
-                        } finally {
-                            XrayUtils.endSubsegment();
                         }
                     }
                 });
-        return modelType;
+        return clientProxy;
+    }
+
+    private static Object proxyInvoke(ApiDefinitionSet<?> definitionSet, Object requestObject,
+                               Function<ClientRequest,ServerResponse> requestSender) {
+
+        ApiActionDefinition apiDefinition = definitionSet.getFromRequestClass(requestObject.getClass());
+        String requestId = IDUtils.randomUUID();
+        String payload = annotatedJsonPayload(requestObject, apiDefinition, requestId);
+
+        ClientRequest clientRequest = new ClientRequest(definitionSet.getEndpointInfo(), payload, requestId);
+        ServerResponse serverResponse = requestSender.apply(clientRequest);
+
+        JsonObject response;
+        try {
+            response = JsonParser.parseString(serverResponse.getPayload()).getAsJsonObject();
+        } catch (JsonSyntaxException | IllegalArgumentException e) {
+            throw new ApiClientParseException("Server response is not well-formed JSON");
+        }
+
+        JsonElement content = response.get(ApiConfig.JSON_RESPONSE_CONTENT_KEY);
+        JsonElement error = response.get(ApiConfig.JSON_RESPONSE_ERROR_KEY);
+        JsonElement message = response.get(ApiConfig.JSON_RESPONSE_GATEWAY_MESSAGE_KEY);
+
+        if (content != null && !content.isJsonNull()) {
+            return (apiDefinition.hasResponseType())
+                    ? apiDefinition.getResponseTypeAdapter().fromJsonTree(content)
+                    : null;
+        }
+
+        // If error provided, generate the exception (basic details only) and throw.
+        if (error != null && !error.isJsonNull()) {
+            ServerExceptionDto info = GSON.fromJson(error, ServerExceptionDto.class);
+            throw ServerExceptionParser.fromName(
+                    info.getExceptionTypeName(),
+                    info.getExceptionMessage());
+        }
+
+        // If other message provided, return it with type based on status code
+        if (message != null && !message.isJsonNull()) {
+            String messageStr = message.getAsString();
+            if (serverResponse.hasStatusCode()) {
+                int statusCode = serverResponse.getStatusCode();
+                if (Utils.inRangeInclusive(statusCode, 400, 499)) {
+                    throw new GatewayClientException(statusCode + ": " + messageStr);
+                } else {
+                    throw new GatewayServerException(statusCode + ": " + messageStr);
+                }
+            } else {
+                throw new GatewayServerException(messageStr);
+            }
+        }
+
+        throw new ApiClientParseException("Server response didn't include any expected keys");
     }
 
     private static String annotatedJsonPayload(Object request, ApiActionDefinition apiDefinition, String requestId) {

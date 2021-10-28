@@ -33,6 +33,29 @@ public class SigV4HttpClient {
 
     public SigV4HttpResponse post(String uri, String body, String serviceName, Map<String,String> headers)
             throws IOException {
+        return postWithTrace(uri, body, serviceName, headers);
+    }
+
+    private SigV4HttpResponse postWithTrace(String uri, String body, String serviceName, Map<String,String> headers)
+            throws IOException{
+        URI requestUri = URI.create(uri);
+        if (!XrayUtils.isInSegment()) {
+            return doPost(requestUri, body, serviceName, headers);
+        } else {
+            try {
+                XrayUtils.beginSubsegment(requestUri.getHost());
+                return doPost(requestUri, body, serviceName, headers);
+            } catch (Exception e) {
+                XrayUtils.addSubsegmentException(e);
+                throw e;
+            } finally {
+                XrayUtils.endSubsegment();
+            }
+        }
+    }
+
+    private SigV4HttpResponse doPost(URI uri, String body, String serviceName, Map<String,String> headers)
+            throws IOException {
 
         String bodyOrEmpty = Optional.ofNullable(body).orElse("");
         ContentStreamProvider bodyProvider = SdkBytes.fromUtf8String(bodyOrEmpty).asContentStreamProvider();
@@ -41,13 +64,15 @@ public class SigV4HttpClient {
         Map<String,List<String>> extraHeaders = new HashMap<>(headers.size()+2);
         extraHeaders.put("Content-Type", List.of("application/json"));
         headers.forEach((k, v) -> extraHeaders.put(k, List.of(v)));
-        Optional.ofNullable(XrayUtils.getTraceHeader()).ifPresent(traceId -> {
-            logger.debug("Adding discovered Trace ID to HTTP headers");
-            extraHeaders.put(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY, List.of(traceId));
-        });
+        String traceHeader = XrayUtils.getTraceHeaderString();
+        if (traceHeader == null) {
+            logger.warn("HTTP request outside of Xray trace, skipping trace header");
+        } else {
+            extraHeaders.put(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY, List.of(traceHeader));
+        }
 
         SdkHttpFullRequest baseRequest = SdkHttpFullRequest.builder()
-                .uri(URI.create(uri))
+                .uri(uri)
                 .method(SdkHttpMethod.POST)
                 .headers(extraHeaders)
                 .contentStreamProvider(bodyProvider)

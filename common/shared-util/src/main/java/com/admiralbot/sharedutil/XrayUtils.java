@@ -1,12 +1,18 @@
 package com.admiralbot.sharedutil;
 
 import com.amazonaws.xray.AWSXRay;
+import com.amazonaws.xray.entities.Entity;
 import com.amazonaws.xray.entities.Segment;
 import com.amazonaws.xray.entities.Subsegment;
+import com.amazonaws.xray.entities.TraceHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
+
+import static com.amazonaws.xray.entities.TraceHeader.SampleDecision.NOT_SAMPLED;
+import static com.amazonaws.xray.entities.TraceHeader.SampleDecision.SAMPLED;
 
 public class XrayUtils {
 
@@ -17,6 +23,8 @@ public class XrayUtils {
     private static final String TRACE_HEADER_PROPERTY = "com.amazonaws.xray.traceHeader";
     private static final String TRACING_ENABLED_PROPERTY = "com.amazonaws.xray.tracingEnabled";
     private static final String MISSING_CONTEXT_STRATEGY_PROPERTY = "com.amazonaws.xray.strategy.contextMissingStrategy";
+
+    private static final Logger log = LoggerFactory.getLogger(XrayUtils.class);
 
     private XrayUtils() {}
 
@@ -31,10 +39,6 @@ public class XrayUtils {
         // The ideal is to modify the equivalent env var, but modifying env vars in Java is not simple
         // Recent versions of AWS Xray Java SDK support this system property as an alternative
         setProperty(TRACING_ENABLED_PROPERTY, xrayBoolString(enabled));
-    }
-
-    public static void setTraceId(String traceId) {
-        System.setProperty(TRACE_HEADER_PROPERTY, traceId);
     }
 
     enum XrayMissingContextStrategy {
@@ -54,9 +58,45 @@ public class XrayUtils {
      * These are proxied so Xray can be removed now as a dependency but potentially re-enabled later.
      */
 
-    public static String getTraceHeader() {
-        return Optional.ofNullable(System.getenv(TRACE_HEADER_ENV_VAR))
-                .orElse(System.getProperty(TRACE_HEADER_PROPERTY));
+    // Ref: https://github.com/aws/aws-xray-sdk-java/blob/d9d17ec980dce1c7e40a4b2e67cd5f76c5a36ea9/aws-xray-recorder-sdk-apache-http/src/main/java/com/amazonaws/xray/proxies/apache/http/TracedHttpClient.java#L109
+    public static String getTraceHeaderString() {
+        Entity entity = AWSXRay.getTraceEntity();
+        if (!(entity instanceof Subsegment)) {
+            return null;
+        } else {
+            Segment parentSegment = entity.getParentSegment();
+            TraceHeader header = new TraceHeader(entity.getTraceId(),
+                    parentSegment.isSampled() ? entity.getId() : null,
+                    parentSegment.isSampled() ? SAMPLED : NOT_SAMPLED);
+            return header.toString();
+        }
+    }
+
+    public static Entity getEntity() {
+        return AWSXRay.getTraceEntity();
+    }
+
+    // Should only be used for copying entities between threads
+    public static void setEntity(Entity entity) {
+        if (entity != null) {
+            AWSXRay.setTraceEntity(entity);
+        } else {
+            AWSXRay.clearTraceEntity();
+        }
+    }
+
+    public static boolean isInSegment() {
+        return AWSXRay.getTraceEntity() != null;
+    }
+
+    public static Segment beginSegment(String name, String traceHeaderString) {
+        TraceHeader header = TraceHeader.fromString(traceHeaderString);
+        if (header.getRootTraceId() == null || header.getParentId() == null) {
+            log.warn("Trace header string does not contain a valid root ID or parent: <" +
+                   traceHeaderString + ">");
+            return AWSXRay.beginSegment(name);
+        }
+        return AWSXRay.beginSegment(name, header.getRootTraceId(), header.getParentId());
     }
 
     public static Segment beginSegment(String name) {

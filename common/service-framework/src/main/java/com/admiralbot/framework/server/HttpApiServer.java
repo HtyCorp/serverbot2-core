@@ -23,6 +23,11 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         return true;
     }
 
+    @Override
+    protected String serverType() {
+        return "HttpServer";
+    }
+
     public HttpApiServer() {
         super.initialise();
         if (getEndpointInfo().httpMethod() != ApiHttpMethod.POST) {
@@ -34,26 +39,25 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
         Spark.port(CommonConfig.SERVICES_INTERNAL_HTTP_PORT);
         Spark.post(internalApiRequestPath, (request, response) -> {
 
-            logger.info("Request payload:");
-            logger.info(request.body());
-            logger.info("Request headers:");
-            logger.info(request.headers().toString());
-
-            XrayUtils.setTraceId(request.headers(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY));
-
-            response.type("application/json");
-            response.header("Server", SERVER_HEADER_VALUE);
+            String traceHeader = request.headers(XrayUtils.TRACE_HEADER_HTTP_HEADER_KEY);
 
             try {
 
-                XrayUtils.beginSubsegment("HandleRequest");
+                XrayUtils.beginSegment(getServerDisplayName(), traceHeader);
 
-                String responseBody = getRequestDispatcher().handleRequest(request.body());
+                logger.info("Request payload:");
+                logger.info(request.body());
+                logger.info("Request headers:");
+                logger.info(request.headers().toString());
+
+                response.type("application/json");
+                response.header("Server", SERVER_HEADER_VALUE);
+
+                String responseBody = XrayUtils.subsegment("HandleRequest", null,
+                        () -> getRequestDispatcher().handleRequest(request.body()));
 
                 logger.info("Response payload:");
                 logger.info(responseBody);
-
-                XrayUtils.endSubsegment();
 
                 return responseBody;
 
@@ -74,7 +78,6 @@ public abstract class HttpApiServer<ModelType> extends AbstractApiServer<ModelTy
                 XrayUtils.endSegment();
 
             }
-
         });
     }
 

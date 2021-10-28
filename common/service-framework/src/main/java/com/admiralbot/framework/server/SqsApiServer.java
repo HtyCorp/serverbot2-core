@@ -30,6 +30,11 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
         return false;
     }
 
+    @Override
+    protected String serverType() {
+        return "SqsPoller";
+    }
+
     public SqsApiServer(String receiveQueueName) {
         super.initialise();
         // Don't run as daemon: this is intended as a forever-running server thread.
@@ -61,10 +66,9 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                     ApiConfig.JSON_REQUEST_QUEUE_KEY
             );
 
-            while(true) {
+            while (true) {
                 logger.trace("Polling messages");
-                ReceiveMessageResponse response = sqsClient.receiveMessage(r ->
-                        r.queueUrl(receiveQueueUrl)
+                ReceiveMessageResponse response = sqsClient.receiveMessage(r -> r.queueUrl(receiveQueueUrl)
                                 .messageAttributeNames(receiveAttributeNames)
                                 .attributeNames(QueueAttributeName.ALL)
                                 .waitTimeSeconds(CommonConfig.DEFAULT_SQS_WAIT_TIME_SECONDS)
@@ -76,8 +80,7 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
 
                         // Propagate Xray trace information if available in message attributes
                         String traceHeader = extractTraceHeaderIfAvailable(message);
-                        XrayUtils.setTraceId(traceHeader);
-                        XrayUtils.beginSegment("HandleRequest");
+                        XrayUtils.beginSegment("HandleRequest", traceHeader);
 
                         try {
 
@@ -100,11 +103,12 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                             LogUtils.infoDump(logger, "Message attributes:", message.messageAttributes());
                             logger.info("Request payload:\n" + message.body());
 
-                            sqsClient.deleteMessage(r -> r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle()));
+                            XrayUtils.subsegment("DeleteMessage", null,
+                                    () -> sqsClient.deleteMessage(r ->
+                                            r.queueUrl(receiveQueueUrl).receiptHandle(message.receiptHandle())));
 
-                            XrayUtils.beginSubsegment("DispatchRequest");
-                            String responseString = getRequestDispatcher().handleRequest(message.body());
-                            XrayUtils.endSubsegment();
+                            String responseString = XrayUtils.subsegment("HandleRequest", null,
+                                    () -> getRequestDispatcher().handleRequest(message.body()));
 
                             logger.info("Response payload:\n" + responseString);
 
@@ -124,6 +128,16 @@ public abstract class SqsApiServer<ModelType> extends AbstractApiServer<ModelTyp
                                 XrayUtils.addSubsegmentException(e);
                             } finally {
                                 XrayUtils.endSubsegment();
+                            }
+
+                            try {
+                                XrayUtils.subsegment("SendReply", null,
+                                        () -> sqsClient.sendMessage(r -> r.queueUrl(replyQueueUrl)
+                                                        .messageAttributes(sqsAttrMap)
+                                                        .messageBody(responseString)));
+                            } catch (Exception e) {
+                                // Explicitly doesn't fail or throw error since reply permissions may be outside our control
+                                logger.warn("Failed to send reply, ignoring");
                             }
 
                         } finally {

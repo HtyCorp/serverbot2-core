@@ -12,8 +12,8 @@ import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.services.iam.IGrantable;
 import software.amazon.awscdk.services.iam.IPrincipal;
 import software.amazon.awscdk.services.iam.IRole;
-import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.lambda.*;
 
 import java.nio.file.Path;
 import java.util.Objects;
