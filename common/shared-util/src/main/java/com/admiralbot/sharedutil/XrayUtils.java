@@ -78,10 +78,12 @@ public class XrayUtils {
     public static String getTraceHeaderString() {
         Entity entity = AWSXRay.getTraceEntity();
         if (!(entity instanceof Subsegment)) {
+            log.info("Trace header: skipping since entity is not a subsegment: <{}>", entity);
             return null;
         } else {
             Segment parentSegment = entity.getParentSegment();
-            TraceHeader header = new TraceHeader(entity.getTraceId(),
+            log.info("Trace header: entity is a subsegment <{}> with parent segment <{}>", entity, parentSegment);
+            TraceHeader header = new TraceHeader(parentSegment.getTraceId(),
                     parentSegment.isSampled() ? entity.getId() : null,
                     parentSegment.isSampled() ? SAMPLED : NOT_SAMPLED);
             return header.toString();

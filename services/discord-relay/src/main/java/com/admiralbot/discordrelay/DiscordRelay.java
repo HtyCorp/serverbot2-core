@@ -90,25 +90,16 @@ public class DiscordRelay {
         new RelayServiceHandler(discordApi, channelMap, messageTable, slashCommandUpdater);
 
         logger.info("Registering Javacord listeners...");
-        discordApi.addMessageCreateListener(event -> asyncExecute("ProcessUserMessage",
-                this::onMessageCreate, event));
+        discordApi.addMessageCreateListener(event -> asyncExecute(this::onMessageCreate, event));
         discordApi.addSlashCommandCreateListener(slashCommandHandler);
 
         logger.info("Ready to receive messages and API calls");
     }
 
-    private <T> void asyncExecute(String segmentName, Consumer<T> handler, T event) {
-        handlerQueue.execute(() -> {
-            try {
-                XrayUtils.beginSegment(segmentName);
-                handler.accept(event);
-            } catch (Exception e) {
-                logger.error("Uncaught exception during {} handling", segmentName, e);
-                XrayUtils.addSegmentException(e);
-            } finally {
-                XrayUtils.endSegment();
-            }
-        });
+    // This is not traced by Xray since the handler is trivial;
+    // it just sends back a "use slash commands instead" message with no processing.
+    private <T> void asyncExecute(Consumer<T> handler, T event) {
+        handlerQueue.execute(() -> handler.accept(event));
     }
 
     private void onMessageCreate(MessageCreateEvent messageCreateEvent) {
