@@ -6,7 +6,6 @@ package com.admiralbot.sharedconfig;
 public class DeployConfig {
 
     public static final String DEPLOYMENT_MANIFEST_PARAM_NAME = "DeploymentEnvironmentManifest";
-    public static final String GITHUB_OAUTH_TOKEN_SECRET_NAME = "GitHubRepoAccessToken";
     public static final String GITHUB_DEPLOYMENT_SOURCE_OWNER = "HtyCorp";
     public static final String GITHUB_DEPLOYMENT_SOURCE_REPO = "serverbot2-core";
     public static final String GITHUB_DEPLOYMENT_MASTER_BRANCH = "master";
