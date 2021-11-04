@@ -3,7 +3,7 @@ version: 0.2
 env:
   shell: bash
   variables:
-    CDK_VERSION: "1.111.0"
+    CDK_VERSION: "1.130.0"
     GRAAL_RELEASE: "vm-21.3.0"
     GRAAL_ARTIFACT: "graalvm-ce-java17-linux-amd64-21.3.0"
     JAVA_HOME: "/usr/local/lib/graalvm/21.3.0"

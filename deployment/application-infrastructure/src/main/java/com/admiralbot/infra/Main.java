@@ -68,8 +68,11 @@ public class Main {
         App app = makeAppWithStandardAzIds(List.of(appEnv));
 
         // Build dev CDK pipeline.
-        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
-                devManifest.getRepoSourceBranch(), "DevEnvironmentPipeline");
+        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack",
+                makeDefaultProps(),
+                devManifest.getConnectionUuid(),
+                devManifest.getRepoSourceBranch(),
+                "DevEnvironmentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         String stageGlobalId = appEnv.getName() + "G" + makeShortRegionName(appEnv.getRegion());
@@ -91,8 +94,11 @@ public class Main {
         App app = makeAppWithStandardAzIds(deploymentManifest.getEnvironments());
 
         // Build central CDK pipeline.
-        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack", makeDefaultProps(),
-                DeployConfig.GITHUB_DEPLOYMENT_MASTER_BRANCH, "CDKDeploymentPipeline");
+        PipelineStack pipelineStack = new PipelineStack(app, "DeploymentPipelineStack",
+                makeDefaultProps(),
+                deploymentManifest.getConnectionUuid(),
+                DeployConfig.GITHUB_DEPLOYMENT_MASTER_BRANCH,
+                "CDKDeploymentPipeline");
         CdkPipeline pipeline = pipelineStack.getPipeline();
 
         // Add an application stage for every enabled environment in manifest.

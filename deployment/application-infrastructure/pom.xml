@@ -87,7 +87,7 @@
         <dependency>
             <groupId>software.amazon.awscdk</groupId>
             <artifactId>monocdk</artifactId>
-            <version>1.110.0.DEVPREVIEW</version>
+            <version>${awsmonocdk.version}.DEVPREVIEW</version>
         </dependency>
     </dependencies>
 

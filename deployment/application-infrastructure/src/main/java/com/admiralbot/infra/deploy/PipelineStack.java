@@ -1,12 +1,16 @@
 package com.admiralbot.infra.deploy;
 
 import com.admiralbot.sharedconfig.DeployConfig;
-import software.amazon.awscdk.core.*;
+import com.admiralbot.sharedutil.Joiner;
+import software.amazon.awscdk.core.Construct;
+import software.amazon.awscdk.core.RemovalPolicy;
+import software.amazon.awscdk.core.Stack;
+import software.amazon.awscdk.core.StackProps;
 import software.amazon.awscdk.pipelines.CdkPipeline;
 import software.amazon.awscdk.services.codebuild.*;
 import software.amazon.awscdk.services.codepipeline.Artifact;
 import software.amazon.awscdk.services.codepipeline.actions.CodeBuildAction;
-import software.amazon.awscdk.services.codepipeline.actions.GitHubSourceAction;
+import software.amazon.awscdk.services.codepipeline.actions.CodeStarConnectionsSourceAction;
 import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.s3.Bucket;
@@ -21,7 +25,8 @@ public class PipelineStack extends Stack {
         return pipeline;
     }
 
-    public PipelineStack(Construct parent, String id, StackProps stackProps, String sourceBranch, String pipelineName) {
+    public PipelineStack(Construct parent, String id, StackProps stackProps, String connectionUuid,
+                         String sourceBranch, String pipelineName) {
         super(parent, id, stackProps);
 
         // Bucket for Maven dependency caching
@@ -42,12 +47,14 @@ public class PipelineStack extends Stack {
         // Outputs:
         Artifact assemblyArtifact = Artifact.artifact("cloud_assembly");
 
-        GitHubSourceAction gitHubSource = GitHubSourceAction.Builder.create()
-                .actionName("PullGitHubSource")
+        String connectionArn = Joiner.colon("arn", "aws", "codestar-connections",
+                getRegion(), getAccount(), "connection/" + connectionUuid);
+        CodeStarConnectionsSourceAction gitHubConnection = CodeStarConnectionsSourceAction.Builder.create()
+                .actionName("GitHubSource")
                 .output(sourceArtifact)
-                .oauthToken(SecretValue.secretsManager(DeployConfig.GITHUB_OAUTH_TOKEN_SECRET_NAME))
+                .connectionArn(connectionArn)
                 .owner(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_OWNER)
-                .repo(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_REPO)
+                .repo(DeployConfig.GITHUB_DEPLOYMENT_MASTER_BRANCH)
                 .branch(sourceBranch)
                 .build();
 
@@ -88,11 +95,10 @@ public class PipelineStack extends Stack {
 
         pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
                 .pipelineName(pipelineName)
-                .sourceAction(gitHubSource)
+                .sourceAction(gitHubConnection)
                 .synthAction(codeBuildAction)
                 .cloudAssemblyArtifact(assemblyArtifact)
                 .build();
-
     }
 
 }
