@@ -54,7 +54,7 @@ public class PipelineStack extends Stack {
                 .output(sourceArtifact)
                 .connectionArn(connectionArn)
                 .owner(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_OWNER)
-                .repo(DeployConfig.GITHUB_DEPLOYMENT_MASTER_BRANCH)
+                .repo(DeployConfig.GITHUB_DEPLOYMENT_SOURCE_REPO)
                 .branch(sourceBranch)
                 .build();
 
