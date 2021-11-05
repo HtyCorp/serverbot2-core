@@ -119,6 +119,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
         Optional<ServerTextChannel> maybeChannel = interaction.getChannel().flatMap(Channel::asServerTextChannel);
         logger.info("maybeChannel={}", maybeChannel);
         if (maybeChannel.isEmpty()) {
+            logger.info("Interaction in a non-text channel (interaction channel ID = {}",
+                    interaction.getChannel().map(DiscordEntity::getIdAsString));
             interaction.createImmediateResponder().append(MSG_CAN_ONLY_USE_IN_CHANNELS).respond();
             return;
         }
@@ -127,6 +129,8 @@ public class InteractionHandler implements SlashCommandCreateListener {
         Optional<MessageChannel> maybeAppChannel = channelMap.getAppChannel(channel);
         logger.info("maybeAppChannel={}", maybeAppChannel);
         if (maybeAppChannel.isEmpty()) {
+            logger.info("Interaction in a non-serverbot channel (interaction channel ID = {}",
+                    interaction.getChannel().map(DiscordEntity::getIdAsString));
             interaction.createImmediateResponder().append(MSG_CAN_ONLY_USE_IN_CHANNELS).respond();
             return;
         }
