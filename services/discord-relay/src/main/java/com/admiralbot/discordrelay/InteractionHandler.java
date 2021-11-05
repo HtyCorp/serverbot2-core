@@ -10,6 +10,7 @@ import com.admiralbot.framework.exception.server.ApiServerException;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.sharedutil.XrayUtils;
+import org.javacord.api.entity.DiscordEntity;
 import org.javacord.api.entity.channel.Channel;
 import org.javacord.api.entity.channel.PrivateChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -97,7 +98,26 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         User requester = interaction.getUser();
 
+        logger.info("Interaction details: " +
+                "commandName={}, " +
+                "commandId={}, " +
+                "id={}, " +
+                "token={}, " +
+                "channel={}, " +
+                "type={}, " +
+                "server={}," +
+                "user={}",
+                interaction.getCommandName(),
+                interaction.getCommandIdAsString(),
+                interaction.getIdAsString(),
+                interaction.getToken(),
+                interaction.getChannel().map(DiscordEntity::getIdAsString),
+                interaction.getType().name(),
+                interaction.getServer().map(DiscordEntity::getIdAsString),
+                interaction.getUser().getIdAsString());
+
         Optional<ServerTextChannel> maybeChannel = interaction.getChannel().flatMap(Channel::asServerTextChannel);
+        logger.info("maybeChannel={}", maybeChannel);
         if (maybeChannel.isEmpty()) {
             interaction.createImmediateResponder().append(MSG_CAN_ONLY_USE_IN_CHANNELS).respond();
             return;
@@ -105,6 +125,7 @@ public class InteractionHandler implements SlashCommandCreateListener {
         ServerTextChannel channel = maybeChannel.get();
 
         Optional<MessageChannel> maybeAppChannel = channelMap.getAppChannel(channel);
+        logger.info("maybeAppChannel={}", maybeAppChannel);
         if (maybeAppChannel.isEmpty()) {
             interaction.createImmediateResponder().append(MSG_CAN_ONLY_USE_IN_CHANNELS).respond();
             return;
