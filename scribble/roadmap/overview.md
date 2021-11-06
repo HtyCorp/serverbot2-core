@@ -1,4 +1,4 @@
-## 2021-10-26 Roadmap Tasks (descending priority)
+## Roadmap Tasks (descending priority)
 
 ### Bring back Xray trace support
 
@@ -18,7 +18,7 @@ High ops impact, will improve understanding of command latency
 ### Upgrade to CDK Pipelines v2
 
 #### Status
-On Hold due to new API seemingly missing caching as an option
+On hold (missing API features: no build caching)
 
 #### Complexity
 Low
@@ -42,7 +42,8 @@ Medium
 High UX impact, improves problematic rough edges on commands
 
 #### Tasks
-* Migrate commands (currently in CommandService) to a standard model package)
+* Migrate commands (currently in CommandService) to a standard model package
+* Investigate ephemeral (per-game) threads for status messaging
 * Rework slash command registration to use model directly from relay code
 * Replace DMs for private links with ephemeral messages
 * Implement assisted flows using Discord message components for UI
@@ -64,8 +65,24 @@ High ops impact in replacing existing hacky solution
 * Use snapshots as game state source of truth (not EBS volumes as is the case now)
 * Implement option for EC2 Spot usage
 * Implement option for EBS volume preloading
+* Add reboot/restart command
 
-### Improve web look and feel for IPAuth pages
+### Improved server admin tools
+
+#### Status
+Planned
+
+#### Complexity
+Medium
+
+#### Tasks
+* Service-stored (off-host) launch config
+* LinuxGSM as install/start/stop/update provider
+* Console read/write slash commands
+* Spike (1): custom Xterm.js terminal for SSH (replaces default Session Manager)
+* Spike (2): custom Xterm.js terminal for game server 
+
+### Improved web look and feel for IPAuth pages
 
 #### Status
 Planned
@@ -80,13 +97,61 @@ Medium impact to UX as plain TXT on IP Auth is an eyesore. Unblocks auto-invoke 
 * Replace API-generated page with formatted static (scripted: JS/TS) CloudFront/S3 page
 * Implement mini REST API for deferred post-load auth API call
 
-### Multi-tenant bot
+### IOT Core for instance messaging
 
 #### Status
 Planned
 
 #### Complexity
-High
+Medium
+
+#### Impact
+High ops improvement: makes two-way SQS obsolete and unblocks on-host firewall
+
+#### Tasks
+* Implement new service based on IOT Core for bi-directional request/response to/from instances
+* Migrate app-daemon to IOT Core (probably rename it too)
+
+### On-host firewall management
+
+#### Status
+Planned
+
+#### Complexity
+Medium
+
+#### Impact
+High UX: fixes long-standing issues with prefix list capacity and VPCFL delay
+
+#### Tasks
+* Add native libnftables integration to agent
+* Replace core NetSec functionality with IOT messaging to on-host nftables
+* Open non-privileged network ports by default (remove /openport, /closeport)
+
+### IPAuth auto-invoke with web push
+
+#### Status
+Unplanned (nice to have, but expecting low adoption)
+
+#### Complexity
+Medium
+
+#### Impact
+Medium UX improvement as it makes IP auth smoother, potentially even auto in some cases (e.g. on /start)
+
+#### Tasks
+* Investigate best way to store user preference and onboard status
+* Implement mini SFn workflow to account for web push latency possibly pushing command invoke latency >3s
+* Update /addip implementation to use new workflow
+* Add onboarding option to IPAuth page
+
+### Multi-tenant bot
+
+#### Status
+Unplanned (stretch goal)
+
+#### Complexity
+Very high
 
 #### Impact
 Makes public launch possible, improves cost analysis
@@ -101,27 +166,10 @@ Makes public launch possible, improves cost analysis
 * Migrate app-daemon to IOT Core (probably rename it too)
 * Migrate to on-host firewall using nftables (replaces NetSec functionality)
 
-### IPAuth auto-invoke with web push
-
-#### Status
-Planned
-
-#### Complexity
-Medium
-
-#### Impact
-High UX improvement as it makes IP auth smoother, potentially even auto in some cases (e.g. on /start)
-
-#### Tasks
-* Investigate best way to store user preference and onboard status
-* Implement mini SFn workflow to account for web push latency possibly pushing command invoke latency >3s
-* Update /addip implementation to use new workflow
-* Add onboarding option to IPAuth page
-
 ### Use on-host OS SFTP server instead of embedded app-daemon version
 
 #### Status
-Planned
+Unplanned (dependent on embedded SFTP server staying functional)
 
 #### Complexity
 Low
