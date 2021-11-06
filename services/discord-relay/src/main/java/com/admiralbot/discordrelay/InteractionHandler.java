@@ -7,6 +7,7 @@ import com.admiralbot.discordrelay.model.service.MessageChannel;
 import com.admiralbot.discordrelay.model.service.SimpleEmbed;
 import com.admiralbot.framework.exception.client.ApiClientException;
 import com.admiralbot.framework.exception.server.ApiServerException;
+import com.admiralbot.sharedconfig.DiscordConfig;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.Utils;
 import com.admiralbot.sharedutil.XrayUtils;
@@ -98,15 +99,15 @@ public class InteractionHandler implements SlashCommandCreateListener {
 
         User requester = interaction.getUser();
 
-        logger.info("Interaction details: " +
+        logger.info("Interaction details = {" +
                 "commandName={}, " +
                 "commandId={}, " +
                 "id={}, " +
                 "token={}, " +
                 "channel={}, " +
                 "type={}, " +
-                "server={}," +
-                "user={}",
+                "server={}, " +
+                "user={}}",
                 interaction.getCommandName(),
                 interaction.getCommandIdAsString(),
                 interaction.getIdAsString(),
@@ -115,6 +116,16 @@ public class InteractionHandler implements SlashCommandCreateListener {
                 interaction.getType().name(),
                 interaction.getServer().map(DiscordEntity::getIdAsString),
                 interaction.getUser().getIdAsString());
+
+        if (interaction.getServer().isEmpty()) {
+            logger.info("Interaction outside of a guild, ignoring");
+            return;
+        }
+        String serverId = interaction.getServer().get().getIdAsString();
+        if (!serverId.equals(DiscordConfig.DISCORD_SERVER_ID.getValue())) {
+            logger.info("Interaction outside of assigned guild, ignoring");
+            return;
+        }
 
         Optional<ServerTextChannel> maybeChannel = interaction.getChannel().flatMap(Channel::asServerTextChannel);
         logger.info("maybeChannel={}", maybeChannel);

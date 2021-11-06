@@ -101,6 +101,8 @@ public class CommonStack extends Stack {
                 CommonConfig.APP_ROOT_DOMAIN_NAME, env.getAppRootDomainName());
         Util.instantiateConfigSsmParameter(this, "AppRootDomainZoneIdParam",
                 CommonConfig.APP_ROOT_DOMAIN_ZONE_ID, env.getAppRootDomainZoneId());
+        Util.instantiateConfigSsmParameter(this, "DiscordServerIdParam",
+                DiscordConfig.DISCORD_SERVER_ID, env.getDiscordServerId());
         Util.instantiateConfigSsmParameter(this, "ChannelIdWelcomeParam",
                 DiscordConfig.CHANNEL_ID_WELCOME, env.getDiscordRelayChannelIdWelcome());
         Util.instantiateConfigSsmParameter(this, "ChannelIdMainParam",

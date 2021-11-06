@@ -18,6 +18,8 @@ public class ApplicationEnv {
     private String appRootDomainName;
     private String appRootDomainZoneId;
 
+    private String discordServerId;
+
     private String discordRelayChannelIdWelcome;
     private String discordRelayChannelIdMain;
     private String discordRelayChannelIdAdmin;
@@ -69,6 +71,10 @@ public class ApplicationEnv {
 
     public String getAppRootDomainZoneId() {
         return appRootDomainZoneId;
+    }
+
+    public String getDiscordServerId() {
+        return discordServerId;
     }
 
     public String getDiscordRelayChannelIdWelcome() {

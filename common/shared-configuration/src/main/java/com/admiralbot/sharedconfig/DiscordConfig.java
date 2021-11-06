@@ -17,6 +17,8 @@ public class DiscordConfig {
 
     public static final String PATH_PUBLIC = PATH_ALL+"/public";
 
+    public static final Parameter DISCORD_SERVER_ID = new Parameter(PATH_PUBLIC, "server-id");
+
     public static final Parameter CHANNEL_ID_WELCOME = new Parameter(PATH_PUBLIC, "channel-id/welcome");
     public static final Parameter CHANNEL_ID_MAIN = new Parameter(PATH_PUBLIC, "channel-id/main");
     public static final Parameter CHANNEL_ID_ADMIN = new Parameter(PATH_PUBLIC, "channel-id/admin");
