@@ -82,11 +82,12 @@ public class XrayUtils {
             return null;
         } else {
             Segment parentSegment = entity.getParentSegment();
-            log.info("Trace header: entity is a subsegment <{}> with parent segment <{}>", entity, parentSegment);
             TraceHeader header = new TraceHeader(parentSegment.getTraceId(),
                     parentSegment.isSampled() ? entity.getId() : null,
                     parentSegment.isSampled() ? SAMPLED : NOT_SAMPLED);
-            return header.toString();
+            String headerString = header.toString();
+            log.info("Generated trace header <{}>", headerString);
+            return headerString;
         }
     }
 
