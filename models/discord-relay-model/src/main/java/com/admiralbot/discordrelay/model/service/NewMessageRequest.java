@@ -17,6 +17,8 @@ public class NewMessageRequest {
     private String recipientUserId;
     @ApiArgumentInfo(order = 4, description = "A simple embed object to send with the message")
     private SimpleEmbed embed;
+    @ApiArgumentInfo(order = 5, description = "Arbitrary channel ID to send message to.")
+    private String recipientChannelId;
 
     public NewMessageRequest() {}
 
@@ -25,14 +27,6 @@ public class NewMessageRequest {
         this.externalId = externalId;
         this.recipientChannel = recipientChannel;
         this.recipientUserId = recipientUserId;
-    }
-
-    public NewMessageRequest(String content, String externalId, MessageChannel recipientChannel, String recipientUserId, SimpleEmbed embed) {
-        this.content = content;
-        this.externalId = externalId;
-        this.recipientChannel = recipientChannel;
-        this.recipientUserId = recipientUserId;
-        this.embed = embed;
     }
 
     public String getExternalId() {
@@ -53,5 +47,9 @@ public class NewMessageRequest {
 
     public SimpleEmbed getEmbed() {
         return embed;
+    }
+
+    public String getRecipientChannelId() {
+        return recipientChannelId;
     }
 }

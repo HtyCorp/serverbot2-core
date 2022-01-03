@@ -18,9 +18,11 @@ import org.javacord.api.entity.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class RelayServiceHandler extends HttpApiServer<IDiscordService> implements IDiscordService {
 
@@ -53,16 +55,17 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
     public NewMessageResponse newMessage(NewMessageRequest newMessageRequest) {
 
         MessageChannel requestedChannel = newMessageRequest.getRecipientChannel();
+        String requestedChannelId = newMessageRequest.getRecipientChannelId();
         String requestedUserId = newMessageRequest.getRecipientUserId();
         String requestedContent = newMessageRequest.getContent();
         String requestedExternalId = newMessageRequest.getExternalId();
         SimpleEmbed requestedEmbed = newMessageRequest.getEmbed();
 
-        if (requestedChannel != null && requestedUserId != null) {
-            throw new RequestValidationException("Received NewMessageRequest with both a recipient channel and recipient user");
-        }
-        if (requestedChannel == null && requestedUserId == null) {
-            throw new RequestValidationException("Received NewMessageRequest with neither a recipient channel or recipient user");
+        final long numRecipientOptionsSpecified = Stream.of(requestedChannel, requestedUserId, requestedChannelId)
+                .filter(Objects::nonNull)
+                .count();
+        if (numRecipientOptionsSpecified != 1) {
+            throw new RequestValidationException("Requires exactly one of recipient channel, user ID or channel ID");
         }
 
         TextChannel channel;
@@ -74,11 +77,18 @@ public class RelayServiceHandler extends HttpApiServer<IDiscordService> implemen
             } else {
                 throw new RequestHandlingException("Discord channel missing for app MessageChannel " + requestedChannel);
             }
-        } else {
+        } else if (requestedUserId != null) {
             try {
                 channel = discordApi.getUserById(requestedUserId).thenCompose(User::openPrivateChannel).join();
             } catch (Exception e) {
                 throw new RequestHandlingException("Failed to open private channel to requested user with ID " + requestedUserId, e);
+            }
+        } else {
+            Optional<ServerTextChannel> optChannel = discordApi.getChannelById(requestedChannelId).flatMap(Channel::asServerTextChannel);
+            if (optChannel.isPresent()) {
+                channel = optChannel.get();
+            } else {
+                throw new RequestHandlingException("Discord channel missing for requested ID " + requestedChannelId);
             }
         }
 
