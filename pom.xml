@@ -119,6 +119,7 @@
     <modules>
         <module>agents/app-daemon</module>
         <module>buildtools/native-image-support</module>
+        <module>common/custom-lambda-runtime</module>
         <module>common/service-framework</module>
         <module>common/service-framework-modelling</module>
         <module>common/shared-configuration</module>

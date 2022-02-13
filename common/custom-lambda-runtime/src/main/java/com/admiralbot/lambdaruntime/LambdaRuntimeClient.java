@@ -1,4 +1,4 @@
-package com.admiralbot.framework.server.lambdaruntime;
+package com.admiralbot.lambdaruntime;
 
 import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
 import com.admiralbot.nativeimagesupport.cache.ImageCache;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RegisterGsonType(types = {APIGatewayV2HTTPEvent.class, APIGatewayV2HTTPResponse.class})
-public class LambdaRuntimeClient {
+public class LambdaRuntimeClient<BodyType, ResponseType> {
 
     // Name of env var containing runtime API endpoint value
     private static final String API_ENDPOINT_ENV_VAR = "AWS_LAMBDA_RUNTIME_API";
@@ -42,11 +42,13 @@ public class LambdaRuntimeClient {
 
     private static final Gson GSON = ImageCache.getGson();
 
+    private final Class<BodyType> requestBodyClass;
     private final String apiEndpointHost;
     private final SdkHttpClient httpClientStandard;
     private final SdkHttpClient httpClientNoTimeout;
 
-    public LambdaRuntimeClient() {
+    public LambdaRuntimeClient(Class<BodyType> requestBodyClass) {
+        this.requestBodyClass = requestBodyClass;
         apiEndpointHost = Objects.requireNonNull(System.getenv(API_ENDPOINT_ENV_VAR));
         // The HTTP client for invocation long-polling needs an infinite timeout
         httpClientNoTimeout = UrlConnectionHttpClient.builder().socketTimeout(Duration.ZERO).build();
@@ -60,16 +62,16 @@ public class LambdaRuntimeClient {
         call(SdkHttpMethod.POST, INIT_ERROR_PATH, headers, GSON.toJson(lambdaError));
     }
 
-    public LambdaInvocation getNextInvocation() {
+    public LambdaInvocation<BodyType> getNextInvocation() {
         HttpExecuteResponse response = call(httpClientNoTimeout, SdkHttpMethod.GET, NEXT_INVOCATION_PATH,
                 null, null);
         String body = getBody(response);
-        log.info("Gateway proxy request JSON:\n" + body);
-        APIGatewayV2HTTPEvent apiRequest = GSON.fromJson(body, APIGatewayV2HTTPEvent.class);
+        log.info("Request body JSON:\n" + body);
+        BodyType apiRequest = GSON.fromJson(body, requestBodyClass);
 
         long deadlineMs = Long.parseLong(Optional.ofNullable(getHeader(response, DEADLINE_MS_HEADER))
                 .orElseThrow(() -> new IllegalStateException("Lambda response missing deadline header")));
-        return new LambdaInvocation(
+        return new LambdaInvocation<>(
                 apiRequest,
                 getHeader(response, INVOCATION_ID_HEADER),
                 deadlineMs,
@@ -78,9 +80,11 @@ public class LambdaRuntimeClient {
         );
     }
 
-    public void postInvocationResponse(String requestId, APIGatewayV2HTTPResponse response) {
+    public void postInvocationResponse(String requestId, ResponseType response) {
         String path = String.format(INVOCATION_RESPONSE_PATH_FORMAT, requestId);
-        call(SdkHttpMethod.POST, path, null, GSON.toJson(response));
+        String responseJson = GSON.toJson(response);
+        log.info("Response JSON:\n" + responseJson);
+        call(SdkHttpMethod.POST, path, null, responseJson);
     }
 
     public void postInvocationError(String requestId, String errorMessage, String errorType, List<String> stackTrace) {

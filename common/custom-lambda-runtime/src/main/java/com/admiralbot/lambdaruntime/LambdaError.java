@@ -1,4 +1,4 @@
-package com.admiralbot.framework.server.lambdaruntime;
+package com.admiralbot.lambdaruntime;
 
 import com.admiralbot.nativeimagesupport.annotation.RegisterGsonType;
 
