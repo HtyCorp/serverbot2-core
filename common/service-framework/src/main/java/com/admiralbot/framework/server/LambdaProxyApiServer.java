@@ -1,6 +1,7 @@
 package com.admiralbot.framework.server;
 
 import com.admiralbot.lambdaruntime.LambdaPoller;
+import com.admiralbot.lambdaruntime.LambdaRuntimeClient;
 import com.admiralbot.sharedutil.LogUtils;
 import com.admiralbot.sharedutil.XrayUtils;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent;
@@ -34,14 +35,17 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
     private final LambdaPoller<APIGatewayV2HTTPEvent,APIGatewayV2HTTPResponse> lambdaPoller;
 
     public LambdaProxyApiServer() {
-        lambdaPoller = new LambdaPoller<>(APIGatewayV2HTTPEvent.class, this::handleRequestWithXray);
+        LambdaRuntimeClient<APIGatewayV2HTTPEvent,APIGatewayV2HTTPResponse> runtimeClient
+                = new LambdaRuntimeClient<>(APIGatewayV2HTTPEvent.class);
+
         try {
             super.initialise();
         } catch (Exception e) {
             String errorMessage = "LambdaRuntimeServer initialization failed: " + e.getMessage();
-            lambdaPoller.postInitError(errorMessage, e.getClass().getSimpleName());
+            runtimeClient.postInitError(errorMessage, e.getClass().getSimpleName(), null);
             throw new RuntimeException(errorMessage, e);
         }
+        lambdaPoller = new LambdaPoller<>(runtimeClient, APIGatewayV2HTTPEvent.class, this::handleRequestWithXray);
     }
 
     private APIGatewayV2HTTPResponse handleRequestWithXray(APIGatewayV2HTTPEvent request) {

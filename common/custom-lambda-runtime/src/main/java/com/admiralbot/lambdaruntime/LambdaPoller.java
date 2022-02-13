@@ -15,9 +15,10 @@ public class LambdaPoller<BodyType,ResponseType> {
     private final LambdaRuntimeClient<BodyType,ResponseType> runtimeClient;
     private final Function<BodyType,ResponseType> invocationHandler;
 
-    public LambdaPoller(Class<BodyType> requestBodyClass, Function<BodyType,ResponseType> invocationHandler) {
+    public LambdaPoller(LambdaRuntimeClient<BodyType,ResponseType> runtimeClient, Class<BodyType> requestBodyClass,
+                        Function<BodyType,ResponseType> invocationHandler) {
         this.threadExecutor = Executors.newSingleThreadExecutor();
-        this.runtimeClient = new LambdaRuntimeClient<>(requestBodyClass);
+        this.runtimeClient = runtimeClient;
         this.invocationHandler = invocationHandler;
 
         try {
@@ -27,10 +28,6 @@ public class LambdaPoller<BodyType,ResponseType> {
             runtimeClient.postInitError(errorMessage, e.getClass().getSimpleName(), null);
             throw new RuntimeException(errorMessage, e);
         }
-    }
-
-    public void postInitError(String errorMessage, String errorType) {
-        runtimeClient.postInitError(errorMessage, errorType, null);
     }
 
     private void lambdaInvocationHandlerLoop() {
