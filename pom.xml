@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <awssdk.version>2.17.73</awssdk.version>
+        <awssdk.version>2.17.131</awssdk.version>
         <awsmonocdk.version>1.130.0</awsmonocdk.version>
     </properties>
 
@@ -50,7 +50,7 @@
                 <plugin>
                     <groupId>org.graalvm.buildtools</groupId>
                     <artifactId>native-maven-plugin</artifactId>
-                    <version>0.9.5</version>
+                    <version>0.9.10</version>
                     <executions>
                         <execution>
                             <goals>

@@ -3,6 +3,7 @@ package com.admiralbot.sharedutil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -10,6 +11,11 @@ import java.util.stream.Collectors;
 public class Utils {
 
     private Utils() {}
+
+    public static String getEnvOrThrow(String key) {
+        return Optional.ofNullable(System.getenv(key)).orElseThrow(() ->
+                new IllegalArgumentException("Environment variable <" + key + "> does not exist"));
+    }
 
     public static boolean equalsAny(Object object, Object... options) {
         // Original version which IDEA suggested replacement for:

@@ -45,7 +45,7 @@ public abstract class LambdaProxyApiServer<ModelType> extends AbstractApiServer<
             runtimeClient.postInitError(errorMessage, e.getClass().getSimpleName(), null);
             throw new RuntimeException(errorMessage, e);
         }
-        lambdaPoller = new LambdaPoller<>(runtimeClient, APIGatewayV2HTTPEvent.class, this::handleRequestWithXray);
+        lambdaPoller = new LambdaPoller<>(runtimeClient, this::handleRequestWithXray);
     }
 
     private APIGatewayV2HTTPResponse handleRequestWithXray(APIGatewayV2HTTPEvent request) {

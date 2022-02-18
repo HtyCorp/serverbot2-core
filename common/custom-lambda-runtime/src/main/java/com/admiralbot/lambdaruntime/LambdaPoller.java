@@ -15,7 +15,7 @@ public class LambdaPoller<BodyType,ResponseType> {
     private final LambdaRuntimeClient<BodyType,ResponseType> runtimeClient;
     private final Function<BodyType,ResponseType> invocationHandler;
 
-    public LambdaPoller(LambdaRuntimeClient<BodyType,ResponseType> runtimeClient, Class<BodyType> requestBodyClass,
+    public LambdaPoller(LambdaRuntimeClient<BodyType,ResponseType> runtimeClient,
                         Function<BodyType,ResponseType> invocationHandler) {
         this.threadExecutor = Executors.newSingleThreadExecutor();
         this.runtimeClient = runtimeClient;

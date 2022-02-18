@@ -4,9 +4,10 @@ env:
   shell: bash
   variables:
     CDK_VERSION: "1.130.0"
-    GRAAL_RELEASE: "vm-21.3.0"
-    GRAAL_ARTIFACT: "graalvm-ce-java17-linux-amd64-21.3.0"
-    JAVA_HOME: "/usr/local/lib/graalvm/21.3.0"
+    GRAAL_RELEASE: "vm-22.0.0.2"
+    GRAAL_ARTIFACT: "graalvm-ce-java17-linux-amd64-22.0.0.2"
+
+    JAVA_HOME: "/usr/local/lib/graalvm/22.0.0.2"
     SOURCE_DATE_EPOCH: "1622959566" # Arbitrary: consistent with pom.xml epoch for sentimental reasons
 
 phases:
