@@ -15,6 +15,8 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
+      - "apt-get update"
+      - "apt-get install -y jq moreutils"
       # Install NPM to 'global' local repo
       - "npm install -g aws-cdk@${CDK_VERSION}"
       # Download Graal only if not already installed (cached by version/GRAAL_RELEASE)
@@ -50,17 +52,27 @@ phases:
         )
       # Synthesize application/service CDK stacks for application deployment
       - "mkdir -p gen/cloud-assembly"
-      - "(cd deployment/application-infrastructure/ && cdk synth -o ../../gen/cloud-assembly)"
-      - "echo \"Generated $(cat gen/cloud-assembly/*.template.json | wc -l) template lines\""
+      - "(cd deployment/application-infrastructure/ && cdk synth -o ../../gen/cloud_assembly)"
+      - "echo \"Generated $(cat gen/cloud_assembly/*.template.json | wc -l) template lines\""
+      # Create the no-assets cloned assembly for CFN pipeline actions
+      - "/bin/sh buildtools/scripts/clone_assembly.sh"
   post_build:
     commands:
       - "echo \"Build completed at $(date)\""
 artifacts:
-  name: "cloud_assembly"
-  base-directory: "gen/cloud-assembly"
-  discard-paths: no
   files:
-    - "**/*"
+    - "**.*" # Useless but required field
+  secondary-artifacts:
+    cloud_assembly:
+      base-directory: "gen/cloud_assembly"
+      discard-paths: no
+      files:
+        - "**/*"
+    cloud_assembly_no_assets:
+      base-directory: "gen/cloud_assembly_no_assets"
+      discard-paths: no
+      files:
+        - "**/*"
 cache:
   paths:
     - '/root/.m2/**/*'

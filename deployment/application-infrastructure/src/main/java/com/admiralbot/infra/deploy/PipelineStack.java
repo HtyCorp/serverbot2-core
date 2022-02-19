@@ -42,10 +42,11 @@ public class PipelineStack extends Stack {
 
         // Inputs:
         Artifact sourceArtifact = Artifact.artifact("github_source");
-        // Artifact manifestArtifact = Artifact.artifact("environment_manifest");
 
         // Outputs:
         Artifact assemblyArtifact = Artifact.artifact("cloud_assembly");
+        // Though the Java CDK code doesn't use this, it's overwritten into the output CFN so we need to build it.
+        Artifact assemblyArtifactNoAssets = Artifact.artifact("cloud_assembly_no_assets");
 
         String connectionArn = Joiner.colon("arn", "aws", "codestar-connections",
                 getRegion(), getAccount(), "connection/" + connectionUuid);
@@ -90,7 +91,7 @@ public class PipelineStack extends Stack {
                 .project(codeBuildProject)
                 .actionName("BuildAndSynthProject")
                 .input(sourceArtifact)
-                .outputs(List.of(assemblyArtifact))
+                .outputs(List.of(assemblyArtifact, assemblyArtifactNoAssets))
                 .build();
 
         pipeline = CdkPipeline.Builder.create(this, "DeploymentPipeline")
