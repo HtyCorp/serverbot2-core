@@ -60,7 +60,7 @@ public class PipelineStack extends Stack {
                 .build();
 
         BuildEnvironment codeBuildBuildEnvironment = BuildEnvironment.builder()
-                .buildImage(LinuxBuildImage.STANDARD_4_0)
+                .buildImage(LinuxBuildImage.STANDARD_5_0)
                 .computeType(ComputeType.LARGE)
                 .build();
         PipelineProject codeBuildProject = PipelineProject.Builder.create(this, "CodeBuildProject")
