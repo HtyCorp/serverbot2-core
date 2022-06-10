@@ -33,7 +33,7 @@ public class NativeLambdaMicroservice extends Construct implements IGrantable {
                 .functionName("native-" + serviceModule)
                 .code(nativeZipCode)
                 .runtime(Runtime.PROVIDED_AL2)
-                .memorySize(4096)
+                .memorySize(3008)
                 .timeout(Duration.seconds(15))
                 .handler("default") // Not applicable to native Lambda right now
                 .tracing(Tracing.PASS_THROUGH) // Should be set to ACTIVE once HTTP APIs support Xray integration
