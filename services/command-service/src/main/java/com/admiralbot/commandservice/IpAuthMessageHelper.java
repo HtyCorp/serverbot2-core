@@ -12,6 +12,8 @@ import com.admiralbot.sharedconfig.NetSecConfig;
 import com.admiralbot.urlshortener.model.CreateShortUrlRequest;
 import com.admiralbot.urlshortener.model.IUrlShortener;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class IpAuthMessageHelper {
 
     private final INetworkSecurity networkSecurityServiceClient;
@@ -25,6 +27,12 @@ public class IpAuthMessageHelper {
 
     public ProcessUserCommandResponse handleMemberIpAuthRequest(CommandAddIp commandAddIp) {
         ProcessUserCommandRequest context = commandAddIp.getContext();
+
+        if (context.getSenderId().equals(VIP.BREAD.getId())) {
+            if (ThreadLocalRandom.current().nextBoolean()) {
+                return new ProcessUserCommandResponse("No");
+            }
+        }
 
         GenerateIpAuthUrlRequest generateUrlRequest = new GenerateIpAuthUrlRequest(context.getCommandSourceId(), context.getSenderId());
 
