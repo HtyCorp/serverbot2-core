@@ -59,23 +59,9 @@ public class UrlShortenerFrontendStack extends Stack {
                 urlShortenerEndpointInfo.uriPath()
         );
 
-        // Edge functions don't support standard env vars, so we have to supply it by proxy as a file
-        JsonObject envVars = new JsonObject();
-        envVars.addProperty("SB2_TARGET_REGION", parent.getMainEnv().getRegion());
-        envVars.addProperty("SB2_TARGET_HOST", urlShortenerServiceHost);
-        envVars.addProperty("SB2_TARGET_URL", urlShortenerServiceUrl);
-
-        InputStream envVarsFileInput = SdkBytes.fromUtf8String(envVars.toString()).asInputStream();
-        Path codePath = Util.codeBuildPath("web", "url-shortener-frontend", "edge-function");
-        Path envVarsFileDest = codePath.resolve("environment.json");
-        try {
-            Files.copy(envVarsFileInput, envVarsFileDest, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't copy edge function env vars due to IO error", e);
-        }
-
         // Declare function
 
+        Path codePath = Util.codeBuildPath("web", "url-shortener-frontend", "edge-function");
         EdgeFunction edgeFunction = EdgeFunction.Builder.create(this, "EdgeFunction")
                 .runtime(Runtime.PYTHON_3_8)
                 .code(Code.fromAsset(codePath.toString()))

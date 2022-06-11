@@ -30,10 +30,6 @@ api_exception_default_message = (500, "Sorry, an unexpected error occurred.")
 gateway_exception_default_message = "Sorry, an unexpected gateway error occurred."
 uncaught_exception_default_message = (500, "Sorry an unexpected error occurred.", "Lambda uncaught")
 
-# Load environment variables file (see UrlShortenerFrontendStack.java; we can't use standard Lambda env vars in Edge)
-for (key, value) in json.load(open("environment.json")).items():
-    environ[key] = value
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -59,7 +55,13 @@ def handle_event(event, _context):
     # Get auth and endpoint params from env vars to contact URL shortener service
 
     access_key_id = environ["AWS_ACCESS_KEY_ID"]
-    url_service_url = environ["SB2_TARGET_URL"]
+    secret_access_key = environ["AWS_SECRET_ACCESS_KEY"]
+    session_token = environ["AWS_SESSION_TOKEN"]
+
+    custom_headers = request["origin"]["s3"]["customHeaders"]
+    url_service_region = custom_headers["x-admiral-env-target-region"][0]["value"]
+    url_service_host = custom_headers["x-admiral-env-target-host"][0]["value"]
+    url_service_url = custom_headers["x-admiral-env-target-url"][0]["value"]
     client_request_id = str(uuid4())
 
     logger.info(f"Authenticating request {client_request_id} to service endpoint {url_service_url} "
@@ -67,11 +69,11 @@ def handle_event(event, _context):
 
     auth = AWSRequestsAuth(
         aws_access_key=access_key_id,
-        aws_secret_access_key=environ["AWS_SECRET_ACCESS_KEY"],
-        aws_token=environ["AWS_SESSION_TOKEN"],
+        aws_secret_access_key=secret_access_key,
+        aws_token=session_token,
         aws_service="execute-api",
-        aws_host=environ["SB2_TARGET_HOST"],
-        aws_region=environ["SB2_TARGET_REGION"]
+        aws_host=url_service_host,
+        aws_region=url_service_region
     )
     json_string_body = json.dumps({
         "xApiTarget": "GetFullUrl",
