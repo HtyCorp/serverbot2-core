@@ -47,8 +47,8 @@ def lambda_handler(event, _context):
 
 def handle_event(event, _context):
     request = event["Records"][0]["cf"]["request"]
+    logger.info(f"Request:\n{json.dumps(request)}")
 
-    logger.info(f"Got request path: {request['uri']}")
     path_segments = request["uri"].split("/") # CF team really should have called this "path", not "uri"
     if len(path_segments) <= 2:
         return build_error_response(400, "Bad Request", "missing request path segments")

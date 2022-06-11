@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 
 public class UrlShortenerFrontendStack extends Stack {
 
@@ -74,6 +75,7 @@ public class UrlShortenerFrontendStack extends Stack {
         }
 
         // Declare function
+
         EdgeFunction edgeFunction = EdgeFunction.Builder.create(this, "EdgeFunction")
                 .runtime(Runtime.PYTHON_3_8)
                 .code(Code.fromAsset(codePath.toString()))
@@ -82,9 +84,17 @@ public class UrlShortenerFrontendStack extends Stack {
                 .build();
         Permissions.addExecuteApi(this, parent.getMainEnv().getRegion(), edgeFunction, IUrlShortener.class);
 
+        // Migrating to alternate env var workaround using custom origin headers: inject new env var replacement headers
+        Map<String,String> envVarHeaders = Map.of(
+                "x-admiral-env-target-region", parent.getMainEnv().getRegion(),
+                "x-admiral-env-target-host", urlShortenerServiceHost,
+                "x-admiral-env-target-url", urlShortenerServiceUrl
+        );
+
         // CloudFront distribution
 
         IOrigin s3Origin = S3Origin.Builder.create(basicContentBucket)
+                .customHeaders(envVarHeaders)
                 .build();
 
         EdgeLambda edgeLambdaAssociation = EdgeLambda.builder()
