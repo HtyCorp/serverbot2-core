@@ -29,8 +29,8 @@ public class UbuntuAmiLocator {
     private static final Map<Function<UbuntuAmiInfo,String>,String> AMI_CRITERIA = Map.of(
             UbuntuAmiInfo::getRegion, getRegion(),
             UbuntuAmiInfo::getArch, "amd64",
-            UbuntuAmiInfo::getName, "jammy",
-            UbuntuAmiInfo::getVersion, "22.04",
+            //UbuntuAmiInfo::getName, "jammy",
+            UbuntuAmiInfo::getVersion, "22.04 LTS",
             UbuntuAmiInfo::getType, "hvm:ebs-ssd"
     );
 
