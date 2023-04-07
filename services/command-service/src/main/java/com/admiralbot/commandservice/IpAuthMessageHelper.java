@@ -29,7 +29,7 @@ public class IpAuthMessageHelper {
         ProcessUserCommandRequest context = commandAddIp.getContext();
 
         if (context.getSenderId().equals(VIP.BREAD.getId())) {
-            if (ThreadLocalRandom.current().nextBoolean()) {
+            if (ThreadLocalRandom.nextDouble() < 0.25d) {
                 return new ProcessUserCommandResponse("No");
             }
         }
