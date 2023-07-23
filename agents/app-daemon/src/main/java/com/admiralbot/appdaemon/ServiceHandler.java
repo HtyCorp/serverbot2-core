@@ -167,7 +167,7 @@ public class ServiceHandler implements IAppDaemon {
                 // Get the partition mounted in filesystem root ("/")
                 .map(device -> {
                     LsblkBlockDevice rootPartition = device.children.stream()
-                            .filter(child -> "/".equals(child.mountpoint))
+                            .filter(child -> child.mountpoints.contains("/"))
                             .findFirst().orElseThrow();
                     return new Pair<>(device.name, rootPartition.name);
                 }).findFirst().orElseThrow();
@@ -212,7 +212,8 @@ public class ServiceHandler implements IAppDaemon {
         String name;
         @SerializedName("maj:min")
         String version;
-        String rm, size, ro, type, mountpoint;
+        String rm, size, ro, type;
+        List<String> mountpoints;
         List<LsblkBlockDevice> children;
     }
 
